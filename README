@@ -1,0 +1,48 @@
+Instalacia:
+
+Operacny system: zatial som skusal len Linux. Zavisi len od toho, pod cim funguje Play framework.
+
+Potrebujes Sun Javu 1.5 a vyssie.
+Navyse treba nainstalovat Play framework, verzia 1.0.1 a vyssia: http://www.playframework.org/
+(malo by stacit stiahnut a rozbalit http://download.playframework.org/releases/play-1.0.1.zip)
+
+Rozbalit tento archiv (co si uz asi spravil, ak citas tento text) so zachovanim adresarovej struktury.
+
+Spustenie:
+
+cd [adresar v ktorom je tento subor]
+[cesta k play frameworku]/play run
+
+Struktura projektu:
+
+conf/
+application.conf - hlavny konfigurancy subor
+log4j.properties - nastavenie logovania
+messages         - preklady hlasok (zatial sa nepouziva)
+play.plugins     - deklaracia aplikacnych pluginov, v nasom pripade pre Neo4j a Mongo
+routes           - routovanie HTTP requestov do aplikacie
+
+data/
+- datove subory grafovej databazy
+
+lib/
+- vsetky potrebne externe kniznice
+
+logs/
+- aplikacne logy
+
+public/
+- staticke zdroje: obrazky, css, javascripty
+
+app/
+controllers      - tu sa zacina spracovanie requestov
+models           - vsetko co robi nieco s datami
+plugins          - datove pripojenia, ktore chceme dostupne stale
+views            - html / groovy templaty
+
+/code/mongo/ [to be moved to ../haiku/mongo/]
+start_mongo      - MongoDB startup script
+/code/mongo/data/db
+                 - Data directory
+
+Enjoy!
