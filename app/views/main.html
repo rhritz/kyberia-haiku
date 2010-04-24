@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>#{get 'title' /}</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <link rel="stylesheet" type="text/css" media="screen" href="@{'/public/stylesheets/main.css'}">
+        <link rel="stylesheet" type="text/css" media="screen"
+            href="@{'/public/stylesheets/kyberia.css'}" />
+        #{get 'moreStyles' /}
+        <link rel="shortcut icon" type="image/png" href="@{'/public/images/favicon.png'}">
+        <script src="@{'/public/javascripts/jquery-1.4.min.js'}" type="text/javascript" charset="utf-8"></script>
+        #{get 'moreScripts' /}
+    </head>
+    <body>
+        <div class="mask">
+            <div class="header">
+              <!-- Top Menu -->
+              <ul class="menu">
+                  <li><a href="@{Application.index()}">Main</a></li>
+                  <li><a href="@{Application.showBookmarks()}">Bookmarks</a></li>
+                  <li><a href="@{Application.showMe()}">Me</a></li>
+                  <li><a href="@{Application.showNodes()}">Nodes</a></li>
+                  <li><a href="@{Application.showLastNodes()}">Last</a></li>
+                  <li><a href="@{Application.showK()}">K-list</a></li>
+                  <li><a href="@{Application.showUsers()}">Users</a></li>
+                  <li><a href="@{Application.showLive()}">Live</a></li>
+                  <li><a href="@{Application.showMail()}">Mail</a></li>
+                  <li><a href="@{Secure.logout()}">Logout</a></li>
+              </ul>
+              <!-- <p class="nodeContent">Hi ${user}, id ${userid}. You entered ${id ?: 'nothing'}!</p> -->
+              <p>Hi ${user}, ${newMail ?: 'no mail' }</p>
+            </div>
+            <div class="colleft">
+                <!-- Main Content -->
+                #{doLayout /}
+            </div>
+            <div class="footer">
+               <!-- <center><small>Page generation took </small></center> -->
+            </div>
+        </div>
+    </body>
+</html>
+*{
+Takto nejak to bude::
+
+<link rel="stylesheet" type="text/css" media="screen" href="${usercss}" />
+alebo #{get 'userCSS' /} ?
+...
+#{playMenu $userMenu/}
+...
+#{playContent $userTemplate/}
+...
+
+renderArgs.put("userCss",...)
+renderArgs.put("userMenu",...)
+renderArgs.put("userContent",...)
+- alebo to budu rovno nazyv tagov a tag by name, alebo parametre tagov?
+}*

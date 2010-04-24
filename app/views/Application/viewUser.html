@@ -1,0 +1,41 @@
+#{extends 'main.html' /}
+#{set title:'Users' /}
+
+<div class="col1">
+    <div class="node_content">
+        Username: ${user}
+    </div>
+    <div class="nodeContent">
+        ${content}
+    </div>
+    <div class="nodeContent">
+        ${friends}
+    </div>
+    #{list items:nodes, as:'node'}
+        <a href="/id/${node.id}">${node.name}</a>${node.cr_date}<a href="@{Application.showUser(node.owner)}">${models.User.getNameForId(node.owner)}</a> <br>
+            ${node.content} <br>
+    #{/list}
+</div>
+<div class="col2">
+    VECAE!<br>
+    friends<br>
+    <a href="@{Application.showFriendsContent}">friends nodes</a><br>
+    ignores<br>
+    fooks<br>
+    books<br>
+    groups<br>
+    K given<br>
+    K recv<br>
+    Visits<br>
+    Updates<br>
+    K nodes<br>
+    nodes<br>
+    tagcloud<br>
+    <div class="actions">
+        <form name="user_actions" action="@{Application.friend(uid)}" method="POST">
+            <input type="submit" value="Friend" onClick="javascript:this.form.action='@{Application.friend(uid)}';submit();"/>
+            <input type="submit" value="Ignore" onClick="javascript:this.form.action='@{Application.ignore(uid)}';submit();"/>
+            <input type="submit" value="Ignore Mail" onClick="javascript:this.form.action='@{Application.ignoreMail(uid)}';submit();" />
+        </form>
+    </div>
+</div>

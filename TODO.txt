@@ -1,0 +1,73 @@
+Veci, ktore nie su hotove, a chceme aby boli:
+--- 24.04.2010 ---
+* access/perms on userinfo ale len ciastocne
+
+--- 20.04.2010 ---
+* ankety
+* bannery
+* testovacie skripty (perl/ruby)
+* mail search
+
+--- 17.04.2010 ---
+*  moznost bookamrknut <Stream> napriklad new nodes ineho usera?
+- v principe by nemuselo byt prilis zlozite, len treba  specializovat (bookmark type)
+- mozeme asi odlozit na neskor
+
+--- 12.04.2010 ---
+* nejaky admin system - init mongodb, predklopenie mongo->neo4j a podobne
+* uprava konkretnych zaznamov v mongodb cez phpmoadmin alebo nieco take
+* put/hardlink - ako specialny typ NodeContent, zobrazi sa obsah node ktory je uvedeny
+v link_to
+
+--- 10.04.2010 ---
+* typ contentu: clanok - rozdeli contetn na 'stranky' definovatelnej velkosti (pocet riadkov),
+ocisluje a spristupni (stranky nemusia mat unikatnu url ale musia sa dat listovat jednotlivo)
+* plugin ShortCache na lokalne ukladanie usernames<->uids a podobne?
+
+--- 09.04.2010 ---
+* status updates
+* banner system
+* personal home/landing page
+* Registracie (akoze tie kackovacie + posielanie + potvrdzovanie mailov, normalne funguju)
+
+--- 23.03.2010 ---
+* Security - pouziva sa plaintext password
+* Https
+* Permissions
+* Mongo queries je mozne vyrazne zlepsit
+* Mongo indexing
+* Templatovaci system resp. CMS
+* Fook, Ignore & co
+* Odpocitavanie a obnovovanie kacok
+* Input validation -> AntiSamy (?)
+* Feeds / Content export? -> REST
+* Ability to see some content without an account
+- 1. Hack Secure module; or
+- 2. Create a different Controller for that; or
+- 3. Redirect to ^ on refusal to login; or
+- 4. mozno ta prihlasovacia funckie v Application pojde hacknut tak,
+ ze bez prihlasenia nastavi defaulot usera.
+* Mongo & Neo4j replication
+* Proper CSS & HTML
+* Variable CSS -> ? http://www.playframework.org/modules/sass
+* Some Javascript sauce and AJAX where needed
+* License comments into *html templates - cez *{ comment }*
+* FastTags/Javatags
+* Bookmark Tags (aka delicious) - pridavanie, querying
+* Session Timeout?
+* public ObjectId(Date time) je zrejme mozne pouzit na date range queries
+namiesto nasho vlastneho casoveho stlpca, funguje to?
+* Fulltext Search -> ? http://www.playframework.org/modules/search
+
+Content Tagy:
+- kazdy user moze priradit contentu 3-5? tagov
+- tabulka node-tag-pocet hlasov za tag
+- tabulka tag (cached)
+- ? budeme aj evidovat kto priadil comu aky tag?
+- user moze priradit max 100 tagov denne
+
+Templates:
+- View: default view, ostatne odvodene - view inheritance
+- Template: default template + verzia pre kazdy view + template inheritance
+- Dobre zadefinovat datovy kontrakt medzi template a modelom
+- View/jeho handle mozeme ulozit v session

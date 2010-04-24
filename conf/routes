@@ -1,0 +1,71 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+GET     /                                       Application.index
+
+# Login - podrobnosti k tomuto su definovane v Secure module
+*       /                                       module:secure
+
+# nodes
+GET     /id/{id}                        Application.viewNode
+GET     /id/{id}/edit                   Application.showEditNode
+# kompletka:
+# ? len ako mu vysvetlit ze niektore su nepovinne?
+# GET /id/{id}/{<[0-9]+>template}/{<[0-9]+>page} Application.viewNode
+POST     /id/{id}/action                        Application.addNode
+POST     /id/{id}/edit                          Application.editNode
+POST     /add_node                              Application.addNode
+GET      /add_thread                             Application.addThread
+GET      /id/{id}/edit                          Application.showEditNode
+
+# actions
+POST     /id/{id}/book                          Application.book
+
+POST     /mail                                  Application.sendMail
+
+# user management
+GET   /add_user                                 Registration.showAddUser
+POST  /add_user                                 Registration.addUser
+GET   /user/{id}                                Application.showUser
+POST  /user/{uid}                               Application.uploadIcon
+POST  /user/{uid}/{action}                      Application.{action}
+
+###
+GET   /bookmarks                                Application.showBookmarks
+GET   /friends_nodes                            Application.showFriendsContent
+GET   /mail                                     Application.showMail
+# TODO obmedzit na dlzku threadid regexpom
+GET   /mail/{thread}                            Application.showMail
+GET   /last                                     Application.showLastNodes
+GET   /me                                       Application.showMe
+GET   /k                                        Application.showK
+GET   /users                                    Application.showUsers
+GET   /live                                     Application.showLive
+GET   /nodes                                    Application.showNodes
+
+# toto je catch-all, musi byt preto nizsie
+POST     /id/{id}/{action}              Application.{action}
+###
+############### bordel ################
+# zatial nepouzivane;
+# druhy a posledny par by malo byt nepovinne
+GET     /thread/{<[0-9]+>id}/{<[0-9]+>start}/{<[0-9]+>length} Application.rawThread
+
+
+#GET     /id/{<[0-9]+>id}/action                  Application.addNode
+#POST    /id/{<[0-9]+>id}/{<[0-9]+>parent}       Application.addNode
+# DELETE /id/{<[0-9]+>id} Application.addNode
+# + movenode cez delete + post
+
+# Map static resources from the /app/public folder to the /public path
+GET     /public/                                staticDir:public
+
+# Catch all
+#*       /{controller}/{action}                  {controller}.{action}
+
+# pre 'redirecty' v ramci aplikacie
+#*        /{action}                               Application.{action}
+
+# TODO - REST routes, nieco ako GET|POST|* /rest/...  Rest.{action}{params} alebo co

@@ -1,0 +1,148 @@
+div.haiku {
+	width: 30em;
+	margin-left: auto;
+	margin-right: auto;
+#	margin-top: 55%;
+#	border: 1px solid #666;
+	text-align: center;
+	background-color: #333;
+	padding: 10px;
+}
+
+.comment { 
+    margin-left: 50px;
+    border: 2px solid #e3e3e3;
+}
+
+div.blocktext {
+    margin-left: auto;
+    margin-right: auto;
+#    width: 23em;
+    text-align: center;
+}
+div.container {
+	display: table-cell;
+	vertical-align: middle
+}
+#dmenu {
+	display:block;
+	width:100%;
+	border:1px green;
+#	position: fixed;
+	left:1px;
+	top:1px;
+	right: 1px;
+	z-index: 5;
+}
+#dmenu li
+{
+	padding: 10px;
+	text-align: left;
+	display: inline;
+}
+#dmenu div:hover, a:hover
+{
+	background: #F0F8FF;
+}
+input[type=button], input[type=submit]
+{
+	border: 1px solid #505050;
+	background: #F0F8FF;
+}
+
+input:hover, textarea:hover
+{
+	border: 1px dashed #c00000;
+}
+
+input:focus, textarea:focus
+{
+	border: 1px solid #c00000;
+}
+
+.menu ul {
+	list-style: square;
+	margin: 10px 0 0 15px;
+	padding-left: 0px;
+	font-size: 1.2em
+}
+.menu li {
+	background: #FFF;
+	font-size: 1.1em;
+	height: 21px;
+	padding: 5px 0 0 7px;
+	margin-top: 4px;
+	display: inline;
+	zoom: 1;
+}
+
+.menu a {
+   background:white;
+   color: black;
+   text-decoration:none;
+}
+
+.menu a:hover {
+    background: #F0F8FF;
+}
+
+.mask{
+   position: relative;
+   overflow: hidden;
+   margin: 0px auto;
+   width: 100%;
+   background:white;
+   color: black;
+}
+.header{
+   float: left;
+   width: 100%;
+   background:white;
+   color: black;
+}
+.colleft{
+   position: relative;
+   width: 100%;
+   right: 85%;
+   background:white;
+   color: black;
+}
+.col1{
+   position: relative;
+   overflow: hidden;
+   float: left;
+   width: 84%;
+   left: 100.5%;
+   background:white;
+   color: black;
+}
+.col2{
+   position: relative;
+   overflow: hidden;
+   float: left;
+   width: 14%;
+   left: 1.5%;
+   background:white;
+   color: black;
+}
+.footer{
+   float: left;
+   width: 100%;
+   background:white;
+   color: black;
+}
+body {
+   padding: 0px;
+   margin: 0px;
+   font-size: 90%;
+   background:white;
+   color: black;
+   font-family: Tahoma, Geneva, sans-serif;
+}
+.nodeContent {
+        font-size: 1.45em;
+        margin: 3px 0 4px 0;
+        font-weight: 100;
+        letter-spacing: -1px;
+        padding-bottom: 0px;
+}

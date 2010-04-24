@@ -1,0 +1,69 @@
+#{extends 'main.html' /}
+#{set title:'Node id' /}
+<div class="col1">
+    <div style="display:block;">
+        <form action="@{Application.addNode(id)}" method="POST">
+            <textarea rows="10" cols="40" style="display:block; width:83%" name="content"></textarea>
+            <input type="submit" value="Add Node" />
+            <!-- +select typu nodu -->
+            <!-- +select typu vztahu -->
+            <!-- +reistracia userov -->
+        </form>
+    </div>
+    <div class="nodeContent">
+        *{ renderujeme thread }*
+        %{ prevDepth = 0; }%
+        #{list items:thread, as:'node' }
+            %{ if (node.depth - prevDepth <= 0)
+                out.print("</div>".multiply(1 + prevDepth - node.depth));
+               prevDepth = node.depth;
+            }%
+            <div class="comment">
+                <div style="background-color:#e3e3e3; display:block">${node.getHead()}</div>
+                <div>${node.getContent()}</div>
+                <!-- <img style=\"position:relative;\" src=\"/public/images/k2.gif\"> -->
+        #{/list}
+        %{out.print("</div>".multiply(prevDepth));}% <!--  -->
+        *{ /renderujeme thread }*
+    </div>
+    <!-- Navigation -->
+    <center>
+        <!-- viewNode -->
+        <form action="@{Application.addNode(id)}" method="POST">
+            <!-- <a href="@ {Application.index(id,0)">&lt;&lt;</a> -->
+            <!-- <a href="@ {Application.index(id,currentPage-1)">&lt;</a> -->
+            <!-- <a href="@ {Application.index(id,currentPage+1)">&gt;</a> -->
+            <!-- ? ako vyznacit aby sme zobrazili najstarsiu stranku? -->
+            <!-- <a href="@ {Application.index(id,-1)">&gt;&gt;</a> -->
+            <button type="submit" name="nav" value="&lt;&lt;">&lt;&lt;</button>
+            <button type="submit" name="nav" value="&lt;">&lt;</button>
+            <button type="submit" name="nav" value="&gt;">&gt;</button>
+            <button type="submit" name="nav" value="&gt;&gt;">&gt;&gt;</button>
+        </form>
+    </center>
+</div>
+<div class="col2">
+   <small>${content}</small>
+   <div style="display:block;">Actions:
+   <form name="node_actions" action="@{Application.book(id)}" method="POST">
+        <input type="submit" value="Book" onClick="javascript:this.form.action='@{Application.book(id)}';submit();"/>
+        <input type="submit" value="Fook" onClick="javascript:this.form.action='@{Application.fook(id)}';submit();"/>
+        <input type="submit" value="K" onClick="javascript:this.form.action='@{Application.k(id)}';submit();" />
+        <input type="submit" value="-K" onClick="javascript:this.form.action='@{Application.mk(id)}';submit();" />
+        <input type="text" size="10" name="tag" />
+        <input type="submit" value="Tag" onClick="javascript:this.form.action='@{Application.tag(id)}';submit();" />
+   </form>
+   <a href="@{Application.showEditNode(id)}">Edit</a>
+   <form action="@{Application.viewNode(id)}" method="GET">
+        <input type="text" size="10" name="id" />
+        <input type="submit" value="View Node" />
+    </form>
+   </div>
+</div>
+<!--
+%{
+   fullName = "bububu";
+   out.print('<h1>'+fullName+'</h1>');
+}%
+-->
+        

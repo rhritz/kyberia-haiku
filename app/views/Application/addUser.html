@@ -1,0 +1,19 @@
+#{extends 'main.html' /}
+#{set title:'Register user' /}
+
+<div class="col1">
+    <div class="nodeContent">
+        Registrujes sa na mrte dolezitu stranku, davaj pozor co napises! BUBUBUBU!!!
+    </div>
+    <div style="display:block;">
+        <form action="@{Registration.addUser()}" method="POST">
+            <!-- <textarea rows="10" cols="23" name="content"></textarea> -->
+            <input type="text" name="username" />
+            <input type="password" name="password" />
+            <input type="submit" value="Add User" />
+        </form>
+    </div>
+</div>
+<div class="col2">
+   &nbsp;
+</div>

@@ -1,0 +1,34 @@
+#{extends 'main.html' /}
+#{set title:'Mail' /}
+
+<div class="col1">
+    <div style="display:block;">
+        <form action="@{Application.sendMail()}" method="POST">
+            <select name="to">
+                #{list items:users, as:'luser'}
+                    <option value="${luser.id}">${luser.username}</option>
+                #{/list}
+            </select>
+            <textarea rows="10" cols="40" style="display:block; width:83%" name="content"></textarea>
+            <input type="submit" value="Send mail" />
+        </form>
+    </div>
+    <div class="nodeContent">
+    <!-- TODO DateFormat.getDateTimeInstance(DateFormat.LONG,
+                            DateFormat.LONG).format(new Date(m.sent))); -->
+    #{list items:mailMessages, as:'message'}
+        <div>
+            <div>${models.User.getNameForId(message.from)}&nbsp;&gt;&nbsp;${models.User.getNameForId(message.to)}
+            &nbsp;&nbsp;&nbsp;${message.sent}
+            </div>
+            <div>
+                ${message.content}
+            </div>
+        </div>
+    #{/list}
+                        
+    </div>
+</div>
+<div class="col2">
+   ${threads}
+</div>

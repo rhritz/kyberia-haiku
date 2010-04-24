@@ -1,0 +1,89 @@
+#{extends 'main.html' /}
+#{set title:'Node id' /}
+<div class="col1">
+    <div style="display:block;">
+        <form action="@{Application.editNode(id)}" method="POST">
+            <textarea rows="10" cols="40" style="display:block; width:83%" name="content"></textarea>
+            <input type="submit" value="Update" />
+
+            <div>
+                Accesslist:
+                #{list items:node.access, as: 'access_user'}
+                        <a href="/user/${access_user}">${models.User.getNameForId(access_user)}</a>
+                #{/list}
+                Add:
+                <select name="access">
+                    <option value="" selected></option>
+                    #{list items:users, as:'luser'}
+                        <option value="${luser.id}">${luser.username}</option>
+                    #{/list}
+                </select>
+            </div>
+            <div>
+                Silencelist:
+                #{list items:node.silence, as: 'silence_user'}
+                        <a href="/user/${silence_user}">${models.User.getNameForId(silence_user)}</a>
+                #{/list}
+                Add:
+                <select name="silence">
+                    <option value="" selected></option>
+                    #{list items:users, as:'luser'}
+                        <option value="${luser.id}">${luser.username}</option>
+                    #{/list}
+                </select>
+            </div>
+            <div>
+                Masterlist:
+                #{list items:node.masters, as: 'masters_user'}
+                        <a href="/user/${masters_user}">${models.User.getNameForId(masters_user)}</a>
+                #{/list}
+                Add:
+                <select name="master">
+                    <option value="" selected></option>
+                    #{list items:users, as:'luser'}
+                        <option value="${luser.id}">${luser.username}</option>
+                    #{/list}
+                </select>
+            </div>
+            <div>
+                Banlist:
+                #{list items:node.bans, as: 'bans_user'}
+                        <a href="/user/${bans_user}">${models.User.getNameForId(bans_user)}</a>
+                #{/list}
+                Add:
+                <select name="ban">
+                    <option value="" selected></option>
+                    #{list items:users, as:'luser'}
+                        <option value="${luser.id}">${luser.username}</option>
+                    #{/list}
+                </select>
+            </div>
+            <input type="submit" value="Update" />
+        </form>
+    </div>
+</div>
+<div class="col2">
+   <small>${content}</small>
+   <div style="display:block;">Actions:
+   <form name="node_actions" action="@{Application.book(id)}" method="POST">
+        <input type="submit" value="Book" onClick="javascript:this.form.action='@{Application.book(id)}';submit();"/>
+        <input type="submit" value="Fook" onClick="javascript:this.form.action='@{Application.fook(id)}';submit();"/>
+        <input type="submit" value="K" onClick="javascript:this.form.action='@{Application.k(id)}';submit();" />
+        <input type="submit" value="-K" onClick="javascript:this.form.action='@{Application.mk(id)}';submit();" />
+        <input type="text" size="10" name="tag" />
+        <input type="submit" value="Tag" onClick="javascript:this.form.action='@{Application.tag(id)}';submit();" />
+   </form>
+   <a href="@{Application.showEditNode(id)}">Edit</a>
+   <form action="@{Application.viewNode(id)}" method="GET">
+        <input type="text" size="10" name="id" />
+        <input type="submit" value="View Node" />
+    </form>
+   </div>
+</div>
+<!--
+%{
+   fullName = "bububu";
+   out.print('<h1>'+fullName+'</h1>');
+}%
+-->
+        

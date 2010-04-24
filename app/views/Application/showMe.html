@@ -1,0 +1,59 @@
+#{extends 'main.html' /}
+#{set title:'Me' /}
+
+<div class="col1">
+    <div style="display:block;">
+        <div class="nodeContent">
+            Mah dear friends:<br>
+            #{list items:friends, as:'luser'}
+                <div><a href="/user/${luser.id}">${luser.username}</a></div>
+            #{/list}
+        </div>
+        <div class="nodeContent">
+            Ima friend of:<br>
+            #{list items:friendsof, as:'friendof'}
+                <div><a href="/user/${friendof.id}">${friendof.username}</a></div>
+            #{/list}
+        </div>
+        <div class="nodeContent">
+            Im ignoring:<br>
+            #{list items:ignores, as:'ignored'}
+                <div><a href="/user/${ignored.id}">${ignored.username}</a></div>
+            #{/list}
+        </div>
+        <div class="nodeContent">
+            Im ignored by:<br>
+            <!-- ? -->
+        </div>
+        <div class="nodeContent">
+            Mah last nodes:<br>
+        </div>
+        <div class="nodeContent">
+            Mah status updatez:<br>
+        </div>
+        <div style="display:block;">
+            Mah last nodes:
+            #{list items:nodes, as:'node'}
+                <a href="/id/${node.id}">${node.name}</a>${node.cr_date}<a href="@{Application.showUser(node.owner)}">${models.User.getNameForId(node.owner)}</a> <br>
+                    ${node.content} <br>
+            #{/list}
+        </div>
+        <form action="@{Application.uploadIcon(uid)}" method="POST" enctype="multipart/form-data">
+            <input type="file" id="icon" name="icon" />
+            <input type="submit" value="Send it..." />
+            #{authenticityToken /}
+        </form>
+        <form action="@{Application.addNode()}" method="POST">
+            <textarea rows="10" cols="40" style="display:block; width:83%" name="content"></textarea>
+            <input type="submit" value="Add Node" />
+            <!-- +select typu nodu -->
+            <!-- +select typu vztahu -->
+            <!-- +reistracia userov -->
+            #{authenticityToken /}
+        </form>
+    </div>
+</div>
+<div class="col2">
+    <!-- Actions -->
+   VECAE!
+</div>
