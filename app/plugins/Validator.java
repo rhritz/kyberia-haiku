@@ -36,7 +36,7 @@ public class Validator {
                     Play.configuration.getProperty("validator.antisamy.path");
         else
             POLICY_FILE_LOCATION =
-                    Play.applicationPath.getAbsolutePath()+"/conf/antisamy-1.3.xml";
+                Play.applicationPath.getAbsolutePath()+"/conf/antisamy-1.3.xml";
         Logger.info("Validator policy file is " + POLICY_FILE_LOCATION);
     }
 
@@ -72,5 +72,15 @@ getScanTime() - returns the scan time in seconds
     public static void shutdown()
     {
      
+    }
+
+    // TODO
+    public static String validate(String get) {
+        return get.replaceAll("\n", "<br>");
+    }
+
+    // TODO - ziadne tagy a haluze
+    public static String validateTextonly(String get) {
+        return get;
     }
 }

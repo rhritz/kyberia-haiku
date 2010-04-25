@@ -1,6 +1,17 @@
 #{extends 'main.html' /}
 #{set title:'Node id' /}
 <div class="col1">
+    <div class="nodeContent" style="display:block;">
+        ${node.name}
+        ${node.content}
+        #{if node.tags}
+            #{list items:node.tags, as:'tag' }
+                <div class="tag">
+                    ${node.getContent()}
+                </div>
+            #{/list}
+        #{/if}
+    </div>
     <div style="display:block;">
         <form action="@{Application.addNode(id)}" method="POST">
             <textarea rows="10" cols="40" style="display:block; width:83%" name="content"></textarea>

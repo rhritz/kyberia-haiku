@@ -192,6 +192,7 @@ public class Application extends Controller {
             Long gid = node.gid;
             // logicky UserVisit save asi patri sem, lebo tu vieme co ideme zobrazit
             UserLocation.saveVisit(User.load(session.get(User.ID)), id);
+            renderArgs.put("node", node);
             renderArgs.put("content", h.viewNode(gid));
             renderArgs.put("thread", h.getThreadedChildren(gid,start,count));
             renderArgs.put("id", id);

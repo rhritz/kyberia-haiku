@@ -17,7 +17,24 @@
 */
 package models;
 
-public class Taglist {
+import com.google.code.morphia.AbstractMongoEntity;
+import com.google.code.morphia.annotations.MongoDocument;
+import com.google.code.morphia.annotations.MongoTransient;
+import com.google.common.collect.Lists;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBCursor;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import play.cache.Cache;
+import play.Logger;
+import plugins.MongoDB;
+
+
+@MongoDocument
+public class Taglist extends AbstractMongoEntity {
 
     public static void tagNode(NodeContent nc, String tag, String uid) {
         nc.addTag(tag);
@@ -33,4 +50,14 @@ public class Taglist {
      zobrazovanie tagov,
      zobrazovanie contentu podla tagov
      */
+
+    public static void add()
+    {
+
+    }
+
+    public static void load()
+    {
+        
+    }
 }

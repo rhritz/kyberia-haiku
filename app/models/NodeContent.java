@@ -33,6 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import plugins.MongoDB;
+import plugins.Validator;
 
 // zobrazitelne polozky z Node
 @MongoDocument
@@ -83,7 +84,7 @@ public class NodeContent extends AbstractMongoEntity {
                         Map<String,String> params,
                         List<String> roots)
     {
-        content = params.get(Haiku.CONTENT);
+        content = Validator.validate(params.get(Haiku.CONTENT));
         created = System.currentTimeMillis();
         gid     = n.getId();
         cr_date = DateFormat.getDateTimeInstance(DateFormat.LONG,
