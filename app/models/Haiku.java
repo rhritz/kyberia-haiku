@@ -237,6 +237,71 @@ public class Haiku {
         return "";
     }
 
+
+    // pre rekonstrukciu grafovej databazy, bez notifikacii
+    public long addNodeFromMongo(Long ownergid, String mongoid, Long parent)
+    {
+        long retid = 0;
+        Transaction tx = graph.beginTx();
+
+        try {
+            List<String> roots = new LinkedList<String>();
+            Node newnode = graph.createNode();
+            newnode.setProperty(TYPE,NodeType.CONTENT.ordinal());
+            if (parent != null) {
+                Node sibling = null;
+                Relationship dfs;
+                Node root = graph.getNodeById(parent);
+                if (root != null) {
+                    root.createRelationshipTo(newnode, Rel.REACTION);
+                    dfs = root.getSingleRelationship(Rel.DFS, Direction.OUTGOING);
+                    if (dfs != null ) {
+                        sibling = dfs.getEndNode();
+                        dfs.delete();
+                    }
+                    root.createRelationshipTo(newnode, Rel.DFS);
+                    if (sibling != null) {
+                        newnode.createRelationshipTo(sibling, Rel.DFS);
+                    } else {
+                        newnode.createRelationshipTo(root, Rel.DFS);
+                    }
+                    // nizsie su updaty notifikacii
+                    Node upnode = root;
+                    for (int i = 0; i < 10; i++)
+                        // 10 - max hier depth for notif update
+                    {
+                          if (upnode.hasProperty(MONGOID)) {
+                            roots.add((String) upnode.getProperty(MONGOID));
+                          }
+                          Relationship re = upnode.getSingleRelationship(
+                                  Rel.REACTION, Direction.INCOMING);
+                          if (re == null) break;
+                          upnode = re.getStartNode();
+                    }
+                }
+            }
+            if (ownergid > 0) {
+                Node owner = graph.getNodeById(ownergid);
+                if (owner != null) { // inak by sme mali failnut
+                    owner.createRelationshipTo(newnode, Rel.OWNER);
+                }
+            }
+            retid = newnode.getId();
+            newnode.setProperty(MONGOID, mongoid);
+            tx.success();
+        }
+        catch(Exception e)
+        {
+           Logger.info("Neo failed " + e.toString() );
+           tx.failure();
+        }
+        finally
+        {
+           tx.finish();
+        }
+        return retid;
+    }
+
     public long addNode(Long parent,
             Map<String,String> params,
             long ownergid,
