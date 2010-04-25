@@ -187,12 +187,17 @@ public class Application extends Controller {
         Haiku h = new Haiku();
         int start = 0;
         int count = 30;
-        Long gid = NodeContent.load(id).gid;
-        // logicki UserVisit save asi patri sem, lebo tu vieme co ideme zobrazit
-        UserLocation.saveVisit(User.load(session.get(User.ID)), id);
-        renderArgs.put("content", h.viewNode(gid));
-        renderArgs.put("thread", h.getThreadedChildren(gid,start,count));
-        renderArgs.put("id", id);
+        NodeContent node = NodeContent.load(id);
+        if (node.canRead(session.get(User.ID))) {
+            Long gid = node.gid;
+            // logicky UserVisit save asi patri sem, lebo tu vieme co ideme zobrazit
+            UserLocation.saveVisit(User.load(session.get(User.ID)), id);
+            renderArgs.put("content", h.viewNode(gid));
+            renderArgs.put("thread", h.getThreadedChildren(gid,start,count));
+            renderArgs.put("id", id);
+        } else {
+            renderArgs.put("content", "Sorry pal, no see for you");
+        }
         render(ViewTemplate.VIEW_NODE_HTML);
         // podl anode nastavit template
         // String template = Haiku.getTemplate(node,user,session.viewtemplate)

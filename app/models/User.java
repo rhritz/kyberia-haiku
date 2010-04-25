@@ -294,6 +294,7 @@ public class User extends AbstractMongoEntity {
 
     public static String getNameForId(String id)
     {
+        if (id == null || id.length() < 10) return "";
         String uname = Cache.get(USERNAME + id, String.class);
         if (uname != null)
         {
@@ -311,7 +312,7 @@ public class User extends AbstractMongoEntity {
                 Logger.info("returning name(2):: " + uname);
             }
         } catch (Exception ex) {
-            Logger.info("mongo fail @getNameForId");
+            Logger.info("mongo fail @getNameForId for id |" + id + "|");
             ex.printStackTrace();
             Logger.info(ex.toString());
             return null;

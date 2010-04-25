@@ -258,12 +258,60 @@ public class NodeContent extends AbstractMongoEntity {
     // bud to bude priamo v Node ALEBO v grupach ALEBO zdedene cez grupy
     public boolean canRead(String uid)
     {
+        Logger.info("canRead:: uid " + uid + " acc type " + accessType);
+        if (owner.equals(uid))
+            return true;
+        if (accessType == null) 
+            return true;
+        switch (accessType) {
+            case ACL.PUBLIC:
+                            if (bans.contains(uid))
+                                return false;
+                            break;
+            case ACL.PRIVATE:
+                            if (! access.contains(uid))
+                                return false;
+                            break;
+            case ACL.MODERATED:
+                            if (bans.contains(uid))
+                                return false;
+                            break;                
+        }
+
         return true;
     }
 
-    public boolean canUpdate(String uid)
+    // moze pridavat reakcie, tagy etc?
+    public boolean canWrite(String uid)
     {
+        Logger.info("canWrite:: uid " + uid + " acc type " + accessType);
+
+        if (owner.equals(uid))
+            return true;
+        if (accessType == null) 
+            return false;
+        switch (accessType) {
+            case ACL.PUBLIC:
+                            if (bans.contains(uid) || silence.contains(uid))
+                                return false;
+                            break;
+            case ACL.PRIVATE:
+                            if (! access.contains(uid))
+                                return false;
+                            break;
+            case ACL.MODERATED:
+                            if (bans.contains(uid))
+                                return false;
+                            break;
+        }
         return true;
+    }
+
+    // moze editovat properties?
+    public boolean canEdit(String uid)
+    {
+        Logger.info("canEdit:: uid " + uid + " acc type " + accessType);
+        return owner.equals(uid) || (masters != null && masters.contains(uid));
     }
 
     // if null inherit everything
