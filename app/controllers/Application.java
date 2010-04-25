@@ -78,6 +78,7 @@ public class Application extends Controller {
     }
 
     public static void addNode(String id, String content) {
+        checkAuthenticity();
         Haiku h = new Haiku();
         // Logger.info("about to add node:" + id + "," + content + "," +
         // Long.parseLong(session.get(User.USERID)) + "," +
@@ -108,6 +109,7 @@ public class Application extends Controller {
     //
     public static void friend(String uid)
     {
+        checkAuthenticity();
         Logger.info("Add friend :: " + uid);
         User.addFriend(session.get(User.ID), uid);
         showUser(uid);
@@ -115,6 +117,7 @@ public class Application extends Controller {
 
     public static void ignore(String uid)
     {
+        checkAuthenticity();
         Logger.info("Add ignore :: " + uid);
         User.addIgnore(session.get(User.ID), uid);
         showUser(uid);
@@ -122,6 +125,7 @@ public class Application extends Controller {
 
     public static void ignoreMail(String uid)
     {
+        checkAuthenticity();
         Logger.info("Add ignoreMail :: " + uid);
         User.addIgnoreMail(session.get(User.ID), uid);
         showUser(uid);
@@ -129,6 +133,7 @@ public class Application extends Controller {
 
     public static void editNode(String id)
     {
+        checkAuthenticity();
         Logger.info("Show edit node:: " + id);
         NodeContent.load(id).edit(Controller.params.allSimple());
         displayNode(id);
@@ -136,6 +141,7 @@ public class Application extends Controller {
 
     public static void book(String id)
     {
+        checkAuthenticity();
         Logger.info("Bookmark action:: " + id);
         Bookmark.add(id, session.get(User.ID));
         displayNode(id);
@@ -143,6 +149,7 @@ public class Application extends Controller {
 
     public static void fook(String id)
     {
+        checkAuthenticity();
         Logger.info("Fook ::" + id);
         User.fook(session.get(User.ID), id);
         displayNode(id);
@@ -150,6 +157,7 @@ public class Application extends Controller {
 
     public static void k(String id)
     {
+        checkAuthenticity();
         Logger.info("K ::" + id);
         NodeContent nc = NodeContent.load(id);
         if (nc != null)
@@ -161,6 +169,7 @@ public class Application extends Controller {
 
     public static void mk(String id)
     {
+        checkAuthenticity();
         Logger.info("K ::" + id);
         NodeContent nc = NodeContent.load(id);
         if (nc != null)
@@ -172,6 +181,7 @@ public class Application extends Controller {
 
     public static void tag(String id, String tag)
     {
+        checkAuthenticity();
         Logger.info("Tag id ::" + id + " with tag ::" + tag);
         NodeContent nc = NodeContent.load(id);
         if (nc != null)
@@ -245,6 +255,7 @@ public class Application extends Controller {
     }
 
     public static void sendMail(String to, String content) {
+        checkAuthenticity();
         //String toId   = User.getIdForName(to);
         String fromId = session.get(User.ID);
         // TODO filter content

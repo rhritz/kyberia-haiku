@@ -3,6 +3,7 @@
 <div class="col1">
     <div style="display:block;">
         <form action="@{Application.editNode(id)}" method="POST">
+            #{authenticityToken /}
             <div>
                 <select name="change_owner">
                     <option value="" selected></option>

@@ -18,6 +18,9 @@
 
 package plugins;
 
+import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.owasp.validator.html.*;
 import play.Play;
 import play.Logger;
@@ -79,8 +82,37 @@ getScanTime() - returns the scan time in seconds
         return get.replaceAll("\n", "<br>"); // TODO ak tam uz br nie je
     }
 
-    // TODO - ziadne tagy a haluze
+    // ziadne tagy a haluze
     public static String validateTextonly(String get) {
-        return get;
+        String stripped = strip_tags(get, null);
+        return stripped;
+    }
+
+    public static String strip_tags(String text, String allowedTags) {
+        // String[] tag_list = allowedTags.split(",");
+        String[] tag_list = new String[1];
+        Arrays.sort(tag_list);
+        final Pattern p = Pattern.compile("<[/!]?([^\\\\s>]*)\\\\s*[^>]*>",
+                 Pattern.CASE_INSENSITIVE);
+        Matcher m = p.matcher(text);
+
+        StringBuffer out = new StringBuffer();
+        int lastPos = 0;
+        while (m.find()) {
+            String tag = m.group(1);
+            // if tag not allowed: skip it
+            if (Arrays.binarySearch(tag_list, tag) < 0) {
+                out.append(text.substring(lastPos, m.start())).append(" ");
+            } else {
+                out.append(text.substring(lastPos, m.end()));
+            }
+            lastPos = m.end();
+        }
+        if (lastPos > 0) {
+            out.append(text.substring(lastPos));
+            return out.toString().trim();
+        } else {
+            return text;
+        }
     }
 }

@@ -20,6 +20,7 @@ package models;
 import com.google.code.morphia.AbstractMongoEntity;
 import com.google.code.morphia.Morphia;
 import com.google.code.morphia.annotations.MongoDocument;
+import com.google.code.morphia.annotations.MongoTransient;
 import com.google.code.morphia.annotations.MongoValue;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
@@ -37,20 +38,25 @@ import play.cache.Cache;
 @MongoDocument
 public class User extends AbstractMongoEntity {
 
-    private String username;
-    private String password;
-    private String gid;
+    private String             username;
+    private String             password;
+    private String             gid;
+    private String             userinfo; // co sa ma zobrazit v userinfe
+    private String             template; // a ako sa to ma zobrazit
+
+    private ViewTemplate       view; // userov view
+    private String             menu; // userovo menu - zrejme iny objekt ako String
     
-    private List<String>  tags;     // given tags
-    private List<String>  friends;  // friends and stuff
-    private List<String>  ignores;  // users whom this user ignores
-    private List<String>  ignoreMail; // users whom this user ignores mail from
-    private List<String>  groups;   // user groups this user is part of
+    private List<String>       tags;     // given tags
+    private List<String>       friends;  // friends and stuff
+    private List<String>       ignores;  // users whom this user ignores
+    private List<String>       ignoreMail; // users whom this user ignores mail from
+    private List<String>       groups;   // user groups this user is part of
 
     // kackove hospodarstvo :)
-    private Long          usedK; // na dnesny den
-    private Long          availableK; // na dnesny den
-    private Long          kDay;  // v ktorom 24h cykle kacok sme
+    private Long               usedK; // na dnesny den
+    private Long               availableK; // na dnesny den
+    private Long               kDay;  // v ktorom 24h cykle kacok sme
 
     public static final String USERNAME = "username";
     public static final String BOOKMARKS = "bookmarks";
@@ -61,6 +67,9 @@ public class User extends AbstractMongoEntity {
     public static final String PASSWORD = "password";
     public static final String USERID   = "gid";
     public static final String ID       = "id";
+
+    @MongoTransient
+    private List<Bookmark>     bookmarks;
 
     public User() {}
 
