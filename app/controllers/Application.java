@@ -176,7 +176,7 @@ public class Application extends Controller {
         NodeContent nc = NodeContent.load(id);
         if (nc != null)
         {
-            Taglist.tagNode(nc,tag,session.get(User.ID));
+            Tag.tagNode(nc,tag,session.get(User.ID));
         }
         displayNode(id);
     }
@@ -188,15 +188,18 @@ public class Application extends Controller {
         int start = 0;
         int count = 30;
         NodeContent node = NodeContent.load(id);
-        if (node.canRead(session.get(User.ID))) {
+        String uid = session.get(User.ID);
+        renderArgs.put("uid", uid);
+        if (node.canRead(uid)) {
             Long gid = node.gid;
             // logicky UserVisit save asi patri sem, lebo tu vieme co ideme zobrazit
-            UserLocation.saveVisit(User.load(session.get(User.ID)), id);
+            UserLocation.saveVisit(User.load(uid), id);
             renderArgs.put("node", node);
             renderArgs.put("content", h.viewNode(gid));
             renderArgs.put("thread", h.getThreadedChildren(gid,start,count));
             renderArgs.put("id", id);
         } else {
+            renderArgs.put("id", id);
             renderArgs.put("content", "Sorry pal, no see for you");
         }
         render(ViewTemplate.VIEW_NODE_HTML);
@@ -293,6 +296,13 @@ public class Application extends Controller {
 
     public static void showK() {
         renderArgs.put("nodes", Nodelist.getKlist(100));
+        render(ViewTemplate.SHOW_K_HTML);
+    }
+
+    public static void showTag(String tag) {
+        renderArgs.put("taglist",  Tag.getTaggedNodes(tag)); // tymto tagom otagovane nody zoradene nejak
+        renderArgs.put("tagcloud", Tag.getTagCloud(tag)); // pribuzne tagy
+        renderArgs.put("taggers", Tag.getTaggers(tag)); // ti co najcastejsie pozuvaju tento tag
         render(ViewTemplate.SHOW_K_HTML);
     }
 

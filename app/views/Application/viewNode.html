@@ -2,14 +2,18 @@
 #{set title:'Node id' /}
 <div class="col1">
     <div class="nodeContent" style="display:block;">
-        ${node.name}
-        ${node.content}
-        #{if node.tags}
-            #{list items:node.tags, as:'tag' }
-                <div class="tag">
-                    ${node.getContent()}
+        #{if node}
+            ${node.name}
+            ${node.content}
+            #{if node.tags}
+                <div class="tags" style="display:block; font-size:small;">
+                #{list items:node.tags, as:'tag' }
+                    <div class="tag" style="display:inline;">
+                        ${tag}
+                    </div>
+                #{/list}
                 </div>
-            #{/list}
+            #{/if}
         #{/if}
     </div>
     <div style="display:block;">
@@ -29,13 +33,12 @@
                 out.print("</div>".multiply(1 + prevDepth - node.depth));
                prevDepth = node.depth;
             }%
-            <div class="comment">
+            <div class="comment"><!-- TODO # {if user.ignore(node.owner)} style="display:none" # {/if} resp. collapsed -->
                 <div style="background-color:#e3e3e3; display:block">${node.getHead()}</div>
                 <div>${node.getContent()}</div>
                 <!-- <img style=\"position:relative;\" src=\"/public/images/k2.gif\"> -->
         #{/list}
         %{out.print("</div>".multiply(prevDepth));}% <!--  -->
-        *{ /renderujeme thread }*
     </div>
     <!-- Navigation -->
     <center>
@@ -64,7 +67,7 @@
         <input type="text" size="10" name="tag" />
         <input type="submit" value="Tag" onClick="javascript:this.form.action='@{Application.tag(id)}';submit();" />
    </form>
-   <a href="@{Application.showEditNode(id)}">Edit</a>
+   #{if node.canEdit(uid)} <a href="@{Application.showEditNode(id)}">Edit</a>#{/if}
    <form action="@{Application.viewNode(id)}" method="GET">
         <input type="text" size="10" name="id" />
         <input type="submit" value="View Node" />

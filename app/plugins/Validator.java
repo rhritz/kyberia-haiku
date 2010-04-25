@@ -76,7 +76,7 @@ getScanTime() - returns the scan time in seconds
 
     // TODO
     public static String validate(String get) {
-        return get.replaceAll("\n", "<br>");
+        return get.replaceAll("\n", "<br>"); // TODO ak tam uz br nie je
     }
 
     // TODO - ziadne tagy a haluze

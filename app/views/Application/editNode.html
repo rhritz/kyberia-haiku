@@ -3,13 +3,41 @@
 <div class="col1">
     <div style="display:block;">
         <form action="@{Application.editNode(id)}" method="POST">
-            <textarea rows="10" cols="40" style="display:block; width:83%" name="content"></textarea>
-            <input type="submit" value="Update" />
-
             <div>
-                Accesslist:
+                <select name="change_owner">
+                    <option value="" selected></option>
+                    #{list items:users, as:'luser'}
+                        <option value="${luser.id}">${luser.username}</option>
+                    #{/list}
+                </select>
+            </div>
+            <div>
+                <label for="parent">Parent</label>
+                <input type="text" name="parent" value="${node.parent}">
+            </div>
+            <div>
+                <label for="template">Template</label>
+                <input type="text" name="template" value="${node.template}">
+            </div>
+            <div>
+                <label for="name">Name</label>
+                <input type="text" name="name" value="${node.name}">
+            </div>
+            <div>
+                <label for="content">Content</label>
+                <textarea rows="10" cols="40" style="display:block; width:83%" name="content">${node.content}</textarea>
+            </div>
+            <div>
+                <input type="submit" value="Update" />
+            </div>
+            <div>
+                <label for="access_type">Access type</label>
+                <input type="text" name="access_type" value="${node.accessType}">
+            </div>
+            <div>
+                <label for="access">Accesslist</label>
                 #{list items:node.access, as: 'access_user'}
-                        <a href="/user/${access_user}">${models.User.getNameForId(access_user)}</a>
+                        <a href="/user/${access_user}">${models.User.getNameForId(access_user)}</a><!-- TODO tu checkbox na odstranenie -->
                 #{/list}
                 Add:
                 <select name="access">
@@ -20,7 +48,7 @@
                 </select>
             </div>
             <div>
-                Silencelist:
+                <label for="silence">Silencelist</label>
                 #{list items:node.silence, as: 'silence_user'}
                         <a href="/user/${silence_user}">${models.User.getNameForId(silence_user)}</a>
                 #{/list}
@@ -33,7 +61,7 @@
                 </select>
             </div>
             <div>
-                Masterlist:
+                <label for="master">Masterlist</label>
                 #{list items:node.masters, as: 'masters_user'}
                         <a href="/user/${masters_user}">${models.User.getNameForId(masters_user)}</a>
                 #{/list}
@@ -46,7 +74,7 @@
                 </select>
             </div>
             <div>
-                Banlist:
+                <label for="ban">Banlist</label>
                 #{list items:node.bans, as: 'bans_user'}
                         <a href="/user/${bans_user}">${models.User.getNameForId(bans_user)}</a>
                 #{/list}

@@ -44,6 +44,7 @@ GET   /k                                        Application.showK
 GET   /users                                    Application.showUsers
 GET   /live                                     Application.showLive
 GET   /nodes                                    Application.showNodes
+GET   /tag/{tag}                                Application.showTag
 
 # toto je catch-all, musi byt preto nizsie
 POST     /id/{id}/{action}              Application.{action}

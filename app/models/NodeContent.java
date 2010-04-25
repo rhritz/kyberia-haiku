@@ -103,6 +103,10 @@ public class NodeContent extends AbstractMongoEntity {
 
     public void edit(Map<String,String> params)
     {
+        String accType = params.get("access_type");
+        if (accType != null) {
+            this.accessType = Integer.parseInt(accType);
+        }
         String access = params.get("access");
         if (access != null && ! this.access.contains(access)) {
             this.access.add(access);
@@ -118,6 +122,26 @@ public class NodeContent extends AbstractMongoEntity {
         String ban = params.get("ban");
         if (ban != null && ! this.bans.contains(ban)) {
             this.bans.add(ban);
+        }
+        String chOwner = params.get("change_owner");
+        if (chOwner != null && User.load(chOwner) != null) {
+            owner = chOwner;
+        }
+        String chParent = params.get("parent");
+        if (chOwner != null && NodeContent.load(chParent) != null) {
+            // TODO Haiku.reparent this.owner = chOwner;
+        }
+        String chName = params.get("name");
+        if (chOwner != null && User.load(chOwner) != null) {
+            name = Validator.validateTextonly(chName);
+        }
+        String chTemplate = params.get("template");
+        if (chTemplate != null ) {
+            template = Integer.parseInt(chTemplate);
+        }
+        String chContent = params.get("content");
+        if (chContent != null) {
+            content = Validator.validate(chContent);
         }
         this.update();
     }
@@ -311,7 +335,7 @@ public class NodeContent extends AbstractMongoEntity {
     // moze editovat properties?
     public boolean canEdit(String uid)
     {
-        Logger.info("canEdit:: uid " + uid + " acc type " + accessType);
+        // Logger.info("canEdit:: " + User.getNameForId(owner) + " acc type " + accessType + " owner:" + User.getNameForId(owner));
         return owner.equals(uid) || (masters != null && masters.contains(uid));
     }
 
@@ -321,31 +345,6 @@ public class NodeContent extends AbstractMongoEntity {
         
     }
     
-    public void setAccessType()
-    {
-        
-    }
-
-    public void addBan()
-    {
-
-    }
-
-    public void addMaster()
-    {
-
-    }
-
-    public void addSilence()
-    {
-
-    }
-
-    public void addAccess()
-    {
-
-    }
-
     /**
      * @return the owner
      */

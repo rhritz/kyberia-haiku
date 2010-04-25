@@ -37,6 +37,7 @@ public class MongoDB {
     private ToUser          user;
     private ToUserLocation  userLocation;
     private ToNodeContent   nodeContent;
+    private ToTag           tag;
 
     private static DB       db;
     private static Mongo    mongo;
@@ -81,6 +82,7 @@ public class MongoDB {
           user          = new ToUser();
           userLocation  = new ToUserLocation();
           nodeContent   = new ToNodeContent();
+          tag           = new ToTag();
     }
 
     public static void start() {
@@ -113,6 +115,7 @@ public class MongoDB {
             morphia.map(Fook.class);
             morphia.map(Ignore.class);
             morphia.map(UserGroup.class);
+            morphia.map(Tag.class);
             
         } catch (Exception e) {
             Logger.info("Brekeke @ mongo:: " + e.toString());
@@ -194,6 +197,11 @@ public class MongoDB {
         return nodeContent;
     }
 
+    public Function<DBObject, Tag> toTag()
+    {
+        return tag;
+    }
+
     // transformacna funkcia pre Lists.transform
     public class ToMessage implements Function<DBObject, Message> {
         public Message apply(DBObject arg) {
@@ -226,6 +234,13 @@ public class MongoDB {
     public class ToNodeContent implements Function<DBObject, NodeContent> {
         public NodeContent apply(DBObject arg) {
             return morphia.fromDBObject(NodeContent.class,
+                   (BasicDBObject) arg);
+        }
+    }
+
+    public class ToTag implements Function<DBObject, Tag> {
+        public Tag apply(DBObject arg) {
+            return morphia.fromDBObject(Tag.class,
                    (BasicDBObject) arg);
         }
     }

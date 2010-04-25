@@ -42,6 +42,7 @@ public class ViewTemplate extends AbstractMongoEntity{
         public static final String SHOW_USERS_HTML = "app/views/Application/showUsers.html";
         public static final String SHOW_USER_HTML = "app/views/Application/viewUser.html";
         public static final String SHOW_LIVE_HTML = "app/views/Application/showLive.html";
+        public static final String SHOW_TAGS_HTML = "app/views/Application/showTags.html";
 
 
 	public boolean isDefault; // true - this is the root/default view
