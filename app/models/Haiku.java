@@ -385,30 +385,6 @@ public class Haiku {
         return retid;
     }
 
-    // zatial len content, neskor dalsie props + reparent atd
-    // TODO tu sa mozu riesit reparent a podobne, v NodeContent zmeny contentu a props
-    public void editNode(long id, String content)
-    {
-        Transaction tx = graph.beginTx();
-        try {
-            Node node = graph.getNodeById(id);
-            // TODO skontrolovat typ node
-            if (node != null) {
-                node.setProperty(CONTENT, content);
-            }
-            tx.success();
-        }
-        catch(Exception e)
-        {
-           Logger.trace("Neo failed " + e.toString() );
-           tx.failure();
-        }
-        finally
-        {
-           tx.finish();
-        }
-    }
-
     // TODO variant s id/casom poslednej nody ktoru chceme zobrazit
     public List<NodeContent> getThreadedChildren(
                                     long rootid,
@@ -458,10 +434,11 @@ public class Haiku {
                    // tento node chceme zobrazit
                    // tu je vhodne miesto na kontrolu per-node permissions,
                    // ignore a fook zalezitosti
-
+                   // if (! user.ignores(User.getIdByGid(nextnode.owner))) {
                    thread.add( NodeContent.
                             load((String) nextnode.
                                 getProperty(Haiku.MONGOID), depth));
+                   // } // inak pridaj len ciastocne
                }
           }
           tx.success();
@@ -570,15 +547,76 @@ public class Haiku {
                } else if (dfs_out == null) {
                    dfs_in.delete();
                } else {
-                   // TODO zle!!!
                    Node prev = dfs_in.getStartNode();
                    Node next = dfs_out.getEndNode();
-                   dfs_in.delete();
-                   dfs_out.delete();
-                   if (! (prev.getId() == next.getId()) ) {
-                        prev.createRelationshipTo(next, Rel.DFS);
-                   }
-               }
+                   // dfs_in.delete();
+                   // dfs_out.delete();
+                   // if (! (prev.getId() == next.getId()) ) {
+                   //     prev.createRelationshipTo(next, Rel.DFS);
+                   // }
+                   //
+                   Node dfs_prev = dfs_in.getStartNode();
+
+                   Node dfs_after = null;
+                   // TODO - kazdy REACTION child tohto node bude mat nastaveny
+                   // parent na null aj v mongodb
+                   // + ideme 'dole' po dfs a ked narazime na node 'nad nami' alebo 'za nami' (tj nie v nasom pdostrome) (tak ako v getThreadedChildren),
+                   // tak ten spojime s nasim parentom
+                   // - v nasledujucom myslime pod 'parentom' nde ktory ideme mazat
+                   // - pozor na koncove nodes, ci su spracovane korektne
+                   /////////////////////////////////////////////////////////////////////
+                    Map<Long,Integer> roots = new HashMap();
+                    Relationship dfs, parent = null;
+                    Node lastnode, nextnode;
+                    nextnode = node;
+                    for (int i = 0;; i++)
+                    {
+                       lastnode = nextnode;
+                       dfs = lastnode.getSingleRelationship(Rel.DFS,
+                               Direction.OUTGOING);
+                       if (dfs == null) {
+                           break;
+                       }
+                       nextnode = dfs.getEndNode();
+                       parent = nextnode.getSingleRelationship(Rel.REACTION,
+                               Direction.INCOMING);
+                       if (parent == null) {
+                           break; // chyba - ma dfs ale nema parenta
+                       }
+                       if (parent.getStartNode().equals(lastnode)) {
+                           roots.put(lastnode.getId(), 1);
+                       } else {
+                           long parid = parent.getStartNode().getId();
+                           // ak v tomto bode nema parenta v roots,
+                           // znamena to ze siahame vyssie ako rootid
+                           // - mame co sme chceli - Node dfs_parent = parent.getStartNode();
+                           if (roots.get(parid) == null) {
+                               dfs_after = parent.getStartNode();
+                               break;
+
+                           }
+                           // nasli sme parenta, sme o jedno hlbsie ako on
+                       }
+                       // nextnode
+
+                    }
+                    // toto nam vyriesi vonkajsiu cast stromu
+                    if (dfs_after != null) {
+                        dfs_in.delete();
+                        parent.delete();
+                        dfs_prev.createRelationshipTo(dfs_after, Rel.DFS);
+                    }
+                    // este musime upravit nas podstrom, aby nam nezostali odtrhnute dfs
+                    // na zaciatku a konci
+                    // zaciatok sme my a koniec je teraz uloceny v nextnode
+                    if (nextnode != null && !nextnode.equals(node)) {
+                        // uhm lenze nam sa to teraz moze rozpadnut na X podstromov
+                        // takze musime prejst vsetky REACTION (ako vyssie si mozeme
+                        // pozriet vsetkych ktorym sme parentom prave my)
+                        // a urobit z nich samostatne stromy
+                    }
+                   /////////////////////////////////////////////////////////////////////
+                }
            }
            for ( Relationship rel : node.getRelationships(Direction.BOTH)) {
                rel.delete();
@@ -629,7 +667,8 @@ public class Haiku {
         Transaction tx = graph.beginTx();
         try {
            Node node_from = graph.getNodeById(from);
-           for (Relationship rel : node_from.getRelationships(toRel(relation), Direction.OUTGOING))
+           for (Relationship rel :
+               node_from.getRelationships(toRel(relation), Direction.OUTGOING))
            {
                if (rel.getEndNode().getId() == to)
                {
