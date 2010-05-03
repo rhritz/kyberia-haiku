@@ -42,7 +42,10 @@ public class User extends AbstractMongoEntity {
     private String             password;
     private String             gid;
     private String             userinfo; // co sa ma zobrazit v userinfe
+    // private ...            userinfoAccessType;
     private String             template; // a ako sa to ma zobrazit
+
+    // TODO mail addr? dalsie?
 
     private ViewTemplate       view; // userov view
     private String             menu; // userovo menu - zrejme iny objekt ako String
@@ -112,6 +115,39 @@ public class User extends AbstractMongoEntity {
         else 
         {
             return null;
+        }
+    }
+
+    public void changePwd(String oldPwd, String newPwd1, String newPwd2)
+    {
+         // TODO asi nejaka metoda na overenie hesla
+        if (oldPwd!= null && oldPwd.equals(this.password)) {
+            if (newPwd1 != null && newPwd2 != null && newPwd1.equals(newPwd2)) {
+                this.password = newPwd1;
+                this.update();
+            }
+        }
+        // TODO else vynadaj userovi
+    }
+
+    // TODO cache invalidate + upload/zmena ikonky
+    public void edit(String username, String template, String userinfo)
+    {
+        boolean changed = false;
+        if (username != null) {
+            this.username = username;
+            changed = true;
+        }
+        if (template != null) {
+            this.template = template;
+            changed = true;
+        }
+        if (userinfo != null) {
+            this.userinfo = userinfo;
+            changed = true;
+        }
+        if (changed) {
+            this.update();
         }
     }
 

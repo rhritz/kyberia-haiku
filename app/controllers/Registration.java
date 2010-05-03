@@ -20,7 +20,6 @@ package controllers;
 import models.Haiku;
 import play.mvc.*;
 
-// TODO zmenit Secure login stranku - pridat linku sem
 public class Registration extends Controller {
 
     public static void addUser(String username, String password) {

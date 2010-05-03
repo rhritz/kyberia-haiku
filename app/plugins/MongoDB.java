@@ -60,6 +60,7 @@ public class MongoDB {
     public static final String CUser          = "User";
     public static final String CUserGroup     = "UserGroup";
     public static final String CUserLocation  = "UserLocation";
+    public static final String CVote          = "Vote";
 
     static {
         if (Play.configuration.containsKey("mongodb.addr"))
@@ -116,6 +117,7 @@ public class MongoDB {
             morphia.map(Ignore.class);
             morphia.map(UserGroup.class);
             morphia.map(Tag.class);
+            morphia.map(Vote.class);
             
         } catch (Exception e) {
             Logger.info("Brekeke @ mongo:: " + e.toString());
