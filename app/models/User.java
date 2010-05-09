@@ -135,10 +135,10 @@ public class User extends AbstractMongoEntity {
         String oldPwd  = params.get("oldPwd");
         String newPwd1 = params.get("newPwd1");
         String newPwd2 = params.get("newPwd2");
-        if (oldPwd!= null && oldPwd.equals(this.password)) {
+        if (oldPwd!= null && password.equals(pwdService.encrypt(oldPwd))) {
             if (newPwd1 != null && newPwd2 != null && newPwd1.equals(newPwd2)) {
-                this.password = pwdService.encrypt(newPwd1);
-                this.update();
+                password = pwdService.encrypt(newPwd1);
+                update();
             }
         } else {
         // TODO else vynadaj userovi
