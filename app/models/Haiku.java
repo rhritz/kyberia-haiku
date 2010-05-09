@@ -104,13 +104,13 @@ public class Haiku {
     }
 
     // params su simple, pozor na viacnasobne
-    public long addAnyNode( NodeType typ,
+    public Long addAnyNode( NodeType typ,
                             Map <String,String> params,
                             long parent,
                             long ownergid,
                             String ownerid)
     {
-        long id = -1;
+        Long id = null;
         switch(typ) {
             case USER: 
                 id = addUser(params);
@@ -149,15 +149,14 @@ public class Haiku {
         return user;
     }
 
-    public long addUser(Map<String,String> params)
+    public Long addUser(Map<String,String> params)
     {
-        Long id = -1l;
+        Long id = null;
         String username = params.get(USERNAME);
         String password = params.get(PASSWORD);
-        if (!User.usernameAvailable(username))
-        {
-            // TODO nejaka kulturna chybova hlaska
-            return -1;
+
+        if (! User.usernameAvailable(username)) {
+            return null;
         }
 
         Transaction tx = graph.beginTx();
@@ -172,7 +171,7 @@ public class Haiku {
         }
         catch(Exception e)
         {
-           Logger.trace("Neo failed " + e.toString() );
+           Logger.info("Neo failed " + e.toString() );
            tx.failure();
         }
         finally

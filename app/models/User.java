@@ -487,7 +487,7 @@ public class User extends AbstractMongoEntity {
           enc = new BASE64Encoder();
       }
 
-      private String encrypt(String plaintext) 
+      private synchronized String encrypt(String plaintext)
       {
         try {
           md.reset();

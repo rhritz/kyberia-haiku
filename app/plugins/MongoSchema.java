@@ -40,7 +40,7 @@ public class MongoSchema {
         // dbc.ensureIndex(null, null, true); ...
         /* - pre vsetky indexy a specialitky ::
          Na NodeContent - created, K, owner, parent, name
-         User - username
+         User - username db.User.ensureIndex({username: 1}, {unique: true});
          Message - threadid,created
          Bookmark - name
          Activity - ?

@@ -18,26 +18,35 @@
 package controllers;
 
 import models.Haiku;
+import models.User;
+import models.ViewTemplate;
+import play.Logger;
 import play.mvc.*;
 
 public class Registration extends Controller {
 
     public static void addUser(String username, String password) {
         Haiku h = new Haiku();
-        long userid = h.addAnyNode(
+        Long userid = h.addAnyNode(
                 Haiku.NodeType.USER,
                 Controller.params.allSimple(),
                 0,0,null);
-        // TODO ak bola registracia uspesna - zobraz profil
-        // ak nebola - zobraz preco
-        renderArgs.put("user", h.viewUser(userid));
-        renderArgs.put("content", "zatial nic");
-        render("app/views/Application/viewUser.html");
+        Logger.info("new user:: " + username + "," + userid);
+        if (userid != null && userid > 0) {
+            // TODO zobrazime userinfo ale este nie je prihlaseny
+            User u = User.loadByGid(userid.toString());
+            renderArgs.put("uid", u.getId());
+            renderArgs.put("user",u);
+            render(ViewTemplate.SHOW_ME_HTML);
+        } else {
+            // show registration errors
+        }
     }
 
-    // TODO tu by sme mali kontrolovat ci nie je prihlaseny 
+    // TODO tu by sme mali kontrolovat ci nie je prihlaseny
     public static void showAddUser() {
-        render("app/views/Application/addUser.html");
+        // if !Security.isConnected()
+        render(ViewTemplate.ADD_USER_HTML);
     }
 
 }
