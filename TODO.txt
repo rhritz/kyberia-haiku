@@ -1,4 +1,9 @@
 Veci, ktore nie su hotove, a chceme aby boli:
+
+--- 09.05.2010 ---
+* bolo by mozno vhodne pre dalsi vyvoj, aby bolo mozne pouzit Scalu/Scalate/Scamongo.
+Zatial sa zda ze tomu nic nebrani, Play to priamo podporuje.
+
 --- 24.04.2010 ---
 * access/perms on userinfo ale len ciastocne
 
@@ -18,11 +23,6 @@ Veci, ktore nie su hotove, a chceme aby boli:
 * put/hardlink - ako specialny typ NodeContent, zobrazi sa obsah node ktory je uvedeny
 v link_to
 
---- 10.04.2010 ---
-* typ contentu: clanok - rozdeli contetn na 'stranky' definovatelnej velkosti (pocet riadkov),
-ocisluje a spristupni (stranky nemusia mat unikatnu url ale musia sa dat listovat jednotlivo)
-* plugin ShortCache na lokalne ukladanie usernames<->uids a podobne?
-
 --- 09.04.2010 ---
 * status updates
 * personal home/landing page
@@ -31,7 +31,8 @@ ocisluje a spristupni (stranky nemusia mat unikatnu url ale musia sa dat listova
 --- 23.03.2010 ---
 * Https
 * Mongo indexing
-* Templatovaci system resp. CMS
+* Templatovaci system resp. CMS - nejaky sposob linkovania medzi
+statickym/dynamickym contentom a templates, treba domysliet
 * Fook, Ignore & co
 * Odpocitavanie a obnovovanie kacok
 * Input validation -> AntiSamy (?)
@@ -41,7 +42,7 @@ ocisluje a spristupni (stranky nemusia mat unikatnu url ale musia sa dat listova
 - 2. Create a different Controller for that; or
 - 3. Redirect to ^ on refusal to login; or
 - 4. mozno ta prihlasovacia funckie v Application pojde hacknut tak,
- ze bez prihlasenia nastavi defaulot usera.
+ ze bez prihlasenia nastavi default usera.
 * Mongo & Neo4j replication
 * Proper CSS & HTML
 * Variable CSS -> ? http://www.playframework.org/modules/sass
