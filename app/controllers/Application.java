@@ -135,7 +135,10 @@ public class Application extends Controller {
     {
         checkAuthenticity();
         Logger.info("Show edit node:: " + id);
-        NodeContent.load(id).edit(Controller.params.allSimple());
+        NodeContent node = NodeContent.load(id);
+        if (node.canEdit(session.get(User.ID))) {
+            node.edit(Controller.params.allSimple());
+        }
         displayNode(id);
     }
 
@@ -223,11 +226,16 @@ public class Application extends Controller {
         String uid = session.get(User.ID);
         NodeContent node = NodeContent.load(id);
         if (node != null) {
-            // check user rights against the node
-            renderArgs.put("id", id);
-            renderArgs.put("node", node);
-            renderArgs.put("users", User.loadUsers());
-            render(ViewTemplate.EDIT_NODE_HTML);
+            if (node.canEdit(uid)) {
+                renderArgs.put("id", id);
+                renderArgs.put("node", node);
+                renderArgs.put("users", User.loadUsers());
+                render(ViewTemplate.EDIT_NODE_HTML);
+            } else {
+                // TODO
+                renderArgs.put("id", id);
+                renderArgs.put("content", "Sorry pal, no edit for you");
+            }
         }
     }
 

@@ -128,11 +128,11 @@ public class NodeContent extends AbstractMongoEntity {
             owner = chOwner;
         }
         String chParent = params.get("parent");
-        if (chOwner != null && NodeContent.load(chParent) != null) {
+        if (chParent != null && NodeContent.load(chParent) != null) {
             // TODO Haiku.reparent this.owner = chOwner;
         }
         String chName = params.get("name");
-        if (chOwner != null && User.load(chOwner) != null) {
+        if (chName != null) {
             name = Validator.validateTextonly(chName);
         }
         String chTemplate = params.get("template");

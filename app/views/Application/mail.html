@@ -4,6 +4,7 @@
 <div class="col1">
     <div style="display:block;">
         <form action="@{Application.sendMail()}" method="POST">
+            #{authenticityToken /}
             <select name="to">
                 #{list items:users, as:'luser'}
                     <option value="${luser.id}">${luser.username}</option>
