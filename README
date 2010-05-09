@@ -1,24 +1,40 @@
+Motivacia:
+Reimplementacia kyberie do tvaru priatelskeho a zabavneho pre developerov, casom
+snad aj userov.
+
+Licencia:
+AGPL
+
 Instalacia:
 
-Operacny system: zatial som skusal len Linux. Zavisi len od toho, pod cim funguje Play framework.
+Prerekvizity:
+* Linux
+* Sun/OpenJDK Java 1.5 a vyssie
+* Play framework, verzia 1.0.1 a vyssia: http://www.playframework.org/
+    Staci stiahnut a rozbalit http://download.playframework.org/releases/play-1.0.1.zip
+    Verzia 1.0.2 funguje tiez.
+* MongoDB, verzia 1.3 a vyssia: http://www.mongodb.org/display/DOCS/Downloads
 
-Potrebujes Sun Javu 1.5 a vyssie.
-Navyse treba nainstalovat Play framework, verzia 1.0.1 a vyssia: http://www.playframework.org/
-(malo by stacit stiahnut a rozbalit http://download.playframework.org/releases/play-1.0.1.zip)
-
-Rozbalit tento archiv (co si uz asi spravil, ak citas tento text) so zachovanim adresarovej struktury.
+Kym nemame instalacne skripty, nasledovne kroky spravit rucne:
+* Rozbalit tento archiv so zachovanim adresarovej struktury
+(ak ides z gitu, vsetko do 1 adresara, pravdepodobne je vhodne nazvat ho haiku).
+* Vytvorit adresar haiku/data pre neo4j
+* V separatnom adresari vytvorit datovy adresar, databazu a kolekcie v MongoDB
+(vid MongoSchema.java pre zoznam kolekcii)
 
 Spustenie:
 
 cd [adresar v ktorom je tento subor]
 [cesta k play frameworku]/play run
 
+pripoj sa na http://localhost:4567 a mozes sa hrat.
+
 Struktura projektu:
 
 conf/
 application.conf - hlavny konfigurancy subor
 log4j.properties - nastavenie logovania
-messages         - preklady hlasok (zatial sa nepouziva)
+messages         - preklady hlasok, zatial sa nepouziva
 play.plugins     - deklaracia aplikacnych pluginov, v nasom pripade pre Neo4j a Mongo
 routes           - routovanie HTTP requestov do aplikacie
 
@@ -37,12 +53,7 @@ public/
 app/
 controllers      - tu sa zacina spracovanie requestov
 models           - vsetko co robi nieco s datami
-plugins          - datove pripojenia, ktore chceme dostupne stale
+plugins          - datove pripojenia a ine objekty, ktore chceme dostupne stale
 views            - html / groovy templaty
-
-/code/mongo/ [to be moved to ../haiku/mongo/]
-start_mongo      - MongoDB startup script
-/code/mongo/data/db
-                 - Data directory
 
 Enjoy!
