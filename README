@@ -2,6 +2,12 @@ Motivacia:
 Reimplementacia kyberie do tvaru priatelskeho a zabavneho pre developerov, casom
 snad aj userov.
 
+Status:
+Nasledovne veci su vo vacsej alebo mensej miere funkcne:
+Registracia, prihlasovanie userov, sessions, friends, bookmarks, K, last nodes,
+Mail, mail notifications, Nodes, Threads, Node permissions
+To co este nie je je popisane v TODO
+
 Licencia:
 AGPL
 
