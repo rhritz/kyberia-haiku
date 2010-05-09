@@ -38,6 +38,13 @@
                     ${node.content} <br>
             #{/list}
         </div>
+        <form action="@{Application.changePwd(uid)}" method="POST">
+            <div><input type="password" name="oldPwd" /></div>
+            <div><input type="password" name="newPwd1" /></div>
+            <div><input type="password" name="newPwd2" /></div>
+            <div><input type="submit" value="Change Password" /></div>
+            #{authenticityToken /}
+        </form>
         <form action="@{Application.uploadIcon(uid)}" method="POST" enctype="multipart/form-data">
             <input type="file" id="icon" name="icon" />
             <input type="submit" value="Send it..." />

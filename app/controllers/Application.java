@@ -378,4 +378,11 @@ public class Application extends Controller {
         icon.renameTo(new File(fname));
         showMe();
     }
+
+    public static void changePwd(String uid) {
+        checkAuthenticity();
+        User me = User.load(session.get(User.ID));
+        me.changePwd(Controller.params.allSimple());
+        showMe();
+    }
 }

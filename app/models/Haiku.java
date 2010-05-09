@@ -165,7 +165,6 @@ public class Haiku {
             Node user = graph.createNode();
             user.setProperty(TYPE,NodeType.USER.ordinal());
             user.setProperty(USERNAME, username);
-            user.setProperty(PASSWORD, password);
             id = user.getId();
             User u = new User(username, password, id);
             u.save();

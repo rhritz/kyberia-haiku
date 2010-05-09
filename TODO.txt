@@ -3,7 +3,6 @@ Veci, ktore nie su hotove, a chceme aby boli:
 * access/perms on userinfo ale len ciastocne
 
 --- 20.04.2010 ---
-* ankety
 * bannery
 * testovacie skripty (perl/ruby)
 * mail search
@@ -26,15 +25,11 @@ ocisluje a spristupni (stranky nemusia mat unikatnu url ale musia sa dat listova
 
 --- 09.04.2010 ---
 * status updates
-* banner system
 * personal home/landing page
 * Registracie (akoze tie kackovacie + posielanie + potvrdzovanie mailov, normalne funguju)
 
 --- 23.03.2010 ---
-* Security - pouziva sa plaintext password
 * Https
-* Permissions
-* Mongo queries je mozne vyrazne zlepsit
 * Mongo indexing
 * Templatovaci system resp. CMS
 * Fook, Ignore & co
@@ -54,9 +49,6 @@ ocisluje a spristupni (stranky nemusia mat unikatnu url ale musia sa dat listova
 * License comments into *html templates - cez *{ comment }*
 * FastTags/Javatags
 * Bookmark Tags (aka delicious) - pridavanie, querying
-* Session Timeout?
-* public ObjectId(Date time) je zrejme mozne pouzit na date range queries
-namiesto nasho vlastneho casoveho stlpca, funguje to?
 * Fulltext Search -> ? http://www.playframework.org/modules/search
 
 Content Tagy:

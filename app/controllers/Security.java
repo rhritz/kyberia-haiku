@@ -22,7 +22,6 @@ import models.*;
 public class Security extends Secure.Security {
 
     static boolean authentify(String username, String password) {
-        // TODO nemusime sa prihlasovat stale.. musime?
         User u = User.login(username, password);
         if (u != null) {
             session.put(User.USERID, u.getUserid());

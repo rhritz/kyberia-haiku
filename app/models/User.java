@@ -31,6 +31,13 @@ import com.mongodb.ObjectId;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.security.MessageDigest;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Map;
+import sun.misc.BASE64Encoder;
+import sun.misc.CharacterEncoder;
 import plugins.*;
 import play.Logger;
 import play.cache.Cache;
@@ -71,6 +78,8 @@ public class User extends AbstractMongoEntity {
     public static final String USERID   = "gid";
     public static final String ID       = "id";
 
+    private static PasswordService pwdService = new PasswordService();
+
     @MongoTransient
     private List<Bookmark>     bookmarks;
 
@@ -78,20 +87,23 @@ public class User extends AbstractMongoEntity {
 
     public User(String username, String password, Long id) {
         this.username = username;
-        this.password = password;
+        this.password = pwdService.encrypt(password);
         this.gid = id.toString();
     }
 
 
     public static User login(String username, String password)
     {
-        // TODO overit cas posledneho loginu, aby sa nam neprihlasovali prilis casto
         User u = null;
         boolean pwdOk = false;
+        Logger.info("user login");
         try {
-            Logger.info("user login");
+           if (username == null || password == null){
+               username = "";
+               password = "";
+           }
             BasicDBObject query = new BasicDBObject().append(USERNAME, username).
-                    append(PASSWORD, password);
+                    append(PASSWORD, pwdService.encrypt(password));
             BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
                     getCollection(MongoDB.CUser).findOne(query);
             if (iobj ==  null) {
@@ -118,16 +130,19 @@ public class User extends AbstractMongoEntity {
         }
     }
 
-    public void changePwd(String oldPwd, String newPwd1, String newPwd2)
+    public void changePwd(Map<String, String> params )
     {
-         // TODO asi nejaka metoda na overenie hesla
+        String oldPwd  = params.get("oldPwd");
+        String newPwd1 = params.get("newPwd1");
+        String newPwd2 = params.get("newPwd2");
         if (oldPwd!= null && oldPwd.equals(this.password)) {
             if (newPwd1 != null && newPwd2 != null && newPwd1.equals(newPwd2)) {
-                this.password = newPwd1;
+                this.password = pwdService.encrypt(newPwd1);
                 this.update();
             }
-        }
+        } else {
         // TODO else vynadaj userovi
+        }
     }
 
     // TODO cache invalidate + upload/zmena ikonky
@@ -456,6 +471,29 @@ public class User extends AbstractMongoEntity {
         public User apply(String arg) {
             return User.load(arg);
         }
+    }
+
+
+    private static final class PasswordService
+    {
+      MessageDigest md;
+      // TODO eventually salt & multiple hashing?
+      
+      private PasswordService() {
+          try{
+            md = MessageDigest.getInstance("SHA");
+          } catch(NoSuchAlgorithmException e) {}
+      }
+
+      private String encrypt(String plaintext) 
+      {
+        try {
+          md.reset();
+          md.update(plaintext.getBytes("UTF-8"));
+        } catch(UnsupportedEncodingException e) {
+        }
+        return (new BASE64Encoder()).encode(md.digest());
+      }
     }
 
 }
