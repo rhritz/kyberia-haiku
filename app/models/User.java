@@ -477,12 +477,14 @@ public class User extends AbstractMongoEntity {
     private static final class PasswordService
     {
       MessageDigest md;
+      BASE64Encoder enc;
       // TODO eventually salt & multiple hashing?
       
       private PasswordService() {
           try{
             md = MessageDigest.getInstance("SHA");
           } catch(NoSuchAlgorithmException e) {}
+          enc = new BASE64Encoder();
       }
 
       private String encrypt(String plaintext) 
@@ -492,7 +494,7 @@ public class User extends AbstractMongoEntity {
           md.update(plaintext.getBytes("UTF-8"));
         } catch(UnsupportedEncodingException e) {
         }
-        return (new BASE64Encoder()).encode(md.digest());
+        return enc.encode(md.digest());
       }
     }
 
