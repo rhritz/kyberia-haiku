@@ -65,6 +65,7 @@ public class Application extends Controller {
     public static void index() {
         // TODO zmenit
         // collection PAGES, kde budu definovane systemove pages? alebo alebo?
+        // Defauls.getDefaultPage() ?
         render();
     }
 
@@ -78,10 +79,9 @@ public class Application extends Controller {
     }
 
     public static void addNode(String id, String content) {
-        checkAuthenticity();
+        Logger.info("about to add node:" + id + "," + content );
+        // checkAuthenticity();
         Haiku h = new Haiku();
-        // Logger.info("about to add node:" + id + "," + content + "," +
-        // Long.parseLong(session.get(User.USERID)) + "," +
         NodeContent parentNode = NodeContent.load(id);
         Long gid = (parentNode == null) ? null : parentNode.gid;
         Long newId = h.addNode(gid, Controller.params.allSimple(),
@@ -205,7 +205,7 @@ public class Application extends Controller {
         renderArgs.put("uid", uid);
         if (node.canRead(uid)) {
             Long gid = node.gid;
-            // logicky UserVisit save asi patri sem, lebo tu vieme co ideme zobrazit
+            // logicky UserVisit save patri sem, lebo tu vieme co ideme zobrazit
             UserLocation.saveVisit(User.load(uid), id);
             renderArgs.put("node", node);
             renderArgs.put("content", h.viewNode(gid));
@@ -384,5 +384,10 @@ public class Application extends Controller {
         User me = User.load(session.get(User.ID));
         me.changePwd(Controller.params.allSimple());
         showMe();
+    }
+
+    // event - zmena property node alebo usera
+    public static void event(String id) {
+       // vyhryzni event z params, urob akciu, vrat displayNode
     }
 }

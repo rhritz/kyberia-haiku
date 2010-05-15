@@ -486,25 +486,27 @@ public class Haiku {
     // toto by sa v pdostate nemalo pouzivat okrem debugu
     public String viewNode(long id)
     {
-        String ret = "<table>";
+        StringBuilder ret = new StringBuilder().append("<table>");
         Transaction tx = graph.beginTx();
+        int max = 0; // aby sme pri uzloch s vela rels.props nezobrazovali vsetko
         try {
            Node node = graph.getNodeById(id);
-           // no, vlastne by sme mali vratit nejaky zbastardeny NodeContent a spracovat ho v template
-           // ale na debug to bude zatial stacit
-           ret += " <tr><td> ID: " + node.getId() + "</td></tr>";
+           ret.append(" <tr><td> ID: ").append(node.getId()).append("</td></tr>");
            for ( String key : node.getPropertyKeys() ) {
-               ret += " <tr><td> " + key + ": " + node.getProperty(key) + "</td></tr>";
+               ret.append(" <tr><td> ").append(key).append(": ").append(node.getProperty(key)).append("</td></tr>");
+               if (max++ > 30) break;
            }
            for ( Relationship rel : node.getRelationships(Direction.OUTGOING)) {
-               ret += " <tr><td> " + rel.getType().name() + 
-                       " to <a href=\"/id/" +  rel.getEndNode().getId() + "\">"
-                       + rel.getEndNode().getId() + "</a></td></tr>";
+               ret.append(" <tr><td> ").append(rel.getType().name())
+                       .append(" to <a href=\"/id/").append(rel.getEndNode().getId()).append("\">")
+                       .append(rel.getEndNode().getId()).append("</a></td></tr>");
+               if (max++ > 30) break;
            }
            for ( Relationship rel : node.getRelationships(Direction.INCOMING)) {
-               ret += " <tr><td> " + rel.getType().name() + 
-                       " from <a href=\"/id/" + rel.getStartNode().getId() +
-                       "\">" + rel.getStartNode().getId() + "</a></td></tr>";
+               ret.append(" <tr><td> ").append(rel.getType().name())
+                       .append(" from <a href=\"/id/").append(rel.getStartNode().getId())
+                       .append("\">").append(rel.getStartNode().getId()).append("</a></td></tr>");
+               if (max++ > 30) break;
            }
            tx.success();
         }
@@ -517,8 +519,7 @@ public class Haiku {
         {
            tx.finish();
         }
-        ret += "</table>";
-        return ret;
+        return ret.append("</table>").toString();
     }
 
 

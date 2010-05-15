@@ -246,7 +246,6 @@ public class NodeContent extends AbstractMongoEntity {
                     findOne(new BasicDBObject().append("_id",
                     new ObjectId(id)));
             if (iobj !=  null) {
-                Logger.info("node found");
                 n = MongoDB.getMorphia().fromDBObject(NodeContent.class,
                            (BasicDBObject) iobj);
             }
@@ -261,13 +260,11 @@ public class NodeContent extends AbstractMongoEntity {
     // TODO Cache!
     public static NodeContent loadByGid(Long gid)
     {
-        Logger.info("about to look for " + gid);
         NodeContent n = null;
         try {
             DBObject iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
                     findOne(new BasicDBObject().append("gid",gid));
             if (iobj !=  null) {
-                Logger.info("node found");
                 n = MongoDB.getMorphia().fromDBObject(NodeContent.class,
                            (BasicDBObject) iobj);
             }

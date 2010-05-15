@@ -19,11 +19,11 @@
     <div style="display:block;">
         <form action="@{Application.addNode(id)}" method="POST">
             #{authenticityToken /}
+            <input type="text" name="name"/>
             <textarea rows="10" cols="40" style="display:block; width:83%" name="content"></textarea>
             <input type="submit" value="Add Node" />
             <!-- +select typu nodu -->
             <!-- +select typu vztahu -->
-            <!-- +reistracia userov -->
         </form>
     </div>
     <div class="nodeContent">

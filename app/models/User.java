@@ -330,7 +330,6 @@ public class User extends AbstractMongoEntity {
         String id = Cache.get(ID + username, String.class); //! pozor na cudne username
         if (id != null)
         {
-            Logger.info("returning id(1):: " + id);
             return id;
         }
         try {
@@ -340,7 +339,6 @@ public class User extends AbstractMongoEntity {
             if (iobj != null)
             {
                 id = iobj.getString("_id");
-                Logger.info("returning id(2):: " + id);
             }
         } catch (Exception ex) {
             Logger.info("mongo fail @getIdForName");
@@ -358,7 +356,6 @@ public class User extends AbstractMongoEntity {
         String uname = Cache.get(USERNAME + id, String.class);
         if (uname != null)
         {
-            Logger.info("returning name(1):: " + uname);
             return uname;
         }
         try {
@@ -369,7 +366,6 @@ public class User extends AbstractMongoEntity {
             if (iobj != null)
             {
                 uname = iobj.getString(USERNAME);
-                Logger.info("returning name(2):: " + uname);
             }
         } catch (Exception ex) {
             Logger.info("mongo fail @getNameForId for id |" + id + "|");

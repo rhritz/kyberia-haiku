@@ -26,6 +26,7 @@ import play.mvc.*;
 public class Registration extends Controller {
 
     public static void addUser(String username, String password) {
+        checkAuthenticity();
         Haiku h = new Haiku();
         Long userid = h.addAnyNode(
                 Haiku.NodeType.USER,

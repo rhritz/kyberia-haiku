@@ -16,9 +16,8 @@ Instalacia:
 Prerekvizity:
 * Linux
 * Sun/OpenJDK Java 1.5 a vyssie
-* Play framework, verzia 1.0.1 a vyssia: http://www.playframework.org/
-    Staci stiahnut a rozbalit http://download.playframework.org/releases/play-1.0.1.zip
-    Verzia 1.0.2 funguje tiez.
+* Play framework, verzia 1.0.2 a vyssia: http://www.playframework.org/
+    Staci stiahnut a rozbalit http://download.playframework.org/releases/play-1.0.2.zip
 * MongoDB, verzia 1.3 a vyssia: http://www.mongodb.org/display/DOCS/Downloads
 
 Kym nemame instalacne skripty, nasledovne kroky spravit rucne:
