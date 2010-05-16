@@ -1,5 +1,9 @@
 Veci, ktore nie su hotove, a chceme aby boli:
 
+--- 16.05.2010 ---
+* v Play1.1 nie je config escapeInTemplates, zrejme bude treba pouzit tag verbatim
+* mozno je dobre mat na bookmarku flag, ci ho zobrazovat vzdy alebo len bv kompletnom zozname
+
 --- 09.05.2010 ---
 * bolo by mozno vhodne pre dalsi vyvoj, aby bolo mozne pouzit Scalu/Scalate/Scamongo.
 Zatial sa zda ze tomu nic nebrani, Play to priamo podporuje.

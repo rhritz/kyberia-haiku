@@ -3,7 +3,11 @@
 
 <div class="col1">
     <div class="nodeContent">
-        ${content}
+        #{list items:bookmarks, as: 'b'}
+        <div>
+            <a href="/id/${b.destination}">${b.name}</a>#{if b.numNew>0}<small><i>${b.numNew} new</i></small> #{/if}
+        </div>
+        #{/list}
     </div>
 </div>
 <div class="col2">

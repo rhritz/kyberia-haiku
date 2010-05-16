@@ -42,7 +42,7 @@ public class MongoSchema {
          Na NodeContent - created, K, owner, parent, name
          User - username db.User.ensureIndex({username: 1}, {unique: true});
          Message - threadid,created
-         Bookmark - name
+         Bookmark - db.Bookmark.ensureIndex({destination: 1, uid:1}, {unique: true});
          Activity - ?
          EnsureIndex('users') on MessageThread
      */

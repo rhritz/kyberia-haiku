@@ -244,8 +244,8 @@ public class Application extends Controller {
     }
 
     public static void showBookmarks() {
-        renderArgs.put("content",
-                Bookmark.viewUserBookmarks(session.get(User.ID)));
+        renderArgs.put("bookmarks",
+                Bookmark.getUserBookmarks(session.get(User.ID)));
         render(ViewTemplate.SHOW_BOOKMARKS_HTML);
     }
 

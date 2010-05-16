@@ -32,26 +32,26 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import play.cache.Cache;
 import plugins.MongoDB;
 import plugins.Validator;
 
-// zobrazitelne polozky z Node
 @MongoDocument
 public class NodeContent extends AbstractMongoEntity {
 
     private String        content     = "";
     private String        owner       = ""; // mongoid ownera
-    private String        ownerGid; // grafove id ownera
+    private String        ownerGid; // grafove id ownera - pouziva sa niekde?
     private Long          created     = 0l;
     private String        cr_date     = "";
     private String        name        = "";
     private String        parent      = "";
 
     private Integer       template    = 1;
-    public Long           gid         = 1l;
+    public  Long          gid         = 1l;
     private String        putId       = null; // ak != null tak toto je hardlink
 
-    private Integer       accessType  = 0; // AccessType.PUBLIC = 0, PRIVATE, MODERATED, ?INHERIT?
+    private Integer       accessType  = 0;
     private Integer       contentType = 0; // zatial nic
 
     private Long          k           = 0l;
@@ -70,7 +70,7 @@ public class NodeContent extends AbstractMongoEntity {
 
     private List<String>  fooks;
 
-    // transient ?
+    @MongoTransient
     private List<String>  vector;
 
     @MongoTransient
@@ -93,12 +93,12 @@ public class NodeContent extends AbstractMongoEntity {
         name    = params.containsKey(Haiku.NAME) ?
                     params.get(Haiku.NAME) : gid.toString(); // zatial
         owner   = ownerid;
-        collectionName = "Node";
+        collectionName = MongoDB.CNode;
         if (roots != null && roots.size() > 0)
             parent = roots.get(0);
         vector     = roots;
 
-        Logger.info("Adding node with c " + content);
+        Logger.info("Adding node with content:: " + content);
     }
 
     public void edit(Map<String,String> params)
@@ -191,11 +191,10 @@ public class NodeContent extends AbstractMongoEntity {
         try {
             Logger.info("creating new node");
             MongoDB.save(this, MongoDB.CNode);
-            Logger.info("NodeContent now has ID::" + this.getId());
             // TODO toto je snad docasne.. ked opravia driver tak aby vracal
             // last insert id
             NodeContent withId = loadByGid(this.gid);
-            Logger.info("NodeContent now has ID::" + withId.getId());
+            Logger.info("new NodeContent now has ID::" + withId.getId());
             return withId.getId();
         } catch (Exception ex) {
             Logger.info("create failed:");
@@ -240,7 +239,10 @@ public class NodeContent extends AbstractMongoEntity {
     // load from mongodb
     public static NodeContent load(String id)
     {
-        NodeContent n = null;
+        // Logger.info("About to load node " + id);
+        NodeContent n = Cache.get("node_" + id, NodeContent.class);
+        if (n != null )
+            return n;
         try {
             DBObject iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
                     findOne(new BasicDBObject().append("_id",
@@ -248,6 +250,8 @@ public class NodeContent extends AbstractMongoEntity {
             if (iobj !=  null) {
                 n = MongoDB.getMorphia().fromDBObject(NodeContent.class,
                            (BasicDBObject) iobj);
+                Cache.add("node_" + id, n);
+                Cache.add("node_gid_" + n.gid, id);
             }
         } catch (Exception ex) {
             Logger.info("load node");
@@ -257,9 +261,13 @@ public class NodeContent extends AbstractMongoEntity {
         return n;
     }
 
-    // TODO Cache!
+    // load by graph id
     public static NodeContent loadByGid(Long gid)
     {
+        String id = Cache.get("node_gid_" + gid, String.class);
+        if (id != null) {
+            return load(id);
+        }
         NodeContent n = null;
         try {
             DBObject iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
@@ -267,6 +275,8 @@ public class NodeContent extends AbstractMongoEntity {
             if (iobj !=  null) {
                 n = MongoDB.getMorphia().fromDBObject(NodeContent.class,
                            (BasicDBObject) iobj);
+                Cache.add("node_" + n.getId(), n);
+                Cache.add("node_gid_" + n.gid, id);
             }
         } catch (Exception ex) {
             Logger.info("load node");
