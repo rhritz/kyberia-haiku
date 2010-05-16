@@ -59,6 +59,7 @@ public class Bookmark extends AbstractMongoEntity {
 
     private static final String USERID = "uid";
     private static final String NAME   = "name";
+    private static final String DEST   = "destination";
     
     private static final BasicDBObject sort = new BasicDBObject().append(NAME, 1);
 
@@ -167,17 +168,28 @@ public class Bookmark extends AbstractMongoEntity {
 
     public static void add(String dest, String uid)
     {
-        // add a bookmark for user
-        // TODO - check ci uz neexistuje
-        // + invalidate cached bookmarklist
-        Bookmark b = new Bookmark(dest, uid);
+        Bookmark b = Cache.get("bookmark_" + uid + "_" + dest, Bookmark.class);
+        if (b != null )
+            return;
+        b = new Bookmark(dest, uid);
         MongoDB.save(b, MongoDB.CBookmark);
+        Cache.delete("bookmark_" + uid);
     }
 
     public static void delete(String dest, String uid)
     {
-        // len ako ho najst
-        // MongoDB.delete(Bookmark.find(dest,uid));
+        Cache.delete("bookmark_" + uid);
+        Cache.delete("bookmark_" + uid + "_" + dest);
+        try {
+            BasicDBObject query = new BasicDBObject().append(USERID, uid)
+                    .append(DEST, dest);
+            Logger.info(query.toString());
+            MongoDB.getDB().getCollection(MongoDB.CBookmark).remove(query);
+        } catch (Exception ex) {
+            Logger.info("Bookmark.delete");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+        }
     }
 
     static void updateVisit(String uid, String location) {

@@ -22,7 +22,7 @@ GET      /id/{id}/edit                          Application.showEditNode
 
 # actions
 POST     /id/{id}/book                          Application.book
-
+POST     /id/{id}/unbook                        Application.unbook
 POST     /mail                                  Application.sendMail
 
 # user management

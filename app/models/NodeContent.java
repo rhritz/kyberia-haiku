@@ -276,7 +276,7 @@ public class NodeContent extends AbstractMongoEntity {
                 n = MongoDB.getMorphia().fromDBObject(NodeContent.class,
                            (BasicDBObject) iobj);
                 Cache.add("node_" + n.getId(), n);
-                Cache.add("node_gid_" + n.gid, id);
+                Cache.add("node_gid_" + n.gid, n.getId());
             }
         } catch (Exception ex) {
             Logger.info("load node");

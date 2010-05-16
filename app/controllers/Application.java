@@ -150,6 +150,14 @@ public class Application extends Controller {
         displayNode(id);
     }
 
+    public static void unbook(String id)
+    {
+        checkAuthenticity();
+        Logger.info("UnBook:: " + id);
+        Bookmark.delete(id, session.get(User.ID));
+        displayNode(id); // mh, toto nemusi byt volane z id/...
+    }
+
     public static void fook(String id)
     {
         checkAuthenticity();
