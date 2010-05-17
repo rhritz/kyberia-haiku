@@ -22,6 +22,7 @@ import com.google.code.morphia.Morphia;
 import com.google.code.morphia.annotations.MongoDocument;
 import com.google.code.morphia.annotations.MongoValue;
 import com.google.code.morphia.annotations.MongoTransient;
+import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
@@ -80,16 +81,16 @@ public class Bookmark extends AbstractMongoEntity {
                 LinkedList.class);
         if (bkeys != null) {
             for (String bkey : bkeys) {
-                Bookmark boo = Cache.get(bkey, Bookmark.class);
-                // tu je pripadne miesto na kontrolu, ci je aktualny
-                // - tak ci tak sa musi robit invalidate pri upd Activities
-                // pripadne umiestnit do nejakeho zoznamu zoznam aktualnych/
-                // neaktulnych bookmarkov?
+                Bookmark boo = Cache.get("bookmark_" + uid + "_" + bkey,
+                        Bookmark.class);
+                if (boo == null ) {
+                    // invalidated or expired
+                    boo = loadAndStore(uid, bkey);
+                }
                 b.add(boo);
             }
             return b;
         }
-        bkeys = new LinkedList<String>();
         try {
             BasicDBObject query = new BasicDBObject().append(USERID, uid);
             DBCursor iobj = MongoDB.getDB().
@@ -98,6 +99,7 @@ public class Bookmark extends AbstractMongoEntity {
             if (iobj !=  null) {
                 Logger.info("user bookmarks found");
                 int i = 0;
+                bkeys = new LinkedList<String>();
                 while(iobj. hasNext())
                 {
                     Bookmark boo = MongoDB.getMorphia().fromDBObject(
@@ -109,12 +111,37 @@ public class Bookmark extends AbstractMongoEntity {
                     b.add(boo);
                     String bkey = "bookmark_" + uid + "_" + boo.destination;
                     Cache.add(bkey, boo);
-                    bkeys.add(bkey);
+                    bkeys.add(boo.destination);
                 }
                 Cache.add("bookmark_" + uid, bkeys);
             }
         } catch (Exception ex) {
             Logger.info("getUserBookmarks");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+        }
+        return b;
+    }
+
+    // load one bookmark
+    private static Bookmark loadAndStore(String uid, String dest) {
+        Bookmark b = null;
+        try {
+            BasicDBObject query = new BasicDBObject().append(USERID, uid).
+                    append(DEST, dest) ;
+            BasicDBObject iobj = (BasicDBObject)
+                MongoDB.getDB().getCollection(MongoDB.CBookmark).findOne(query);
+            if (iobj !=  null) {
+                b = MongoDB.getMorphia().fromDBObject(Bookmark.class,iobj);
+                b.numNew = loadNotifsForBookmark(b.destination,
+                    b.lastVisit == null ? 0 : b.lastVisit );
+                // TODO toto by malo byt nutne len docasne
+                b.name = NodeContent.load(b.destination).getName();
+                String bkey = "bookmark_" + uid + "_" + b.destination;
+                Cache.add(bkey, b);
+            }
+        } catch (Exception ex) {
+            Logger.info("Bookmark.loadAndStore");
             ex.printStackTrace();
             Logger.info(ex.toString());
         }
@@ -166,6 +193,27 @@ public class Bookmark extends AbstractMongoEntity {
         return len;
     }
 
+    // List of Bookmarks by destination id
+    public static List<Bookmark> getByDest(String dest)
+    {
+        List<Bookmark> b = null;
+        try {
+            DBCursor iobj = MongoDB.getDB().
+                    getCollection(MongoDB.CBookmark).
+                    find(new BasicDBObject().append(DEST, dest));
+            if (iobj !=  null) 
+                b = Lists.transform(iobj.toArray(),
+                            MongoDB.getSelf().toBookmark());
+            else
+                b =  new LinkedList<Bookmark>();
+        } catch (Exception ex) {
+            Logger.info("getByDest::" + dest);
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+        }
+        return b;
+    }
+
     public static void add(String dest, String uid)
     {
         Bookmark b = Cache.get("bookmark_" + uid + "_" + dest, Bookmark.class);
@@ -200,5 +248,16 @@ public class Bookmark extends AbstractMongoEntity {
             Cache.replace("bookmark_" + uid + "_" + location, b);
             MongoDB.update(b, MongoDB.CBookmark);
         }
+    }
+
+    static void invalidate(String uid, String dest) {
+        Cache.delete("bookmark_" + uid + "_" + dest);
+    }
+
+    /**
+     * @return the uid
+     */
+    public String getUid() {
+        return uid;
     }
 }

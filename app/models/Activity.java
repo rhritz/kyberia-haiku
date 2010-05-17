@@ -26,9 +26,11 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.ObjectId;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.SortedSet;
 import plugins.*;
 import play.Logger;
 
@@ -38,7 +40,7 @@ import play.Logger;
 @MongoDocument
 public class Activity extends AbstractMongoEntity {
     
-    private String       oid;  // o ktorom objekte je tato notifikacia
+    private String         oid;  // o ktorom objekte je tato notifikacia
     private Integer        type; // enum? new, delete...? zatial neviem
     private Long           date;
     private String         name; // nazov prispevku, meno usera atd
@@ -63,10 +65,10 @@ public class Activity extends AbstractMongoEntity {
                      String parid,
                      String owner)
     {
-        this.oid  = oid;
-        this.date = date;
-        this.ids  = ids;
-        this.uids  = uids;
+        this.oid    = oid;
+        this.date   = date;
+        this.ids    = ids;
+        this.uids   = uids;
         this.vector = vector;
         this.parid  = parid;
         this.owner  = owner;
@@ -92,6 +94,18 @@ public class Activity extends AbstractMongoEntity {
             Activity notif = new Activity(id, System.currentTimeMillis(),
                     parents, friends, parents, parOwnerId,node.getOwner());
             notif.save();
+
+            // lame - prerobit!
+            SortedSet<UserLocation> uso = UserLocation.getAll();
+            HashMap<String,Integer> usersOnline = new HashMap<String,Integer>();
+            for (UserLocation u : uso)
+                usersOnline.put(u.getUserid(), 1);
+
+            // update bookmarks for users online
+            for (String par : parents) 
+                for (Bookmark b : Bookmark.getByDest(par)) 
+                    if (usersOnline.containsKey(b.getUid())) 
+                        Bookmark.invalidate(b.getUid(),par);
         } catch (Exception ex) {
             Logger.info("newNodeActivity failed:");
             ex.printStackTrace();
@@ -102,7 +116,6 @@ public class Activity extends AbstractMongoEntity {
     public void save()
     {
         try {
-            Logger.info("creating new activity");
             MongoDB.save(this, MongoDB.CActivity);
         } catch (Exception ex) {
             Logger.info("activity save failed:");

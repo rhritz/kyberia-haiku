@@ -173,16 +173,10 @@ public class User extends AbstractMongoEntity {
         // list bookmarks,
         // list of friends,
         // and possibly more things
-        Cache.set(User.BOOKMARKS + id, getBookmarks());
         // Cache.set(User.FRIENDS + id, getFriends());
         Cache.set(User.IGNORES + id, getIgnores());
         Cache.set(User.FOOKS + id, getFooks());
         Cache.set(User.UPDATES + id, getUpdates());
-    }
-
-    public List<Bookmark> getBookmarks()
-    {
-        return Bookmark.getUserBookmarks(id);
     }
 
     /*
