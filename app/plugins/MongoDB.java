@@ -56,6 +56,7 @@ public class MongoDB {
     public static final String CMessage       = "Message";
     public static final String CMessageThread = "MessageThread";
     public static final String CNode          = "Node";
+    public static final String CPage          = "Page";
     public static final String CTag           = "Tag";
     public static final String CTagNodeUser   = "TagNodeUser";
     public static final String CUser          = "User";
@@ -120,6 +121,7 @@ public class MongoDB {
             morphia.map(UserGroup.class);
             morphia.map(Tag.class);
             morphia.map(Vote.class);
+            morphia.map(Page.class);
             
         } catch (Exception e) {
             Logger.info("Brekeke @ mongo:: " + e.toString());

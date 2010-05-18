@@ -31,7 +31,7 @@ public class MongoSchema {
         DB db = MongoDB.getDB();
         String [] cols = new String[] {"Message",  "User", "Friend", "Fook",
         "Ignore", "MessageThread", "Bookmark", "Activity", "Node", "Tag",
-        "TagNodeUser", "UserLocation"};
+        "TagNodeUser", "UserLocation", "Page"};
 
         for (String col : cols) {
             db.createCollection(col, null);

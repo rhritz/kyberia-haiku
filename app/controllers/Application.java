@@ -63,10 +63,8 @@ public class Application extends Controller {
     }
 
     public static void index() {
-        // TODO zmenit
-        // collection PAGES, kde budu definovane systemove pages? alebo alebo?
-        // Defauls.getDefaultPage() ?
-        render();
+        Page main = Page.getByName(Page.MAIN);
+        render(main.getTemplate());
     }
 
     public static void viewNode(String id) {

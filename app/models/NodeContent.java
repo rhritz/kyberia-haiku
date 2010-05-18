@@ -56,7 +56,8 @@ public class NodeContent extends AbstractMongoEntity {
 
     private Long          k           = 0l;
     private Long          mk          = 0l;
-    private Long          numVisits   = 0l;
+    private Long          numVisits   = 0l; // TODO
+    private Boolean       kAllowed    = true;
 
     // tu by asi mali byt idcka tagov a nie tagy samotne
     private List<String>  tags;
