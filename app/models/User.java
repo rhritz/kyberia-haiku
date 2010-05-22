@@ -223,6 +223,7 @@ public class User extends AbstractMongoEntity {
     public void save()
     {
         try {
+             Cache.set("user_" + this.getId(), this);
              MongoDB.save(this,MongoDB.CUser);
         } catch (Exception ex) {
             Logger.info(ex.toString());
@@ -232,6 +233,7 @@ public class User extends AbstractMongoEntity {
     public void update()
     {
         try {
+             Cache.set("user_" + this.getId(), this);
              MongoDB.update(this,MongoDB.CUser);
         } catch (Exception ex) {
             Logger.info(ex.toString());
@@ -256,17 +258,20 @@ public class User extends AbstractMongoEntity {
     // load user by id
     public static User load(String id)
     {
-        // coll.find({username:username, password:password})
-        // cache?
-        // String uname = Cache.get(USERNAME + id, String.class);
-        User u = null;
+        User u = Cache.get("user_" + id, User.class);
+        if (u != null )
+            return u;
         try {
             BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
                     getCollection(MongoDB.CUser).
                     findOne(new BasicDBObject().append("_id",new ObjectId(id)));
-            if (iobj != null)
-                u = (User) MongoDB.getMorphia().
-                        fromDBObject(User.class, (BasicDBObject) iobj);
+            if (iobj != null) {
+                u = MongoDB.getMorphia().fromDBObject(User.class, iobj);
+                Cache.set("user_" + id, u);
+                Cache.set("user_gid_" + u.getGid(), id);
+                Cache.set(ID + u.username, id);
+                Cache.set(USERNAME + id, u.username);
+            }
         } catch (Exception ex) {
             Logger.info("user load fail");
             ex.printStackTrace();
@@ -279,14 +284,22 @@ public class User extends AbstractMongoEntity {
     // load by graph id
     public static User loadByGid(String gid)
     {
+        String id = Cache.get("user_gid_" + gid, String.class);
+        if (id != null) 
+            return load(id);
         User u = null;
         try {
             BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
                     getCollection(MongoDB.CUser).
-                    findOne(new BasicDBObject().append("gid",gid));
-            if (iobj != null)
-                u = (User) MongoDB.getMorphia().
-                        fromDBObject(User.class, (BasicDBObject) iobj);
+                    findOne(new BasicDBObject().append(USERID,gid));
+            if (iobj != null) {
+                u = MongoDB.getMorphia().fromDBObject(User.class, iobj);
+                id = u.getId();
+                Cache.set("user_" + id, u);
+                Cache.set("user_gid_" + gid, id);
+                Cache.set(ID + u.username, id);
+                Cache.set(USERNAME + id, u.username);
+            }
         } catch (Exception ex) {
             Logger.info("user load fail");
             ex.printStackTrace();
@@ -296,17 +309,23 @@ public class User extends AbstractMongoEntity {
         return u;
     }
 
-    // TODO search, order, start , count
-    public static List<User> loadUsers()
+    public static List<User> loadUsers(String namePart,
+                                        Integer start,
+                                        Integer count,
+                                        String  order)
     {
         List<User> users = null;
+        if (namePart != null) {
+            // este treba upravit
+            BasicDBObject match = new BasicDBObject().append(USERNAME, namePart);
+        }
         try {
             BasicDBObject query = new BasicDBObject().append(USERNAME, 1);
             DBCursor iobj = (DBCursor) MongoDB.getDB().
-                    getCollection(MongoDB.CUser).find().sort(query);
-            if (iobj == null) {
-                users = new ArrayList<User>();
-            } else {
+                    getCollection(MongoDB.CUser).find().sort(query).
+                    skip(start == null ? 0 : start).
+                    limit(count == null ? 0 : count);
+            if (iobj != null) {
                 users = Lists.transform(iobj.toArray(),
                             MongoDB.getSelf().toUser());
             }
@@ -321,18 +340,18 @@ public class User extends AbstractMongoEntity {
     // vracia mongo id
     public static String getIdForName(String username)
     {
-        String id = Cache.get(ID + username, String.class); //! pozor na cudne username
+        // pozor na cudne usernames
+        String id = Cache.get(ID + username, String.class); 
         if (id != null)
-        {
             return id;
-        }
         try {
-            BasicDBObject query = new BasicDBObject().append(USERNAME, username );
+            BasicDBObject query = new BasicDBObject().append(USERNAME, username);
             BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
                     getCollection(MongoDB.CUser).findOne(query);
             if (iobj != null)
             {
                 id = iobj.getString("_id");
+                Cache.add(ID + username, id);
             }
         } catch (Exception ex) {
             Logger.info("mongo fail @getIdForName");
@@ -340,18 +359,16 @@ public class User extends AbstractMongoEntity {
             Logger.info(ex.toString());
             return null;
         }
-        Cache.add(ID + username, id);
         return id;
     }
 
     public static String getNameForId(String id)
     {
-        if (id == null || id.length() < 10) return "";
+        if (id == null || id.length() < 10)
+            return "";
         String uname = Cache.get(USERNAME + id, String.class);
         if (uname != null)
-        {
             return uname;
-        }
         try {
             BasicDBObject query = new BasicDBObject().append("_id",
                     new ObjectId(id));
@@ -360,6 +377,7 @@ public class User extends AbstractMongoEntity {
             if (iobj != null)
             {
                 uname = iobj.getString(USERNAME);
+                Cache.add(USERNAME + id, uname);
             }
         } catch (Exception ex) {
             Logger.info("mongo fail @getNameForId for id |" + id + "|");
@@ -367,62 +385,60 @@ public class User extends AbstractMongoEntity {
             Logger.info(ex.toString());
             return null;
         }
-        Cache.add(USERNAME + id, uname); // TODO expire/invalidate
         return uname;
     }
 
-    public static String viewUsersOnline()
-    {
-        // pri prihlaseni / kazdej akcii -> Cache(userid,location)
-        // + List of current online users
-        // potom to tu len pozbierame
-        return null;
+    public void addFriend(String uid) {
+        if (friends == null ) {
+            friends = new ArrayList<String>();
+        } else if (friends.contains(uid)) {
+            return;
+        }
+        friends.add(uid);
+        // + mozno vytvorit nejaky iny zaznam inde?
+        update();
     }
 
-    // kto koho?
-    public static void fook(String get, String id) {
-
-    }
-
-    public static void addFriend(String currUid, String uid) {
-        User u = load(currUid);
-        if (u != null) {
-            if (u.friends == null ) {
-                u.friends = new ArrayList<String>();
-            } else if (u.friends.contains(uid)) {
-                return;
-            }
-            u.friends.add(uid);
-            // + mozno vytvorit nejaky iny zaznam inde?
-            u.update();
+    public void removeFriend(String uid) {
+        if (friends != null && friends.contains(uid)) {
+            friends.remove(uid);
+            update();
         }
     }
 
-    public static void addIgnore(String currUid, String uid) {
-        User u = load(currUid);
-        if (u != null) {
-            if (u.ignores == null ) {
-                u.ignores = new ArrayList<String>();
-            } else if (u.ignores.contains(uid)) {
-                return;
-            }
-            u.ignores.add(uid);
-            // + mozno vytvorit nejaky iny zaznam inde?
-            u.update();
+    public void addIgnore(String uid) {
+        if (ignores == null ) {
+            ignores = new ArrayList<String>();
+        } else if (ignores.contains(uid)) {
+            return;
+        }
+        ignores.add(uid);
+        // + mozno vytvorit nejaky iny zaznam inde?
+        update();
+    }
+
+    public void removeIgnore(String uid) {
+        if (ignores != null && ignores.contains(uid)) {
+            ignores.remove(uid);
+            update();
         }
     }
 
-    public static void addIgnoreMail(String currUid, String uid) {
-        User u = load(currUid);
-        if (u != null) {
-            if (u.ignoreMail == null ) {
-                u.ignoreMail = new ArrayList<String>();
-            } else if (u.ignoreMail.contains(uid)) {
-                return;
-            }
-            u.ignoreMail.add(uid);
-            // + mozno vytvorit nejaky iny zaznam inde?
-            u.update();
+    public void addIgnoreMail(String uid) {
+        if (ignoreMail == null ) {
+            ignoreMail = new ArrayList<String>();
+        } else if (ignoreMail.contains(uid)) {
+            return;
+        }
+        ignoreMail.add(uid);
+        // + mozno vytvorit nejaky iny zaznam inde?
+        update();
+    }
+
+    public void removeIgnoreMail(String uid) {
+        if (ignoreMail != null && ignoreMail.contains(uid)) {
+            ignoreMail.add(uid);
+            update();
         }
     }
 

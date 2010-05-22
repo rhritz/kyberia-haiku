@@ -15,8 +15,8 @@ use Time::HiRes qw(usleep nanosleep);
 my($url)       = $ARGV[0] ? $ARGV[0] : "http://localhost:4567/id";
 my($user_id)   = $ARGV[1] ? $ARGV[1] : "ubik";
 my($password)  = $ARGV[2] ? $ARGV[2] : "test";
-my($par)       = $ARGV[3] ? $ARGV[3] : "4bee335541fe20a469a852d0";
-my($num_nodes) = $ARGV[4] ? $ARGV[4] : 23;
+my($par)       = $ARGV[3] ? $ARGV[3] : "4bf80885b0be20a499daf9d6"; # startovaci prispevok
+my($num_nodes) = $ARGV[4] ? $ARGV[4] : 1000;
 
 my($headers)   = "kyb_headers.txt";
 
@@ -27,6 +27,10 @@ close(WORDFILE);
 my($line_count) = $#word_lines;
 chomp(@word_lines);
 
+#login();
+my @ids;
+my $child;
+push(@ids,$par);
 
 #TODO check headers exists, otherwise execute
 # staci zavolat raz
@@ -39,20 +43,16 @@ sub troll {
 	my($event)   = "add";
 	my($name)    = shift;
 	my($content) = shift;
-        print qq{curl -b $headers -F "content=$content" $url/$parent/action | grep -m 1 "node_chosen" > retvalue.txt };
-#system(qq{curl -b $headers -F "content=$content" $url/$parent/action | grep -m 1 "node_chosen" > retvalue.txt });
-        system(qq{curl -b $headers -F "content=$content" -F "name=$name" $url/$parent/action > /dev/null});
-# tu preparsovat output, najst id noveho prispevku a zadat ho do zoznamu prispevkov odkial sa bude nahodne vyberat parent nasledujuceho
-#	open(RETVALUE,"<retvalue.txt");
-#	my @lines=<RETVALUE>;
-#	my $line=$lines[0];
-#	close(RETVALUE);
-#	my $match = ($line =~ m/\d{7}/) ? "match" : "no match" ;
-#	# print("matched: $& $match");
-#	my $new_id=$&;
-#	#print("result: $new_id");
-#	return $new_id;
-        return "";
+        system(qq^curl -b $headers -F "content=$content" -F "name=$name" $url/$parent/action | grep -o "node_link\\" href=\\"/id/\[\[\:alnum\:\]\]\\{24\\}" > retvalue.txt^);
+        # parse output, find id of new node and add it to the list
+	open(RETVALUE,"<retvalue.txt");
+	my @lines=<RETVALUE>;
+        for my $line (@lines) {
+            my $lline = substr($line,21);
+            chop($lline);
+            print $lline;
+            push(@ids,$lline);
+        }
 }
 
 sub create_content {
@@ -64,27 +64,26 @@ sub create_content {
 	}
 	$content =~ s/\'//g;
 	#print("content: $content");
-	return $content . ".";
+	return $content;
 }
 
-login();
-my @ids;
-my $child;
-push(@ids,$par);
-
+#for (my $j = 0; $j < 3; $j++) {
+#    fork();
+#}
 for (my $i = 0; $i < $num_nodes; $i++ ) {
-	#$par = $ids[rand($#ids)];
-	#$child = troll($par,create_content(3),create_content(42));
-	#push(@ids,$child);
-        my $pid = fork();
-        if ($pid) {
+	$par = $ids[rand($#ids)];
+        troll($par,create_content(3),join("\n",(create_content(2),
+                        create_content(3),create_content(2))));
+        #my $pid = fork();
+        #if ($pid) {
             # parent
-            usleep(3000);
-        } else {
+        #    usleep(3000);
+        #} else {
             # child
-            troll($par,create_content(23),create_content(420));
-            exit;
-        }
+        #    troll($par,create_content(3),join("\n",(create_content(2),
+        #                create_content(3),create_content(2))));
+        #    exit;
+        #}
 }
 
 # TODO a dalsi pre get req

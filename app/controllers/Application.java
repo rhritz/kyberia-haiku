@@ -109,7 +109,8 @@ public class Application extends Controller {
     {
         checkAuthenticity();
         Logger.info("Add friend :: " + uid);
-        User.addFriend(session.get(User.ID), uid);
+        User u = User.load(session.get(User.ID));
+        u.addFriend(uid);
         showUser(uid);
     }
 
@@ -117,7 +118,8 @@ public class Application extends Controller {
     {
         checkAuthenticity();
         Logger.info("Add ignore :: " + uid);
-        User.addIgnore(session.get(User.ID), uid);
+        User u = User.load(session.get(User.ID));
+        u.addIgnore(uid);
         showUser(uid);
     }
 
@@ -125,7 +127,8 @@ public class Application extends Controller {
     {
         checkAuthenticity();
         Logger.info("Add ignoreMail :: " + uid);
-        User.addIgnoreMail(session.get(User.ID), uid);
+        User u = User.load(session.get(User.ID));
+        u.addIgnoreMail(uid);
         showUser(uid);
     }
 
@@ -160,7 +163,8 @@ public class Application extends Controller {
     {
         checkAuthenticity();
         Logger.info("Fook ::" + id);
-        User.fook(session.get(User.ID), id);
+        NodeContent n = NodeContent.load(id);
+        n.fook(session.get(User.ID));
         displayNode(id);
     }
 
@@ -235,12 +239,11 @@ public class Application extends Controller {
             if (node.canEdit(uid)) {
                 renderArgs.put("id", id);
                 renderArgs.put("node", node);
-                renderArgs.put("users", User.loadUsers());
+                renderArgs.put("users", User.loadUsers(null, 0 , 30, null));
                 render(ViewTemplate.EDIT_NODE_HTML);
             } else {
-                // TODO
-                renderArgs.put("id", id);
-                renderArgs.put("content", "Sorry pal, no edit for you");
+                renderArgs.put("error", "Sorry pal, no edit for you");
+                displayNode(id);
             }
         }
     }
@@ -259,7 +262,7 @@ public class Application extends Controller {
         String uid = session.get(User.ID);
         renderArgs.put("threads",
                 MessageThread.viewUserThreads(uid,session));
-        renderArgs.put("users", User.loadUsers());
+        renderArgs.put("users", User.loadUsers(null, 0 , 30, null));
         if (thread == null)
         {
             thread = session.get("LastThreadId");
@@ -274,7 +277,7 @@ public class Application extends Controller {
         String fromId = session.get(User.ID);
         // TODO filter content
         Message.send(fromId, to, content);
-        renderArgs.put("users", User.loadUsers());
+        renderArgs.put("users", User.loadUsers(null, 0 , 30, null));
         renderArgs.put("threads",
                 MessageThread.viewUserThreads(session.get(User.ID),session));
         renderArgs.put("mailMessages",
@@ -335,7 +338,7 @@ public class Application extends Controller {
         // list all users
         // re.append(u.id).append(u.getGid()).append(u.username).append("<br>");
         // renderArgs.put("content", User.listUsers());
-        renderArgs.put("users", User.loadUsers());
+        renderArgs.put("users", User.loadUsers(null, 0 , 30, null));
         render(ViewTemplate.SHOW_USERS_HTML);
     }
 
@@ -362,6 +365,7 @@ public class Application extends Controller {
     // Template processing:
     public static void viewNodeT(NodeTemplate template)
     {
+        /*
         for (TemplateDataDef d : template.getWantedData())
         {
             switch (d.getDatasetName()) {
@@ -373,6 +377,8 @@ public class Application extends Controller {
                     // niektore ine z requestu / session
             }
         }
+         *
+         */
     }
 
     // TODO cesta k obrazkom do konfigu + kontrolovat co sa upladuje

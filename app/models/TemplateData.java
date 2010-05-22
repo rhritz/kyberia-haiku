@@ -1,12 +1,18 @@
 package models;
 
-public class TemplateData {
+import java.util.List;
 
+public interface TemplateData<T> {
+
+    public T       getOne();
+    public List<T> getList();
 
     /*
-     idea je,
-     napchat vsetko co treba zobrazit do stringov / iter / enum
-     a zobrazit to potom ako kaze template
+     * public class Communicate  {
+          public <T extends Speaks> void speak(T speaker) {
+            speaker.speak();
+          }
+        }
      */
 
 }

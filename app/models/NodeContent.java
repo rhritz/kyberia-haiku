@@ -151,7 +151,7 @@ public class NodeContent extends AbstractMongoEntity {
     public String getHead()
     {
         StringBuilder head = new StringBuilder();
-        head.append("<a href=\"/id/").append(id).append("\">").append(gid);
+        head.append("<a class=\"node_link\" href=\"/id/").append(id).append("\">").append(gid);
         head.append("</a>(").append(depth).append(") ").append(getName());
         head.append(" ").append("<a href=\"/user/").append(getOwner()).append("\">");
         // docasne
@@ -187,6 +187,7 @@ public class NodeContent extends AbstractMongoEntity {
     }
 
     // save to mongodb
+    // TODO invalidate cache
     public String save()
     {
         try {
@@ -210,6 +211,7 @@ public class NodeContent extends AbstractMongoEntity {
         try {
             Logger.info("updating node");
             MongoDB.update(this, MongoDB.CNode);
+            Cache.set("node_" + this.getId(), this);
         } catch (Exception ex) {
             Logger.info("update failed:");
             ex.printStackTrace();
@@ -221,8 +223,12 @@ public class NodeContent extends AbstractMongoEntity {
     {
         try {
             Logger.info("deleting node");
+            Cache.delete("node_" + this.getId());
+            Cache.delete("node_gid_" + this.gid );
             MongoDB.delete(this, MongoDB.CNode);
+            
             // + ostatne veci co treba deltnut: Activity, Bookmarks, ..?
+            // + graf
         } catch (Exception ex) {
             Logger.info("delete failed:");
             ex.printStackTrace();
@@ -351,6 +357,17 @@ public class NodeContent extends AbstractMongoEntity {
     public void inheritPermissions(String from, String type)
     {
         
+    }
+
+    public void fook(String uid)
+    {
+        if (fooks == null) {
+            fooks = new LinkedList<String>();
+        } else if (fooks.contains(uid)) {
+            return;
+        }
+        fooks.add(uid);
+        update();
     }
     
     /**

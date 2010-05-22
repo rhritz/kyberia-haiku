@@ -33,6 +33,7 @@
     tagcloud<br>
     <div class="actions">
         <form name="user_actions" action="@{Application.friend(uid)}" method="POST">
+            #{authenticityToken /}
             <input type="submit" value="Friend" onClick="javascript:this.form.action='@{Application.friend(uid)}';submit();"/>
             <input type="submit" value="Ignore" onClick="javascript:this.form.action='@{Application.ignore(uid)}';submit();"/>
             <input type="submit" value="Ignore Mail" onClick="javascript:this.form.action='@{Application.ignoreMail(uid)}';submit();" />

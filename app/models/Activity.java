@@ -22,6 +22,7 @@ import com.google.code.morphia.Morphia;
 import com.google.code.morphia.annotations.MongoDocument;
 import com.google.code.morphia.annotations.MongoValue;
 import com.google.code.morphia.annotations.MongoCollectionName;
+import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
@@ -97,6 +98,8 @@ public class Activity extends AbstractMongoEntity {
 
             // lame - prerobit!
             SortedSet<UserLocation> uso = UserLocation.getAll();
+            if (uso == null)
+                return;
             HashMap<String,Integer> usersOnline = new HashMap<String,Integer>();
             for (UserLocation u : uso)
                 usersOnline.put(u.getUserid(), 1);
@@ -191,10 +194,10 @@ public class Activity extends AbstractMongoEntity {
         // pozbieraj data o bookmarkoch - bude sucastou bookmarklistu neskor
     }
 
+    // TODO - check permissions
     public static List<NodeContent> showFriendsContent(String uid)
     {
         List<NodeContent> ll = new LinkedList<NodeContent>();
-
         BasicDBObject query = new BasicDBObject().append("uids", uid);
         BasicDBObject sort = new BasicDBObject().append("date", -1);
         DBCursor iobj = MongoDB.getDB()
@@ -202,11 +205,8 @@ public class Activity extends AbstractMongoEntity {
             sort(sort).limit(30);
         Morphia morphia = MongoDB.getMorphia();
         while(iobj.hasNext())
-        {
-           Activity a = morphia.fromDBObject(Activity.class,
-                   (BasicDBObject) iobj.next());
-           ll.add(NodeContent.load(a.oid));
-        }
+           ll.add(NodeContent.load((morphia.fromDBObject(Activity.class,
+                   (BasicDBObject) iobj.next())).oid));
         return ll;
     }
 
