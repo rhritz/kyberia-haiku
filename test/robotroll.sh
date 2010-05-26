@@ -29,6 +29,7 @@ chomp(@word_lines);
 
 #login();
 my @ids;
+my %ids_uniq;
 my $child;
 push(@ids,$par);
 
@@ -39,19 +40,16 @@ sub login {
 }
 
 sub troll {
-	my($parent)  = shift;
-	my($event)   = "add";
-	my($name)    = shift;
-	my($content) = shift;
-        system(qq^curl -b $headers -F "content=$content" -F "name=$name" $url/$parent/action | grep -o "node_link\\" href=\\"/id/\[\[\:alnum\:\]\]\\{24\\}" > retvalue.txt^);
-        # parse output, find id of new node and add it to the list
-	open(RETVALUE,"<retvalue.txt");
-	my @lines=<RETVALUE>;
+	my($parent,$name,$content)  = @_;
+        my @lines = qx^curl -b $headers -F "content=$content" -F "name=$name" $url/$parent/action | grep -o "node_link\\" href=\\"/id/\[\[\:alnum\:\]\]\\{24\\}"^;
         for my $line (@lines) {
             my $lline = substr($line,21);
             chop($lline);
             print $lline;
-            push(@ids,$lline);
+            if (!defined $ids_uniq{$lline}) {
+                push(@ids,$lline);
+                $ids_uniq{$lline} = 1;
+            }
         }
 }
 
@@ -67,23 +65,13 @@ sub create_content {
 	return $content;
 }
 
-#for (my $j = 0; $j < 3; $j++) {
-#    fork();
-#}
+for (my $j = 0; $j < 2; $j++) {
+    fork();
+}
 for (my $i = 0; $i < $num_nodes; $i++ ) {
 	$par = $ids[rand($#ids)];
         troll($par,create_content(3),join("\n",(create_content(2),
                         create_content(3),create_content(2))));
-        #my $pid = fork();
-        #if ($pid) {
-            # parent
-        #    usleep(3000);
-        #} else {
-            # child
-        #    troll($par,create_content(3),join("\n",(create_content(2),
-        #                create_content(3),create_content(2))));
-        #    exit;
-        #}
 }
 
 # TODO a dalsi pre get req
