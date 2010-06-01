@@ -17,6 +17,7 @@
 */
 package models;
 
+import com.mongodb.ObjectId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -359,14 +360,14 @@ public class Haiku {
                     owner.createRelationshipTo(newnode, Rel.OWNER);
                 }
             }
-            NodeContent nc = new NodeContent(newnode,ownerid,params,roots);
-            String mongoId = nc.save();
+            NodeContent nc = new NodeContent(newnode,new ObjectId(ownerid),params,roots);
+            String mongoId = nc.save().getIdString();
             Logger.info("Mongoloid::" + mongoId);
             if (mongoId == null)
             {
                 throw new Exception();
             }
-            Activity.newNodeActivity(mongoId, nc, roots, ownerid, parOwner);
+            // Activity.newNodeActivity(new ObjectId(mongoId), nc, roots, ownerid, parOwner);
             retid = newnode.getId();
             newnode.setProperty(MONGOID, mongoId);
             tx.success();

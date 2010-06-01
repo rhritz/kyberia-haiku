@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
     <head>
         <title>#{get 'title' /}</title>
@@ -33,7 +32,9 @@
             </div>
             <div class="colleft">
                 <!-- Main Content -->
-                #{doLayout /}
+                #{verbatim}
+                    #{doLayout /}
+                #{/verbatim}
             </div>
             <div class="footer">
                <!-- <center><small>Page generation took </small></center> -->
@@ -41,6 +42,7 @@
         </div>
     </body>
 </html>
+#{footer par:"brekeke" /}
 *{
 Takto nejak to bude::
 

@@ -17,11 +17,9 @@
 */
 package models;
 
-import com.google.code.morphia.AbstractMongoEntity;
+import com.google.code.morphia.annotations.Entity;
+import com.google.code.morphia.annotations.Transient;
 import com.google.code.morphia.Morphia;
-import com.google.code.morphia.annotations.MongoDocument;
-import com.google.code.morphia.annotations.MongoTransient;
-import com.google.code.morphia.annotations.MongoValue;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
@@ -42,26 +40,24 @@ import plugins.*;
 import play.Logger;
 import play.cache.Cache;
 
-@MongoDocument
-public class User extends AbstractMongoEntity {
+@Entity("User")
+public class User extends MongoEntity {
 
     private String             username;
     private String             password;
     private String             gid;
     private String             userinfo; // co sa ma zobrazit v userinfe
-    // private ...            userinfoAccessType;
+    private Integer            userinfoAccessType;
     private String             template; // a ako sa to ma zobrazit
 
-    // TODO mail addr? dalsie?
-
-    private ViewTemplate       view; // userov view
-    private String             menu; // userovo menu - zrejme iny objekt ako String
+    private String             view; // userov view
+    private Map<String,String> menu; // userovo menu
     
     private List<String>       tags;     // given tags
-    private List<String>       friends;  // friends and stuff
-    private List<String>       ignores;  // users whom this user ignores
-    private List<String>       ignoreMail; // users whom this user ignores mail from
-    private List<String>       groups;   // user groups this user is part of
+    private List<ObjectId>       friends;  // friends and stuff
+    private List<ObjectId>       ignores;  // users whom this user ignores
+    private List<ObjectId>       ignoreMail; // users whom this user ignores mail from
+    private List<ObjectId>       groups;   // user groups this user is part of
 
     // kackove hospodarstvo :)
     private Long               usedK; // na dnesny den
@@ -80,7 +76,7 @@ public class User extends AbstractMongoEntity {
 
     private static PasswordService pwdService = new PasswordService();
 
-    @MongoTransient
+    @Transient
     private List<Bookmark>     bookmarks;
 
     public User() {}
@@ -198,7 +194,7 @@ public class User extends AbstractMongoEntity {
 
     public List<ObjectId> getFooks()
     {
-        return Fook.getUserFooks(this.getId());
+        return Fook.getUserFooks(this.getIdString());
     }
 
     // false ak uz je username pouzite
@@ -256,7 +252,7 @@ public class User extends AbstractMongoEntity {
     }
 
     // load user by id
-    public static User load(String id)
+    public static User load(ObjectId id)
     {
         User u = Cache.get("user_" + id, User.class);
         if (u != null )
@@ -264,12 +260,12 @@ public class User extends AbstractMongoEntity {
         try {
             BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
                     getCollection(MongoDB.CUser).
-                    findOne(new BasicDBObject().append("_id",new ObjectId(id)));
+                    findOne(new BasicDBObject().append("_id",id));
             if (iobj != null) {
                 u = MongoDB.getMorphia().fromDBObject(User.class, iobj);
                 Cache.set("user_" + id, u);
-                Cache.set("user_gid_" + u.getGid(), id);
-                Cache.set(ID + u.username, id);
+                Cache.set("user_gid_" + u.getGid(), id.toString());
+                Cache.set(ID + u.username, id.toString());
                 Cache.set(USERNAME + id, u.username);
             }
         } catch (Exception ex) {
@@ -284,9 +280,12 @@ public class User extends AbstractMongoEntity {
     // load by graph id
     public static User loadByGid(String gid)
     {
-        String id = Cache.get("user_gid_" + gid, String.class);
-        if (id != null) 
+        String hid = Cache.get("user_gid_" + gid, String.class);
+        ObjectId id = null;
+        if (hid != null) {
+            id = new ObjectId(hid);
             return load(id);
+        }
         User u = null;
         try {
             BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
@@ -362,22 +361,21 @@ public class User extends AbstractMongoEntity {
         return id;
     }
 
-    public static String getNameForId(String id)
+    public static String getNameForId(ObjectId id)
     {
-        if (id == null || id.length() < 10)
+        if (id == null || id.toString().length() < 10)
             return "";
         String uname = Cache.get(USERNAME + id, String.class);
         if (uname != null)
             return uname;
         try {
-            BasicDBObject query = new BasicDBObject().append("_id",
-                    new ObjectId(id));
+            BasicDBObject query = new BasicDBObject().append("_id", id);
             BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
                     getCollection(MongoDB.CUser).findOne(query);
             if (iobj != null)
             {
                 uname = iobj.getString(USERNAME);
-                Cache.add(USERNAME + id, uname);
+                Cache.add(USERNAME + id.toString(), uname);
             }
         } catch (Exception ex) {
             Logger.info("mongo fail @getNameForId for id |" + id + "|");
@@ -388,9 +386,9 @@ public class User extends AbstractMongoEntity {
         return uname;
     }
 
-    public void addFriend(String uid) {
+    public void addFriend(ObjectId uid) {
         if (friends == null ) {
-            friends = new ArrayList<String>();
+            friends = new ArrayList<ObjectId>();
         } else if (friends.contains(uid)) {
             return;
         }
@@ -399,16 +397,16 @@ public class User extends AbstractMongoEntity {
         update();
     }
 
-    public void removeFriend(String uid) {
+    public void removeFriend(ObjectId uid) {
         if (friends != null && friends.contains(uid)) {
             friends.remove(uid);
             update();
         }
     }
 
-    public void addIgnore(String uid) {
+    public void addIgnore(ObjectId uid) {
         if (ignores == null ) {
-            ignores = new ArrayList<String>();
+            ignores = new ArrayList<ObjectId>();
         } else if (ignores.contains(uid)) {
             return;
         }
@@ -417,16 +415,16 @@ public class User extends AbstractMongoEntity {
         update();
     }
 
-    public void removeIgnore(String uid) {
+    public void removeIgnore(ObjectId uid) {
         if (ignores != null && ignores.contains(uid)) {
             ignores.remove(uid);
             update();
         }
     }
 
-    public void addIgnoreMail(String uid) {
+    public void addIgnoreMail(ObjectId uid) {
         if (ignoreMail == null ) {
-            ignoreMail = new ArrayList<String>();
+            ignoreMail = new ArrayList<ObjectId>();
         } else if (ignoreMail.contains(uid)) {
             return;
         }
@@ -435,7 +433,7 @@ public class User extends AbstractMongoEntity {
         update();
     }
 
-    public void removeIgnoreMail(String uid) {
+    public void removeIgnoreMail(ObjectId uid) {
         if (ignoreMail != null && ignoreMail.contains(uid)) {
             ignoreMail.add(uid);
             update();
@@ -446,7 +444,7 @@ public class User extends AbstractMongoEntity {
     /**
      * @return the friends
      */
-    public List<String> getFriends() {
+    public List<ObjectId> getFriends() {
         return friends;
     }
 
@@ -472,9 +470,16 @@ public class User extends AbstractMongoEntity {
         this.gid = gid;
     }
 
+    /**
+     * @return the view
+     */
+    public String getView() {
+        return view;
+    }
+
     // transform
-    class ToUser implements Function<String, User> {
-        public User apply(String arg) {
+    class ToUser implements Function<ObjectId, User> {
+        public User apply(ObjectId arg) {
             return User.load(arg);
         }
     }

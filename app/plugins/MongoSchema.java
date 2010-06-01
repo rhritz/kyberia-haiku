@@ -31,7 +31,7 @@ public class MongoSchema {
         DB db = MongoDB.getDB();
         String [] cols = new String[] {"Message",  "User", "Friend", "Fook",
         "Ignore", "MessageThread", "Bookmark", "Activity", "Node", "Tag",
-        "TagNodeUser", "UserLocation", "Page"};
+        "TagNodeUser", "UserLocation", "Page", "ViewTemplate"};
 
         for (String col : cols) {
             db.createCollection(col, null);
@@ -45,9 +45,24 @@ public class MongoSchema {
          Bookmark - db.Bookmark.ensureIndex({destination: 1, uid:1}, {unique: true});
          Activity - ?
          EnsureIndex('users') on MessageThread
+         * db.Node.ensureIndex({gid:1});
+         * db.Node.ensureIndex({created:-1});
+         * db.createCollection("ViewTemplate");
      */
      }
     // find().sort({$natural:-1}) <-- sortovanie an natural colls, mozno aj idne funguje takto?
     // http://www.mongodb.org/display/DOCS/Capped+Collections
+     /*
+      * db.coll.group(
+            key='function(doc) { return {"dt": doc.dt.toDateString()} }',
+            condition={'dt': {'$gt': datetime_obj_30_days_ago}},
+            initial={'downloads': 0},
+            reduce='function(curr, prev) { prev.downloads = Math.max(curr.downloads, prev.downloads) }'
+        )
+      *
+      db.system.js.save({_id: "sum",value: function (x, y) { return x + y; }});
+
+      db.system.js.save({_id: "sum",value: function (x, y) { return x + y; }});
+      */
 
 }

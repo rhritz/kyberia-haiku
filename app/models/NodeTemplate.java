@@ -7,12 +7,11 @@ import java.util.List;
 // v zavislosti od user, viewtemplate
 // node moze byt zobrazeny roznymi NodeTemplate
 
-import com.google.code.morphia.AbstractMongoEntity;
-import com.google.code.morphia.annotations.MongoDocument;
+import com.google.code.morphia.annotations.Entity;
 
 
-@MongoDocument
-public class NodeTemplate extends AbstractMongoEntity {
+@Entity
+public class NodeTemplate extends MongoEntity {
 
     public static final int BASIC_NODE = 1;
 

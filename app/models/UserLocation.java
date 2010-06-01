@@ -17,12 +17,12 @@
 */
 package models;
 
-import com.google.code.morphia.AbstractMongoEntity;
-import com.google.code.morphia.annotations.MongoDocument;
-import com.google.code.morphia.annotations.MongoTransient;
+import com.google.code.morphia.annotations.Entity;
+import com.google.code.morphia.annotations.Transient;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
+import com.mongodb.ObjectId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -33,14 +33,14 @@ import play.Logger;
 import plugins.MongoDB;
 
 
-@MongoDocument
-public class UserLocation extends AbstractMongoEntity {
+@Entity("UserLocation")
+public class UserLocation extends MongoEntity {
 
-    @MongoTransient
+    @Transient
     private String         username; // for sorting
     private String         userid;
     private String         location;
-    @MongoTransient
+    @Transient
     private String         locname; // <- nazov lokacie
     private Long           time;
 
@@ -66,12 +66,12 @@ public class UserLocation extends AbstractMongoEntity {
     public static synchronized void saveVisit(User user, String location)
     {
         // if location == null nezapisuj do db...
-        String userid = user.getId();
-        UserLocation ul = new UserLocation(userid, user.getUsername(),
+        ObjectId userid = user.getId();
+        UserLocation ul = new UserLocation(userid.toString(), user.getUsername(),
                 location, System.currentTimeMillis());
         Cache.set("user_location" + user.getId(), ul); // + expiry
         ul.save();
-        Bookmark.updateVisit(user.getId(), location);
+        Bookmark.updateVisit(userid, location);
         // TODO z tohto asi perzistentny plugin, stale to de/serializovat z cache
         // je blbost
         SortedSet<UserLocation> ll = Cache.get("user_locations",

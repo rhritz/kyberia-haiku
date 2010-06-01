@@ -17,34 +17,35 @@
 */
 package models;
 
-import com.google.code.morphia.AbstractMongoEntity;
-import com.google.code.morphia.annotations.MongoDocument;
+import com.google.code.morphia.annotations.Entity;
+import com.google.code.morphia.annotations.Transient;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
+import com.mongodb.ObjectId;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import plugins.*;
 import play.Logger;
 
-@MongoDocument
-public class Message extends AbstractMongoEntity {
+@Entity
+public class Message extends MongoEntity {
     private String content;
     private Long sent;
-    private String from;
-    private String to;
-    private String thread;
-    private List <String> deleted;
+    private ObjectId from;
+    private ObjectId to;
+    private ObjectId thread;
+    private List <ObjectId> deleted;
     // TODO String<>ObjectID?
 
     public Message() {}
 
     public Message( String content,
-                    String from,
-                    String to,
-                    String thread)
+                    ObjectId from,
+                    ObjectId to,
+                    ObjectId thread)
     {
         this.content = content;
         this.from    = from;
@@ -68,16 +69,18 @@ public class Message extends AbstractMongoEntity {
     // TODO nezobrazovat spravu tym ktori si spravu deletli
     public void delete(String uid)
     {
-        deleted.add(uid);
+        deleted.add(new ObjectId(uid));
         MongoDB.save(this, MongoDB.CMessage);
     }
 
     public static void send(
-            String fromId,
-            String toId,
+            String fromIdStr,
+            String toIdStr,
             String content
             )
     {
+        ObjectId fromId = new ObjectId(fromIdStr);
+        ObjectId toId = new ObjectId(toIdStr);
         MessageThread mt = MessageThread.getThread(fromId, toId, false);
         if (mt == null)
         {
@@ -96,9 +99,9 @@ public class Message extends AbstractMongoEntity {
     // list of last messages from a mailthread
     // TODO errorchecking
     public static List<Message> getLastMessages (
-            String threadId,
+            ObjectId threadId,
             boolean doUpdate,
-            String forUser,
+            ObjectId forUser,
             Integer start,
             Integer count)
     {
@@ -115,8 +118,8 @@ public class Message extends AbstractMongoEntity {
         return Lists.transform(iobj.toArray(), MongoDB.getSelf().toMessage());
     }
 
-    public static List<Message> getMessages(String threadId,
-            String forUser)
+    public static List<Message> getMessages(ObjectId threadId,
+            ObjectId forUser)
     {
         return getLastMessages(threadId, true, forUser, 0, 30);
     }

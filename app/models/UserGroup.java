@@ -17,10 +17,9 @@
 */
 package models;
 
-import com.google.code.morphia.AbstractMongoEntity;
+import com.google.code.morphia.annotations.Entity;
+import com.google.code.morphia.annotations.Transient;
 import com.google.code.morphia.Morphia;
-import com.google.code.morphia.annotations.MongoDocument;
-import com.google.code.morphia.annotations.MongoValue;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
@@ -32,42 +31,42 @@ import plugins.*;
 import play.Logger;
 import play.cache.Cache;
 
-@MongoDocument
-public class UserGroup extends AbstractMongoEntity {
+@Entity("UserGroup")
+public class UserGroup extends MongoEntity {
     String name;
-    String owner;
-    List<String> masters;
-    List<String> members;
-    List<String> extend; // usergroup inheritance - just a thought for now
-    String oid;  // ak sa vztahuje k nejakemu contentu, tak tu - just a thought for now
+    ObjectId owner;
+    List<ObjectId> masters;
+    List<ObjectId> members;
+    List<ObjectId> extend; // usergroup inheritance - just a thought for now
+    ObjectId oid;  // ak sa vztahuje k nejakemu contentu, tak tu - just a thought for now
 
     public UserGroup () {}
 
-    public UserGroup (String uid,
+    public UserGroup (ObjectId uid,
             String name,
-            List<String> members)
+            List<ObjectId> members)
     {
         this.owner   = uid;
         this.name    = name;
         this.members = members;
     }
 
-    public static UserGroup create(String uid, 
+    public static UserGroup create(ObjectId uid,
             String name,
-            List<String> members)
+            List<ObjectId> members)
     {
             UserGroup u = new UserGroup(uid, name, members);
             MongoDB.save(u, MongoDB.CUserGroup);
             return u;
     }
 
-    public static UserGroup load(String groupid) {
+    public static UserGroup load(ObjectId groupid) {
         UserGroup u = null;
         try {
             BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
                     getCollection(MongoDB.CUserGroup).
                     findOne(new BasicDBObject().
-                    append("_id",new ObjectId(groupid)));
+                    append("_id",groupid));
             if (iobj != null)
                 u = (UserGroup) MongoDB.getMorphia().
                         fromDBObject(UserGroup.class, (BasicDBObject) iobj);
@@ -80,7 +79,7 @@ public class UserGroup extends AbstractMongoEntity {
         return u;
     }
 
-    public static void addUser(String uid, String groupid) {
+    public static void addUser(ObjectId uid, ObjectId groupid) {
 
     }
 

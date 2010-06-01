@@ -17,9 +17,8 @@
 */
 package models;
 
-import com.google.code.morphia.AbstractMongoEntity;
-import com.google.code.morphia.annotations.MongoDocument;
-import com.google.code.morphia.annotations.MongoTransient;
+import com.google.code.morphia.annotations.Entity;
+import com.google.code.morphia.annotations.Transient;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
@@ -33,8 +32,8 @@ import play.Logger;
 import plugins.MongoDB;
 
 
-@MongoDocument
-public class Tag extends AbstractMongoEntity {
+@Entity
+public class Tag extends MongoEntity {
 
     String tag;
 

@@ -17,8 +17,8 @@
 */
 package models;
 
-import com.google.code.morphia.AbstractMongoEntity;
-import com.google.code.morphia.annotations.MongoDocument;
+import com.google.code.morphia.annotations.Entity;
+import com.google.code.morphia.annotations.Transient;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.ObjectId;
@@ -27,9 +27,8 @@ import java.util.List;
 import play.Logger;
 import plugins.MongoDB;
 
-@MongoDocument
-
-public class Fook extends AbstractMongoEntity {
+@Entity("brekeke")
+public class Fook extends MongoEntity {
 
     private ObjectId uid; // new ObjectId(id)
     private ObjectId nodeid;

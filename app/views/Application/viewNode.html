@@ -27,6 +27,8 @@
         </form>
     </div>
     <div class="nodeContent">
+        
+
         *{ renderujeme thread }*
         %{ prevDepth = 0; }%
         #{list items:thread, as:'node' }
@@ -73,7 +75,7 @@
             <input type="submit" value="Tag" onClick="javascript:this.form.action='@{Application.tag(id)}';submit();" />
        </form>
    #{/if}
-   #{if node && node.canEdit(uid)} <a href="@{Application.showEditNode(id)}">Edit</a>#{/if}
+   #{if node && node.canEdit(new com.mongodb.ObjectId(uid))} <a href="@{Application.showEditNode(id)}">Edit</a>#{/if}
    <form action="@{Application.viewNode(id)}" method="GET">
         <input type="text" size="10" name="id" />
         <input type="submit" value="View Node" />

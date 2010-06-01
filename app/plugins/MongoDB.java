@@ -63,6 +63,7 @@ public class MongoDB {
     public static final String CUserGroup     = "UserGroup";
     public static final String CUserLocation  = "UserLocation";
     public static final String CVote          = "Vote";
+    public static final String CViewTemplate  = "ViewTemplate";
 
     static {
         if (Play.configuration.containsKey("mongodb.addr"))
@@ -122,6 +123,7 @@ public class MongoDB {
             morphia.map(Tag.class);
             morphia.map(Vote.class);
             morphia.map(Page.class);
+            morphia.map(ViewTemplate.class);
             
         } catch (Exception e) {
             Logger.info("Brekeke @ mongo:: " + e.toString());
@@ -217,49 +219,60 @@ public class MongoDB {
     public class ToMessage implements Function<DBObject, Message> {
         public Message apply(DBObject arg) {
             return morphia.fromDBObject(Message.class,
-                   (BasicDBObject) arg);
+                   arg);
         }
     }
 
     public class ToMessageThread implements Function<DBObject, MessageThread> {
         public MessageThread apply(DBObject arg) {
             return morphia.fromDBObject(MessageThread.class,
-                   (BasicDBObject) arg);
+                    arg);
         }
     }
 
     public class ToUser implements Function<DBObject, User> {
         public User apply(DBObject arg) {
             return morphia.fromDBObject(User.class,
-                   (BasicDBObject) arg);
+                   arg);
         }
     }
 
     public class ToUserLocation implements Function<DBObject, UserLocation> {
         public UserLocation apply(DBObject arg) {
-            return morphia.fromDBObject(UserLocation.class,
-                   (BasicDBObject) arg);
+            return morphia.fromDBObject(UserLocation.class,   arg);
         }
     }
 
     public class ToNodeContent implements Function<DBObject, NodeContent> {
         public NodeContent apply(DBObject arg) {
-            return morphia.fromDBObject(NodeContent.class,
-                   (BasicDBObject) arg);
+            return morphia.fromDBObject(NodeContent.class,   arg);
         }
     }
 
     public class ToTag implements Function<DBObject, Tag> {
         public Tag apply(DBObject arg) {
             return morphia.fromDBObject(Tag.class,
-                   (BasicDBObject) arg);
+                   arg);
         }
     }
 
     public class ToBookmark implements Function<DBObject, Bookmark> {
         public Bookmark apply(DBObject arg) {
             return morphia.fromDBObject(Bookmark.class,
-                   (BasicDBObject) arg);
+                   arg);
         }
     }
 }
+/*
+ TODO
+ @OnApplicationStart
+public class EnsureGeoMongoIndex extends Job {
+
+        @Override
+        public void doJob() {
+                DB db = MongoDB.db();
+                DBCollection coll = db.getCollection("places");
+                coll.ensureIndex(new BasicDBObject("location", "2d"));
+        }
+}
+ */

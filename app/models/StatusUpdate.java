@@ -17,14 +17,14 @@
 */
 package models;
 
-import com.google.code.morphia.AbstractMongoEntity;
-import com.google.code.morphia.annotations.MongoDocument;
+import com.google.code.morphia.annotations.Entity;
+import com.google.code.morphia.annotations.Transient;
 import com.mongodb.ObjectId;
 import java.util.LinkedList;
 import java.util.List;
 
-@MongoDocument
-public class StatusUpdate extends AbstractMongoEntity {
+@Entity
+public class StatusUpdate extends MongoEntity {
 
     private ObjectId uid;
     private String   content;

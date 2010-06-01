@@ -17,9 +17,8 @@
 */
 package models;
 
-import com.google.code.morphia.AbstractMongoEntity;
-import com.google.code.morphia.annotations.MongoDocument;
-import com.google.code.morphia.annotations.MongoTransient;
+import com.google.code.morphia.annotations.Entity;
+import com.google.code.morphia.annotations.Transient;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
@@ -36,16 +35,16 @@ import play.cache.Cache;
 import plugins.MongoDB;
 import plugins.Validator;
 
-@MongoDocument
-public class NodeContent extends AbstractMongoEntity {
+@Entity("Node")
+public class NodeContent extends MongoEntity {
 
     private String        content     = "";
-    private String        owner       = ""; // mongoid ownera
+    private ObjectId      owner       ; // mongoid ownera
     private String        ownerGid; // grafove id ownera - pouziva sa niekde?
     private Long          created     = 0l;
     private String        cr_date     = "";
     private String        name        = "";
-    private String        parent      = "";
+    private ObjectId      par             ;
 
     private Integer       template    = 1;
     public  Long          gid         = 1l;
@@ -61,27 +60,29 @@ public class NodeContent extends AbstractMongoEntity {
 
     // tu by asi mali byt idcka tagov a nie tagy samotne
     private List<String>  tags;
-    private List<String>  kgivers;  // +k
-    private List<String>  mkgivers; // -k
+    private List<ObjectId>  kgivers;  // +k
+    private List<ObjectId>  mkgivers; // -k
 
-    private List<String>  bans;
-    private List<String>  access;
-    private List<String>  silence;
-    private List<String>  masters;
+    private List<ObjectId>  bans;
+    private List<ObjectId>  access;
+    private List<ObjectId>  silence;
+    private List<ObjectId>  masters;
 
-    private List<String>  fooks;
+    private List<ObjectId>  fooks;
 
-    @MongoTransient
-    private List<String>  vector;
+    @Transient
+    private List<ObjectId>  vector;
 
-    @MongoTransient
+    @Transient
     public Integer        depth       = 1;
+
+    private ObjectId      dfs;
 
     public NodeContent() {}
 
 
     public NodeContent (Node n,
-                        String ownerid,
+                        ObjectId ownerid,
                         Map<String,String> params,
                         List<String> roots)
     {
@@ -94,10 +95,24 @@ public class NodeContent extends AbstractMongoEntity {
         name    = params.containsKey(Haiku.NAME) ?
                     params.get(Haiku.NAME) : gid.toString(); // zatial
         owner   = ownerid;
-        collectionName = MongoDB.CNode;
         if (roots != null && roots.size() > 0)
-            parent = roots.get(0);
-        vector     = roots;
+            par = new ObjectId(roots.get(0));
+        // vector     = roots;
+
+        Logger.info("Adding node with content:: " + content);
+    }
+
+    public NodeContent (ObjectId ownerid,
+                        Map<String,String> params)
+    {
+        content = Validator.validate(params.get(Haiku.CONTENT));
+        created = System.currentTimeMillis();
+        cr_date = DateFormat.getDateTimeInstance(DateFormat.LONG,
+                    DateFormat.LONG).format(new Date(getCreated()));
+        template =  NodeTemplate.BASIC_NODE;
+        name    = params.containsKey(Haiku.NAME) ?
+                    params.get(Haiku.NAME) : gid.toString(); // zatial
+        owner   = ownerid;
 
         Logger.info("Adding node with content:: " + content);
     }
@@ -109,24 +124,24 @@ public class NodeContent extends AbstractMongoEntity {
             this.accessType = Integer.parseInt(accType);
         }
         String access = params.get("access");
-        if (access != null && ! this.access.contains(access)) {
-            this.access.add(access);
+        if (access != null && ! this.access.contains(new ObjectId(access))) {
+            this.access.add(new ObjectId(access));
         }
         String silence = params.get("silence");
-        if (silence != null && ! this.silence.contains(silence)) {
-            this.silence.add(silence);
+        if (silence != null && ! this.silence.contains(new ObjectId(silence))) {
+            this.silence.add(new ObjectId(silence));
         }
         String master = params.get("master");
-        if (master != null && ! this.masters.contains(master) ) {
-            this.masters.add(master);
+        if (master != null && ! this.masters.contains(new ObjectId(master)) ) {
+            this.masters.add(new ObjectId(master));
         }
         String ban = params.get("ban");
-        if (ban != null && ! this.bans.contains(ban)) {
-            this.bans.add(ban);
+        if (ban != null && ! this.bans.contains(new ObjectId(ban))) {
+            this.bans.add(new ObjectId(ban));
         }
         String chOwner = params.get("change_owner");
-        if (chOwner != null && User.load(chOwner) != null) {
-            owner = chOwner;
+        if (chOwner != null && User.load(new ObjectId(chOwner)) != null) {
+            owner = new ObjectId(chOwner);
         }
         String chParent = params.get("parent");
         if (chParent != null && NodeContent.load(chParent) != null) {
@@ -188,16 +203,19 @@ public class NodeContent extends AbstractMongoEntity {
 
     // save to mongodb
     // TODO invalidate cache
-    public String save()
+    public NodeContent save()
     {
         try {
             Logger.info("creating new node");
+            this.dfs = new ObjectId("4bf8b6bf1e9f20a452e3b2c3");
             MongoDB.save(this, MongoDB.CNode);
             // TODO toto je snad docasne.. ked opravia driver tak aby vracal
             // last insert id
-            NodeContent withId = loadByGid(this.gid);
-            Logger.info("new NodeContent now has ID::" + withId.getId());
-            return withId.getId();
+            NodeContent koko = MongoDB.getMorphia().fromDBObject(NodeContent.class,
+                           (BasicDBObject) MongoDB.getDB().getCollection("Node").findOne(
+                           (BasicDBObject) MongoDB.getMorphia().toDBObject(this)));
+            Logger.info("new NodeContent now has ID::" + koko.getId());
+            return koko;
         } catch (Exception ex) {
             Logger.info("create failed:");
             ex.printStackTrace();
@@ -268,6 +286,30 @@ public class NodeContent extends AbstractMongoEntity {
         return n;
     }
 
+    // load from mongodb
+    public static NodeContent load(ObjectId id)
+    {
+        // Logger.info("About to load node " + id);
+        NodeContent n = Cache.get("node_" + id, NodeContent.class);
+        if (n != null )
+            return n;
+        try {
+            DBObject iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
+                    findOne(new BasicDBObject().append("_id",id));
+            if (iobj !=  null) {
+                n = MongoDB.getMorphia().fromDBObject(NodeContent.class,
+                           (BasicDBObject) iobj);
+                Cache.add("node_" + id, n);
+                Cache.add("node_gid_" + n.gid, id);
+            }
+        } catch (Exception ex) {
+            Logger.info("load node");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+        }
+        return n;
+    }
+
     // load by graph id
     public static NodeContent loadByGid(Long gid)
     {
@@ -295,9 +337,9 @@ public class NodeContent extends AbstractMongoEntity {
     }
 
     // bud to bude priamo v Node ALEBO v grupach ALEBO zdedene cez grupy
-    public boolean canRead(String uid)
+    public boolean canRead(ObjectId uid)
     {
-        Logger.info("canRead:: uid " + uid + " acc type " + accessType);
+        Logger.info("canRead:: uid " + uid.toString() + " acc type " + accessType);
         if (owner.equals(uid))
             return true;
         if (accessType == null) 
@@ -321,9 +363,9 @@ public class NodeContent extends AbstractMongoEntity {
     }
 
     // moze pridavat reakcie, tagy etc?
-    public boolean canWrite(String uid)
+    public boolean canWrite(ObjectId uid)
     {
-        Logger.info("canWrite:: uid " + uid + " acc type " + accessType);
+        Logger.info("canWrite:: uid " + uid.toString() + " acc type " + accessType);
 
         if (owner.equals(uid))
             return true;
@@ -347,7 +389,7 @@ public class NodeContent extends AbstractMongoEntity {
     }
 
     // moze editovat properties?
-    public boolean canEdit(String uid)
+    public boolean canEdit(ObjectId uid)
     {
         // Logger.info("canEdit:: " + User.getNameForId(owner) + " acc type " + accessType + " owner:" + User.getNameForId(owner));
         return owner.equals(uid) || (masters != null && masters.contains(uid));
@@ -359,10 +401,10 @@ public class NodeContent extends AbstractMongoEntity {
         
     }
 
-    public void fook(String uid)
+    public void fook(ObjectId uid)
     {
         if (fooks == null) {
-            fooks = new LinkedList<String>();
+            fooks = new LinkedList<ObjectId>();
         } else if (fooks.contains(uid)) {
             return;
         }
@@ -373,7 +415,7 @@ public class NodeContent extends AbstractMongoEntity {
     /**
      * @return the owner
      */
-    public String getOwner() {
+    public ObjectId getOwner() {
         return owner;
     }
 
@@ -401,8 +443,8 @@ public class NodeContent extends AbstractMongoEntity {
     /**
      * @return the parent
      */
-    public String getParent() {
-        return parent;
+    public ObjectId getParent() {
+        return par;
     }
 
     /**
@@ -431,6 +473,65 @@ public class NodeContent extends AbstractMongoEntity {
      */
     public void setMk(Long mk) {
         this.mk = mk;
+    }
+
+    // docasne
+    public static String addNode(ObjectId parent,
+            Map<String,String> params,
+            ObjectId ownerid)
+    {
+        String retid = null;
+        // TODO validate content & name -> antisamy?
+        // TODO podstatna vec co tu potrebujeme je isPut a pripadne permissions
+        List<ObjectId> roots = new LinkedList<ObjectId>();
+        String parOwner = null;
+        NodeContent newnode = new NodeContent(ownerid,params).save();
+        ObjectId mongoId = newnode.getId();
+        if (mongoId == null)
+        {
+            // throw new Exception();
+            return null;
+        }
+        Logger.info("parent :: " + parent);
+        if (parent != null) {
+            NodeContent root = NodeContent.load(parent);
+            NodeContent sibling = null;
+            ObjectId dfs;
+            if (root != null) {
+                newnode.par = parent;
+                Logger.info("parent loaded :: " + root.dfs);
+                dfs = root.dfs;
+                if (dfs != null ) {
+                    sibling = NodeContent.load(dfs);
+                }
+                root.dfs = mongoId;
+                root.update();
+                Logger.info("parent saved:: " + root.dfs);
+                if (sibling != null) {
+                    newnode.dfs = sibling.getId();
+                } else {
+                    newnode.dfs = root.getId();
+                }
+                Logger.info("newnode dfs:: " + newnode.dfs );
+                // nizsie su updaty notifikacii
+                NodeContent upnode = root;
+                for (int i = 0; i < 10; i++)
+                    // 10 - max hier depth for notif update
+                {
+                      roots.add(upnode.getId());
+                      ObjectId re = upnode.getParent();
+                      if (re == null) break;
+                      upnode = NodeContent.load(re);
+                }
+                User parentOwner = User.load(root.owner);
+                if (parentOwner != null) {
+                    parOwner = parentOwner.getIdString();
+                }
+            }
+        }
+        newnode.update();
+        Activity.newNodeActivity(mongoId, newnode, roots, ownerid, parOwner);
+        return retid;
     }
 
 }

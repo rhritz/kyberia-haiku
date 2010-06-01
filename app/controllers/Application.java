@@ -17,17 +17,16 @@
 */
 package controllers;
 
+import com.mongodb.ObjectId;
 import java.io.File;
 import play.mvc.*;
 import play.Logger;
 import models.*;
+import play.mvc.Controller;
 
 // find . -name "*java" -exec cat '{}' ';' | wc -l
 // find . -name "*java" -exec grep 'TODO' '{}' ';' -print
-
-// zopar pravidiel:
-// - v kazdom POST forme tag #{authenticityToken /}, v controlleri potom
-// checkAuthenticity();
+// JDK_HOME=/usr/lib/jvm/java-6-sun-1.6.0.20/ ./idea.sh
 
 @With(Secure.class)
 public class Application extends Controller {
@@ -43,7 +42,7 @@ public class Application extends Controller {
             // UserLocation.saveVisit(uid, "some location");
             // - toto enjak doriesit s bookmark visits a tak
             renderArgs.put("newMail", 
-                    MessageThread.getUnreadMailNotif(session.get(User.ID)));
+                    MessageThread.getUnreadMailNotif(new ObjectId(session.get(User.ID))));
         } else {
             // to este neznamena ze sme uplne mimo, snad
             // moze Secure vytvorit nejaku fake session pre
@@ -63,7 +62,10 @@ public class Application extends Controller {
     }
 
     public static void index() {
-        Page main = Page.getByName(Page.MAIN);
+        // Page.getByName(Controller.params, Controller.renderArgs, Controller.request, Controller.session
+
+        Page main = Page.getByName(Page.MAIN, params, renderArgs, request, session);
+        renderArgs.put(ViewTemplate.TOP_LEVEL_TEMPLATE, "main.html"); // main.getToplevelTemplate? alebo skor z viewu -> main.view.getToplevelTemplate
         render(main.getTemplate());
     }
 
@@ -76,6 +78,7 @@ public class Application extends Controller {
         render(id);
     }
 
+    /*
     public static void addNode(String id, String content) {
         Logger.info("about to add node:" + id + "," + content );
         // checkAuthenticity();
@@ -93,12 +96,23 @@ public class Application extends Controller {
         }
         displayNode(nid);
     }
+     */
 
-    // zle
-    public static void delAllNodes() {
-        Haiku h = new Haiku();
-        h.delAllNodes();
-        displayNode("0");
+     public static void addNode(String id, String content) {
+        Logger.info("about to add node:" + id + "," + content );
+        // checkAuthenticity();
+        NodeContent parentNode = NodeContent.load(id);
+        String newId = NodeContent.addNode(id == null ? null : new ObjectId(id),
+                    Controller.params.allSimple(),
+                    new ObjectId(session.get(User.ID))
+                );
+        String nid = null;
+        if (id == null) {
+            nid = NodeContent.load(new ObjectId(newId)).getIdString();
+        } else {
+            nid = id;
+        }
+        displayNode(nid);
     }
 
 
@@ -109,8 +123,8 @@ public class Application extends Controller {
     {
         checkAuthenticity();
         Logger.info("Add friend :: " + uid);
-        User u = User.load(session.get(User.ID));
-        u.addFriend(uid);
+        User u = User.load(new ObjectId(session.get(User.ID)));
+        u.addFriend(new ObjectId(uid));
         showUser(uid);
     }
 
@@ -118,8 +132,8 @@ public class Application extends Controller {
     {
         checkAuthenticity();
         Logger.info("Add ignore :: " + uid);
-        User u = User.load(session.get(User.ID));
-        u.addIgnore(uid);
+        User u = User.load(new ObjectId(session.get(User.ID)));
+        u.addIgnore(new ObjectId(uid));
         showUser(uid);
     }
 
@@ -127,8 +141,8 @@ public class Application extends Controller {
     {
         checkAuthenticity();
         Logger.info("Add ignoreMail :: " + uid);
-        User u = User.load(session.get(User.ID));
-        u.addIgnoreMail(uid);
+        User u = User.load(new ObjectId(session.get(User.ID)));
+        u.addIgnoreMail(new ObjectId(uid));
         showUser(uid);
     }
 
@@ -137,7 +151,7 @@ public class Application extends Controller {
         checkAuthenticity();
         Logger.info("Show edit node:: " + id);
         NodeContent node = NodeContent.load(id);
-        if (node.canEdit(session.get(User.ID))) {
+        if (node.canEdit(new ObjectId(session.get(User.ID)))) {
             node.edit(Controller.params.allSimple());
         }
         displayNode(id);
@@ -164,7 +178,7 @@ public class Application extends Controller {
         checkAuthenticity();
         Logger.info("Fook ::" + id);
         NodeContent n = NodeContent.load(id);
-        n.fook(session.get(User.ID));
+        n.fook(new ObjectId(session.get(User.ID)));
         displayNode(id);
     }
 
@@ -213,10 +227,10 @@ public class Application extends Controller {
         NodeContent node = NodeContent.load(id);
         String uid = session.get(User.ID);
         renderArgs.put("uid", uid);
-        if (node.canRead(uid)) {
+        if (node.canRead(new ObjectId(uid))) {
             Long gid = node.gid;
             // logicky UserVisit save patri sem, lebo tu vieme co ideme zobrazit
-            UserLocation.saveVisit(User.load(uid), id);
+            UserLocation.saveVisit(User.load(new ObjectId(uid)), id);
             renderArgs.put("node", node);
             renderArgs.put("content", h.viewNode(gid));
             renderArgs.put("thread", h.getThreadedChildren(gid,start,count));
@@ -236,7 +250,7 @@ public class Application extends Controller {
         String uid = session.get(User.ID);
         NodeContent node = NodeContent.load(id);
         if (node != null) {
-            if (node.canEdit(uid)) {
+            if (node.canEdit(new ObjectId(uid))) {
                 renderArgs.put("id", id);
                 renderArgs.put("node", node);
                 renderArgs.put("users", User.loadUsers(null, 0 , 30, null));
@@ -261,13 +275,14 @@ public class Application extends Controller {
     public static void showMail(String thread) {
         String uid = session.get(User.ID);
         renderArgs.put("threads",
-                MessageThread.viewUserThreads(uid,session));
+                MessageThread.viewUserThreads(new ObjectId(uid),session));
         renderArgs.put("users", User.loadUsers(null, 0 , 30, null));
         if (thread == null)
         {
             thread = session.get("LastThreadId");
         }
-        renderArgs.put("mailMessages", Message.getMessages(thread, uid));
+        renderArgs.put("mailMessages", 
+                Message.getMessages(new ObjectId(thread), new ObjectId(uid)));
         render(ViewTemplate.MAIL_HTML);
     }
 
@@ -279,9 +294,11 @@ public class Application extends Controller {
         Message.send(fromId, to, content);
         renderArgs.put("users", User.loadUsers(null, 0 , 30, null));
         renderArgs.put("threads",
-                MessageThread.viewUserThreads(session.get(User.ID),session));
+                MessageThread.viewUserThreads(new ObjectId(session.get(User.ID)),
+                    session));
         renderArgs.put("mailMessages",
-                Message.getMessages(session.get("LastThreadId"), fromId));
+                Message.getMessages(new ObjectId(session.get("LastThreadId")),
+                    new ObjectId(fromId)));
         render(ViewTemplate.MAIL_HTML);
     }
 
@@ -301,7 +318,7 @@ public class Application extends Controller {
         Haiku h = new Haiku();
         renderArgs.put("nodes",
                 Nodelist.getUserNodes(session.get(User.ID),null));
-        User me = User.load(session.get(User.ID));
+        User me = User.load(new ObjectId(session.get(User.ID)));
         /* should this be lazily evaluated? */
         renderArgs.put("friends", me.listFriends());
         renderArgs.put("uid", session.get(User.ID));
@@ -311,7 +328,7 @@ public class Application extends Controller {
     public static void showUser(String id) {
         Haiku h = new Haiku();
         // renderArgs.put("user", h.viewUser(id));
-        User u = User.load(id);
+        User u = User.load(new ObjectId(id));
         if ( u !=null ) {
             renderArgs.put("uid", u.getId());
             // renderArgs.put("user", user);
@@ -359,6 +376,7 @@ public class Application extends Controller {
             Cache.set(session.getId() + "-messages", messages, "30mn");
         }
          */
+        // Controller.renderArgs.get/put?
         renderArgs.put("messages", Alert.pop(session.get(User.ID)));
     }
 
@@ -393,7 +411,7 @@ public class Application extends Controller {
 
     public static void changePwd(String uid) {
         checkAuthenticity();
-        User me = User.load(session.get(User.ID));
+        User me = User.load(new ObjectId(session.get(User.ID)));
         me.changePwd(Controller.params.allSimple());
         showMe();
     }
@@ -402,4 +420,6 @@ public class Application extends Controller {
     public static void event(String id) {
        // vyhryzni event z params, urob akciu, vrat displayNode
     }
+
+
 }

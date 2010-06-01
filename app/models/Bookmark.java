@@ -17,11 +17,9 @@
 */
 package models;
 
-import com.google.code.morphia.AbstractMongoEntity;
+import com.google.code.morphia.annotations.Entity;
+import com.google.code.morphia.annotations.Transient;
 import com.google.code.morphia.Morphia;
-import com.google.code.morphia.annotations.MongoDocument;
-import com.google.code.morphia.annotations.MongoValue;
-import com.google.code.morphia.annotations.MongoTransient;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
@@ -42,18 +40,18 @@ import play.cache.Cache;
 // potom pre kazdy node ukladat last_update_time do caceh a porovnavat
 // pri nacitani bookamrkov
 
-@MongoDocument
-public class Bookmark extends AbstractMongoEntity {
+@Entity("Bookmark")
+public class Bookmark extends MongoEntity {
 
     private String  destination;     // dest url/path
     private String  alt;             // alt link to diplay next to dest url
     private String  name;            // dest name
     private Integer typ;             // - standard (node) + streams
     private Long    lastVisit;
-    private List    notifications;   // list of activities since last visit(?)
-    private String  uid;
+    // private List    notifications;   // list of activities since last visit(?)
+    private ObjectId  uid;
 
-    @MongoTransient
+    @Transient
     private Integer numNew;
 
     private List<String>  tags;
@@ -66,7 +64,7 @@ public class Bookmark extends AbstractMongoEntity {
 
     public Bookmark() {}
 
-    public Bookmark(String dest, String uid)
+    public Bookmark(String dest, ObjectId uid)
     {
         this.destination = dest;
         this.uid         = uid;
@@ -194,7 +192,7 @@ public class Bookmark extends AbstractMongoEntity {
     }
 
     // List of Bookmarks by destination id
-    public static List<Bookmark> getByDest(String dest)
+    public static List<Bookmark> getByDest(ObjectId dest)
     {
         List<Bookmark> b = null;
         try {
@@ -219,7 +217,7 @@ public class Bookmark extends AbstractMongoEntity {
         Bookmark b = Cache.get("bookmark_" + uid + "_" + dest, Bookmark.class);
         if (b != null )
             return;
-        b = new Bookmark(dest, uid);
+        b = new Bookmark(dest, new ObjectId(uid));
         MongoDB.save(b, MongoDB.CBookmark);
         Cache.delete("bookmark_" + uid);
     }
@@ -240,24 +238,24 @@ public class Bookmark extends AbstractMongoEntity {
         }
     }
 
-    static void updateVisit(String uid, String location) {
+    static void updateVisit(ObjectId uid, String location) {
         // Logger.info("Updating visit::" + "bookmark_" + uid + "_" + location);
         Bookmark b = (Bookmark) Cache.get("bookmark_" + uid + "_" + location);
         if (b != null) {
             b.lastVisit = System.currentTimeMillis();
-            Cache.replace("bookmark_" + uid + "_" + location, b);
+            Cache.replace("bookmark_" + uid.toString() + "_" + location, b);
             MongoDB.update(b, MongoDB.CBookmark);
         }
     }
 
-    static void invalidate(String uid, String dest) {
+    static void invalidate(ObjectId uid, String dest) {
         Cache.delete("bookmark_" + uid + "_" + dest);
     }
 
     /**
      * @return the uid
      */
-    public String getUid() {
+    public ObjectId getUid() {
         return uid;
     }
 }

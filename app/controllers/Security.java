@@ -25,7 +25,7 @@ public class Security extends Secure.Security {
         User u = User.login(username, password);
         if (u != null) {
             session.put(User.USERID, u.getUserid());
-            session.put(User.ID,     u.getId());
+            session.put(User.ID,     u.getIdString());
             return true;
         } else {
             return false;

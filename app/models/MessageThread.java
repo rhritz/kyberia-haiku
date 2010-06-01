@@ -17,10 +17,9 @@
 */
 package models;
 
-import com.google.code.morphia.AbstractMongoEntity;
+import com.google.code.morphia.annotations.Entity;
+import com.google.code.morphia.annotations.Transient;
 import com.google.code.morphia.Morphia;
-import com.google.code.morphia.annotations.MongoDocument;
-import com.google.code.morphia.annotations.MongoValue;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
@@ -34,14 +33,14 @@ import plugins.*;
 import play.Logger;
 import play.cache.Cache;
 
-@MongoDocument
-public class MessageThread extends AbstractMongoEntity {
+@Entity("MessageThread")
+public class MessageThread extends MongoEntity {
 
     // { _id: '...', users: [user1, user2...]}
     // @Indexed
-    private List<String> users;
-    private List<String> unreads;
-    private List<String> deleted;
+    private List<ObjectId> users;
+    private List<ObjectId> unreads;
+    private List<ObjectId> deleted;
 
     public static final String USERS   = "users";
     public static final String UNREAD  = "unreads";
@@ -49,18 +48,18 @@ public class MessageThread extends AbstractMongoEntity {
 
     public MessageThread() {}
 
-    public MessageThread(String from, 
-                         String to)
+    public MessageThread(ObjectId from,
+                         ObjectId to)
     {
-        users = new LinkedList<String>();
+        users = new LinkedList<ObjectId>();
         users.add(from);
         users.add(to);
     }
 
     // create a new mailthread if it doesn't already exist
-    public static MessageThread create(String from, String to)
+    public static MessageThread create(ObjectId from, ObjectId to)
     {
-        String c = getThreadId(from, to);
+        ObjectId c = getThreadId(from, to);
         if (c != null)
         {
             return null;
@@ -81,7 +80,7 @@ public class MessageThread extends AbstractMongoEntity {
     }
 
     // loadne vsetky thready usera, zoradi podla poctu neprecitanych sprav
-    public static List<MessageThread> getUserThreads(String uid)
+    public static List<MessageThread> getUserThreads(ObjectId uid)
     {
         // TODO limitneme to na 30, treba potom pridat moznost zobrazit vsetko
         List<MessageThread> r = null;
@@ -106,7 +105,7 @@ public class MessageThread extends AbstractMongoEntity {
         return r;
     }
 
-    public static String viewUserThreads(String uid,
+    public static String viewUserThreads(ObjectId uid,
             play.mvc.Scope.Session session)
     {
         List<MessageThread> r = getUserThreads(uid);
@@ -122,12 +121,13 @@ public class MessageThread extends AbstractMongoEntity {
                     ret.append("<a href=/mail/").append(m.id).append(">");
                     if (m.users != null )
                     {
-                        for (String oid : m.users) {
+                        for (ObjectId oid : m.users) {
+                            // TODO ObjectId vs. equals je na tom ako?
                             if (! uid.equals(oid)) {
                                 ret.append(User.getNameForId(oid) );
                                 if (m.unreads != null) {
                                     int un = 0;
-                                    for (String uu : m.unreads) {
+                                    for (ObjectId uu : m.unreads) {
                                         // toto je pocet nami neprecitanych
                                         // v tomto threade
                                         un += uid.equals(uu) ? 1 : 0;
@@ -148,14 +148,14 @@ public class MessageThread extends AbstractMongoEntity {
     // vratime thread 
     // doRead - oznacime neprecitane posty v nom ako precitane
     // pre aktualneho usera
-    public static MessageThread getThread(String forUser, 
-            String otherUser,
+    public static MessageThread getThread(ObjectId forUser,
+            ObjectId otherUser,
             boolean doRead)
     {
         Logger.info("Trying to find thread for " + forUser + " & " + otherUser);
         try {
             BasicDBObject query = new BasicDBObject().append(USERS,
-                    new BasicDBObject("$all",new String[]{forUser,otherUser}) );
+                    new BasicDBObject("$all",new ObjectId[]{forUser,otherUser}) );
             BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
                     getCollection(MongoDB.CMessageThread).findOne(query);
             if (iobj !=  null) {
@@ -164,13 +164,13 @@ public class MessageThread extends AbstractMongoEntity {
                 Logger.info("thread found: " + m.getId());
                 if (doRead) {
                     // oznacime posty za precitane pre forUser
-                    LinkedList<String> lr = new LinkedList<String>();
-                    for (String s : m.unreads) {
+                    LinkedList<ObjectId> lr = new LinkedList<ObjectId>();
+                    for (ObjectId s : m.unreads) {
                         if (s.equals(forUser)) {
                             lr.add(s);
                         }
                     }
-                    for (String s : lr) {
+                    for (ObjectId s : lr) {
                             m.unreads.remove(s);
                     }
                     MongoDB.update(m, MongoDB.CMessageThread);
@@ -186,7 +186,7 @@ public class MessageThread extends AbstractMongoEntity {
     }
 
     // tu potrebujeme len thread id, takze mozeme veselo cachovat
-    public static String getThreadId(String from, String to)
+    public static ObjectId getThreadId(ObjectId from, ObjectId to)
     {
         String mt = Cache.get("message_thread-"+from+"-"+to, String.class);
         if (mt == null) {
@@ -200,29 +200,29 @@ public class MessageThread extends AbstractMongoEntity {
     }
 
     // notifikuj thread o pridani noveho postu
-    public void notify(String from, String to)
+    public void notify(ObjectId from, ObjectId to)
     {
         unreads.add(to);
         MongoDB.save(this, MongoDB.CMessageThread);
     }
 
     // oznac thread ako precitany danym userom
-    public static void setAsRead(String threadId, String forUser) {
+    public static void setAsRead(ObjectId threadId, ObjectId forUser) {
         try {
             BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
                     getCollection(MongoDB.CMessageThread).
                     findOne(new BasicDBObject().
-                    append("_id", new ObjectId(threadId)));
+                    append("_id", threadId));
             if (iobj !=  null) {
                 MessageThread m = MongoDB.getMorphia().
                         fromDBObject(MessageThread.class, iobj);
-                LinkedList<String> lr = new LinkedList<String>();
-                for (String s : m.unreads) {
+                LinkedList<ObjectId> lr = new LinkedList<ObjectId>();
+                for (ObjectId s : m.unreads) {
                     if (s.equals(forUser)) {
                         lr.add(s);
                     }
                 }
-                for (String s : lr) {
+                for (ObjectId s : lr) {
                         m.unreads.remove(s);
                 }
                 MongoDB.update(m, MongoDB.CMessageThread);
@@ -235,16 +235,16 @@ public class MessageThread extends AbstractMongoEntity {
     }
 
     // utility pre meno druheho usera v threade
-    private static String getOtherUser(List<String> users, String uid )
+    private static String getOtherUser(List<ObjectId> users, ObjectId uid )
     {
-        for (String u : users)
+        for (ObjectId u : users)
             if (! uid.equals(u))
                 return User.getNameForId(u);
         // nieco je zle
         return "";
     }
 
-    public static List<String> checkUnreadMail(String uid)
+    public static List<String> checkUnreadMail(ObjectId uid)
     {
         List<String> ll = new LinkedList<String>();
         try {
@@ -273,7 +273,7 @@ public class MessageThread extends AbstractMongoEntity {
     }
 
     // provizorne lesenie
-    public static String getUnreadMailNotif(String uid) {
+    public static String getUnreadMailNotif(ObjectId uid) {
         StringBuilder ret = new StringBuilder();
         for (String s : checkUnreadMail(uid))
         {
@@ -284,7 +284,7 @@ public class MessageThread extends AbstractMongoEntity {
 
     // TODO nezobrazovat tym ktori si spravu deletli
     // TODO asi tento flag by mal byt v Message a nie tu
-    public void delete(String uid)
+    public void delete(ObjectId uid)
     {
         deleted.add(uid);
         MongoDB.save(this, MongoDB.CMessageThread);

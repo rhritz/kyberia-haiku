@@ -17,11 +17,9 @@
 */
 package models;
 
-import com.google.code.morphia.AbstractMongoEntity;
+import com.google.code.morphia.annotations.Entity;
+import com.google.code.morphia.annotations.Transient;
 import com.google.code.morphia.Morphia;
-import com.google.code.morphia.annotations.MongoDocument;
-import com.google.code.morphia.annotations.MongoValue;
-import com.google.code.morphia.annotations.MongoCollectionName;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
@@ -38,33 +36,30 @@ import play.Logger;
 // new nodes etc create new activity instances to notify bookmarks etc
 // about these new events
 
-@MongoDocument
-public class Activity extends AbstractMongoEntity {
+@Entity("Activity")
+public class Activity extends MongoEntity {
     
-    private String         oid;  // o ktorom objekte je tato notifikacia
+    private ObjectId         oid;  // o ktorom objekte je tato notifikacia
     private Integer        type; // enum? new, delete...? zatial neviem
     private Long           date;
     private String         name; // nazov prispevku, meno usera atd
                                  // pripadne popis aktivity?
-    private List<String>   vector;
+    private List<ObjectId>   vector;
     // vecna otazka: String alebo oids?
-    private List<String>   ids;  // idcka nodov ktore notifikujeme
-    private List<String>   uids; // userov ktorych notifikujeme, skrze friend/follow
-    private String         parid; // user submission children - len ak parowner != owner
-    private String         owner;
+    private List<ObjectId>   ids;  // idcka nodov ktore notifikujeme
+    private List<ObjectId>   uids; // userov ktorych notifikujeme, skrze friend/follow
+    private ObjectId         parid; // user submission children - len ak parowner != owner
+    private ObjectId         owner;
     
-    @MongoCollectionName 
-    private String         actName;
-
     public Activity () {}
 
-    public Activity (String oid, 
+    public Activity (ObjectId oid,
                      Long date,
-                     List<String> ids,
-                     List<String> uids,
-                     List<String> vector,
-                     String parid,
-                     String owner)
+                     List<ObjectId> ids,
+                     List<ObjectId> uids,
+                     List<ObjectId> vector,
+                     ObjectId parid,
+                     ObjectId owner)
     {
         this.oid    = oid;
         this.date   = date;
@@ -76,18 +71,18 @@ public class Activity extends AbstractMongoEntity {
     }
     
     public static void newNodeActivity(
-            String id,
+            ObjectId id,
             NodeContent node,
-            List<String> parents,
-            String ownerid,
+            List<ObjectId> parents,
+            ObjectId ownerid,
             String parOwnerGid
             )
     {
         try {
             Logger.info("@newNodeActivity");
-            List<String> friends = User.load(ownerid).getFriends();
+            List<ObjectId> friends = User.load(ownerid).getFriends();
             User parent = User.loadByGid(parOwnerGid);
-            String parOwnerId = null;
+            ObjectId parOwnerId = null;
             if (parent != null) {
                 parOwnerId = parent.getId();
             }
@@ -105,10 +100,10 @@ public class Activity extends AbstractMongoEntity {
                 usersOnline.put(u.getUserid(), 1);
 
             // update bookmarks for users online
-            for (String par : parents) 
+            for (ObjectId par : parents)
                 for (Bookmark b : Bookmark.getByDest(par)) 
                     if (usersOnline.containsKey(b.getUid())) 
-                        Bookmark.invalidate(b.getUid(),par);
+                        Bookmark.invalidate(b.getUid(),par.toString());
         } catch (Exception ex) {
             Logger.info("newNodeActivity failed:");
             ex.printStackTrace();

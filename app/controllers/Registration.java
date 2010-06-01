@@ -36,7 +36,7 @@ public class Registration extends Controller {
         if (userid != null && userid > 0) {
             // TODO zobrazime userinfo ale este nie je prihlaseny
             User u = User.loadByGid(userid.toString());
-            renderArgs.put("uid", u.getId());
+            renderArgs.put("uid", u.getIdString());
             renderArgs.put("user",u);
             render(ViewTemplate.SHOW_ME_HTML);
         } else {

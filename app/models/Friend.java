@@ -1,9 +1,9 @@
 package models;
 
-import com.google.code.morphia.AbstractMongoEntity;
-import com.google.code.morphia.annotations.MongoDocument;
+import com.google.code.morphia.annotations.Entity;
+import com.google.code.morphia.annotations.Transient;
 
-@MongoDocument
-public class Friend extends AbstractMongoEntity {
+@Entity
+public class Friend extends MongoEntity {
 
 }

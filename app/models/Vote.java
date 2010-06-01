@@ -17,11 +17,9 @@
 */
 package models;
 
-import com.google.code.morphia.AbstractMongoEntity;
+import com.google.code.morphia.annotations.Entity;
+import com.google.code.morphia.annotations.Transient;
 import com.google.code.morphia.Morphia;
-import com.google.code.morphia.annotations.MongoDocument;
-import com.google.code.morphia.annotations.MongoTransient;
-import com.google.code.morphia.annotations.MongoValue;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
@@ -35,9 +33,8 @@ import plugins.*;
 import play.Logger;
 import play.cache.Cache;
 
-@MongoDocument
-
-public class Vote extends AbstractMongoEntity {
+@Entity("Vote")
+public class Vote extends MongoEntity {
 
     private List<Option> options; // TODO v pohode embedded?
     private List<String> votes;
@@ -45,7 +42,7 @@ public class Vote extends AbstractMongoEntity {
     private String description;
     private String owner; // nie nutne
     // private int type;
-    @MongoTransient
+    @Transient
     private Integer totalVotes;
 
     public Vote() {}
@@ -125,7 +122,7 @@ public class Vote extends AbstractMongoEntity {
         boolean suc = false;
         if (hasVoted(u))
             return false;
-        votes.add(u.getId());
+        votes.add(u.getIdString());
         Option o = options.get(optid);
         if (o != null ) {
             suc = o.vote();
@@ -140,7 +137,7 @@ public class Vote extends AbstractMongoEntity {
     // pripadne votes ako hash?
     public boolean hasVoted(User u) {
         for (String s: votes)
-            if (s.equals(u.getId()))
+            if (s.equals(u.getIdString()))
                 return true;
         return false;
     }
@@ -154,9 +151,9 @@ public class Vote extends AbstractMongoEntity {
         private String name;
         
         private Integer numVotes;
-        @MongoTransient
+        @Transient
         private List<String> results;
-        @MongoTransient
+        @Transient
         private Integer percentage;
 
         public Option() {}

@@ -20,12 +20,12 @@ package models;
 // definuje celkovo pohlad na stranku
 
 import java.util.HashMap;
-import com.google.code.morphia.AbstractMongoEntity;
-import com.google.code.morphia.annotations.MongoDocument;
+import com.google.code.morphia.annotations.Entity;
+import com.google.code.morphia.annotations.Transient;
 
 // - zavisi od usera a sposobu pristupu
-@MongoDocument
-public class ViewTemplate extends AbstractMongoEntity{
+@Entity("ViewTemplate")
+public class ViewTemplate extends MongoEntity{
 
         // hlavne templaty - nazvy
         public static final String VIEW_USER = "view_user";
@@ -45,6 +45,7 @@ public class ViewTemplate extends AbstractMongoEntity{
         public static final String SHOW_TAGS_HTML = "app/views/Application/showTags.html";
         public static final String ADD_USER_HTML = "app/views/Application/addUser.html";
 
+        public static final String TOP_LEVEL_TEMPLATE = "topLevelTemplate";
 
 	public boolean isDefault; // true - this is the root/default view
 	// public String superViewId;  // view inheritance
@@ -157,6 +158,11 @@ public class ViewTemplate extends AbstractMongoEntity{
         {
             // zatial tmpl podla hashu #what asi len
             // + zadefinovat staticke identifikatory tmpl
+            return null;
+        }
+
+        public static ViewTemplate load(String id)
+        {
             return null;
         }
 
