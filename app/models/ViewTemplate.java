@@ -22,6 +22,7 @@ package models;
 import java.util.HashMap;
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
+import com.mongodb.ObjectId;
 
 // - zavisi od usera a sposobu pristupu
 @Entity("ViewTemplate")
@@ -49,7 +50,7 @@ public class ViewTemplate extends MongoEntity{
 
 	public boolean isDefault; // true - this is the root/default view
 	// public String superViewId;  // view inheritance
-	public ViewTemplate superView; // view inheritance
+	public ObjectId superView; // view inheritance
 	public String defaultFrame; // '/main.html'
 	public String defaultMenu;  // '/menu/html'
 	public String defaultCss;
@@ -67,7 +68,7 @@ public class ViewTemplate extends MongoEntity{
 	public ViewTemplate(boolean isDefault, ViewTemplate superView)
 	{
 		this.isDefault = isDefault;
-                this.superView = superView;
+                // this.superView = superView;
 	}
 
 	public void registerTemplate(String templateId, NodeTemplate t)
@@ -96,7 +97,8 @@ public class ViewTemplate extends MongoEntity{
 				// throw new TemplateInstantiationException();
 				return null;
 			}
-			return superView.getTemplate(templateId);
+			// return superView.getTemplate(templateId);
+                        return null;
 		}
 	}
 

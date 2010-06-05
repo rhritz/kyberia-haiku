@@ -45,7 +45,6 @@ public class User extends MongoEntity {
 
     private String             username;
     private String             password;
-    private String             gid;
     private String             userinfo; // co sa ma zobrazit v userinfe
     private Integer            userinfoAccessType;
     private String             template; // a ako sa to ma zobrazit
@@ -71,7 +70,6 @@ public class User extends MongoEntity {
     public static final String FOOKS    = "fooks";
     public static final String UPDATES  = "udpates";
     public static final String PASSWORD = "password";
-    public static final String USERID   = "gid";
     public static final String ID       = "id";
 
     private static PasswordService pwdService = new PasswordService();
@@ -81,10 +79,9 @@ public class User extends MongoEntity {
 
     public User() {}
 
-    public User(String username, String password, Long id) {
+    public User(String username, String password) {
         this.username = username;
         this.password = pwdService.encrypt(password);
-        this.gid = id.toString();
     }
 
 
@@ -243,12 +240,12 @@ public class User extends MongoEntity {
         return username;
     }
 
-    /**
-     * @return the id
-     */
-    // toto by sme mozno mohli vyhodit
-    public String getUserid() {
-        return getGid();
+    public static User load(String id)
+    {
+        if (id == null || id.length() < 10) return null;
+        return load(new ObjectId(id));
+//        ObjectId bubu = null;
+  //      try { bubu = new ObjectId(x);} catch (Exception e ) {};
     }
 
     // load user by id
@@ -264,7 +261,6 @@ public class User extends MongoEntity {
             if (iobj != null) {
                 u = MongoDB.getMorphia().fromDBObject(User.class, iobj);
                 Cache.set("user_" + id, u);
-                Cache.set("user_gid_" + u.getGid(), id.toString());
                 Cache.set(ID + u.username, id.toString());
                 Cache.set(USERNAME + id, u.username);
             }
@@ -277,36 +273,6 @@ public class User extends MongoEntity {
         return u;
     }
 
-    // load by graph id
-    public static User loadByGid(String gid)
-    {
-        String hid = Cache.get("user_gid_" + gid, String.class);
-        ObjectId id = null;
-        if (hid != null) {
-            id = new ObjectId(hid);
-            return load(id);
-        }
-        User u = null;
-        try {
-            BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
-                    getCollection(MongoDB.CUser).
-                    findOne(new BasicDBObject().append(USERID,gid));
-            if (iobj != null) {
-                u = MongoDB.getMorphia().fromDBObject(User.class, iobj);
-                id = u.getId();
-                Cache.set("user_" + id, u);
-                Cache.set("user_gid_" + gid, id);
-                Cache.set(ID + u.username, id);
-                Cache.set(USERNAME + id, u.username);
-            }
-        } catch (Exception ex) {
-            Logger.info("user load fail");
-            ex.printStackTrace();
-            Logger.info(ex.toString());
-            return null;
-        }
-        return u;
-    }
 
     public static List<User> loadUsers(String namePart,
                                         Integer start,
@@ -452,22 +418,8 @@ public class User extends MongoEntity {
         if (friends == null) {
             return new ArrayList<User>();
         } else {
-            return Lists.transform(friends, new ToUser()); //->Singleton
+            return Lists.transform(friends, new ToUser());
         }
-    }
-
-    /**
-     * @return the gid
-     */
-    public String getGid() {
-        return gid;
-    }
-
-    /**
-     * @param gid the gid to set
-     */
-    public void setGid(String gid) {
-        this.gid = gid;
     }
 
     /**
@@ -507,6 +459,28 @@ public class User extends MongoEntity {
         }
         return enc.encode(md.digest());
       }
+    }
+
+    public static String addUser(Map<String,String> params)
+    {
+        ObjectId id = null;
+        String username = params.get(USERNAME);
+        String password = params.get(PASSWORD);
+
+        if (! User.usernameAvailable(username)) {
+            return null;
+        }
+
+        try {
+            User u = new User(username, password);
+            id = u.getId();
+            u.save();
+        }
+        catch(Exception e)
+        {
+           Logger.info("addUser failed " + e.toString() );
+        }
+        return id == null ? null : id.toString();
     }
 
 }

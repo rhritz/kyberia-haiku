@@ -90,7 +90,8 @@ public class Bookmark extends MongoEntity {
             return b;
         }
         try {
-            BasicDBObject query = new BasicDBObject().append(USERID, uid);
+            BasicDBObject query = new BasicDBObject().append(USERID,
+                    new ObjectId(uid));
             DBCursor iobj = MongoDB.getDB().
                     getCollection(MongoDB.CBookmark).find(query).
                     sort(sort);

@@ -23,7 +23,6 @@ Prerekvizity:
 Kym nemame instalacne skripty, nasledovne kroky spravit rucne:
 * Rozbalit tento archiv so zachovanim adresarovej struktury
 (ak ides z gitu, vsetko do 1 adresara, pravdepodobne je vhodne nazvat ho haiku).
-* Vytvorit adresar haiku/data pre neo4j
 * V separatnom adresari vytvorit datovy adresar, databazu a kolekcie v MongoDB
 (vid MongoSchema.java pre zoznam kolekcii)
 

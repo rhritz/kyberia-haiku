@@ -75,14 +75,13 @@ public class Activity extends MongoEntity {
             NodeContent node,
             List<ObjectId> parents,
             ObjectId ownerid,
-            String parOwnerGid
+            ObjectId parOwnerId
             )
     {
         try {
             Logger.info("@newNodeActivity");
             List<ObjectId> friends = User.load(ownerid).getFriends();
-            User parent = User.loadByGid(parOwnerGid);
-            ObjectId parOwnerId = null;
+            User parent = User.load(parOwnerId);
             if (parent != null) {
                 parOwnerId = parent.getId();
             }

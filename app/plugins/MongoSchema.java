@@ -45,7 +45,6 @@ public class MongoSchema {
          Bookmark - db.Bookmark.ensureIndex({destination: 1, uid:1}, {unique: true});
          Activity - ?
          EnsureIndex('users') on MessageThread
-         * db.Node.ensureIndex({gid:1});
          * db.Node.ensureIndex({created:-1});
          * db.createCollection("ViewTemplate");
      */

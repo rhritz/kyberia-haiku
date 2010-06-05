@@ -35,7 +35,7 @@ public class Application extends Controller {
     static void setConnectedUser() {
         renderArgs.put("reqstart", System.currentTimeMillis());
         if(Security.isConnected()) {
-            String uid = session.get(User.USERID);
+            String uid = session.get(User.ID);
             renderArgs.put("user",   session.get(User.USERNAME));
             renderArgs.put("userid", uid);
             // Logger.info("ahojky " + uid);
@@ -78,26 +78,6 @@ public class Application extends Controller {
         render(id);
     }
 
-    /*
-    public static void addNode(String id, String content) {
-        Logger.info("about to add node:" + id + "," + content );
-        // checkAuthenticity();
-        Haiku h = new Haiku();
-        NodeContent parentNode = NodeContent.load(id);
-        Long gid = (parentNode == null) ? null : parentNode.gid;
-        Long newId = h.addNode(gid, Controller.params.allSimple(),
-                Long.parseLong(session.get(User.USERID)),
-                    session.get(User.ID) );
-        String nid = null;
-        if (id == null) {
-            nid = NodeContent.loadByGid(newId).getId();
-        } else {
-            nid = id;
-        }
-        displayNode(nid);
-    }
-     */
-
      public static void addNode(String id, String content) {
         Logger.info("about to add node:" + id + "," + content );
         // checkAuthenticity();
@@ -107,8 +87,9 @@ public class Application extends Controller {
                     new ObjectId(session.get(User.ID))
                 );
         String nid = null;
+        Logger.info("newid::" + newId);
         if (id == null) {
-            nid = NodeContent.load(new ObjectId(newId)).getIdString();
+            nid = NodeContent.load(newId).getIdString();
         } else {
             nid = id;
         }
@@ -123,7 +104,7 @@ public class Application extends Controller {
     {
         checkAuthenticity();
         Logger.info("Add friend :: " + uid);
-        User u = User.load(new ObjectId(session.get(User.ID)));
+        User u = User.load(session.get(User.ID));
         u.addFriend(new ObjectId(uid));
         showUser(uid);
     }
@@ -132,7 +113,7 @@ public class Application extends Controller {
     {
         checkAuthenticity();
         Logger.info("Add ignore :: " + uid);
-        User u = User.load(new ObjectId(session.get(User.ID)));
+        User u = User.load(session.get(User.ID));
         u.addIgnore(new ObjectId(uid));
         showUser(uid);
     }
@@ -141,7 +122,7 @@ public class Application extends Controller {
     {
         checkAuthenticity();
         Logger.info("Add ignoreMail :: " + uid);
-        User u = User.load(new ObjectId(session.get(User.ID)));
+        User u = User.load(session.get(User.ID));
         u.addIgnoreMail(new ObjectId(uid));
         showUser(uid);
     }
@@ -221,19 +202,19 @@ public class Application extends Controller {
     // interne, po akcii
     private static void displayNode(String id)
     {
-        Haiku h = new Haiku();
         int start = 0;
         int count = 30;
-        NodeContent node = NodeContent.load(id);
+        ObjectId oid = new ObjectId(id);
+        NodeContent node = NodeContent.load(oid);
         String uid = session.get(User.ID);
         renderArgs.put("uid", uid);
         if (node.canRead(new ObjectId(uid))) {
-            Long gid = node.gid;
+            // NodeContent.getThreadedChildren(oid, start, count);
             // logicky UserVisit save patri sem, lebo tu vieme co ideme zobrazit
-            UserLocation.saveVisit(User.load(new ObjectId(uid)), id);
+            UserLocation.saveVisit(User.load(uid), id);
             renderArgs.put("node", node);
-            renderArgs.put("content", h.viewNode(gid));
-            renderArgs.put("thread", h.getThreadedChildren(gid,start,count));
+            renderArgs.put("thread",
+                    NodeContent.getThreadedChildren(oid, start, count));
             renderArgs.put("id", id);
         } else {
             renderArgs.put("id", id);
@@ -241,7 +222,7 @@ public class Application extends Controller {
         }
         render(ViewTemplate.VIEW_NODE_HTML);
         // podl anode nastavit template
-        // String template = Haiku.getTemplate(node,user,session.viewtemplate)
+        // String template = .getTemplate(node,user,session.viewtemplate)
         // render(template,id);
         // alebo skor render
     }
@@ -315,24 +296,22 @@ public class Application extends Controller {
 
     public static void showMe() {
         // linka na current usera
-        Haiku h = new Haiku();
+        String myId = session.get(User.ID);
+        Logger.info("showMe:: " + myId);
         renderArgs.put("nodes",
-                Nodelist.getUserNodes(session.get(User.ID),null));
-        User me = User.load(new ObjectId(session.get(User.ID)));
+                Nodelist.getUserNodes(myId,null));
+        User me = User.load(myId);
         /* should this be lazily evaluated? */
         renderArgs.put("friends", me.listFriends());
-        renderArgs.put("uid", session.get(User.ID));
+        renderArgs.put("uid", myId);
         render(ViewTemplate.SHOW_ME_HTML);
     }
 
     public static void showUser(String id) {
-        Haiku h = new Haiku();
-        // renderArgs.put("user", h.viewUser(id));
-        User u = User.load(new ObjectId(id));
+        User u = User.load(id);
         if ( u !=null ) {
             renderArgs.put("uid", u.getId());
             // renderArgs.put("user", user);
-            // renderArgs.put("content",  h.userNodes(Long.parseLong(u.getGid())));
             renderArgs.put("nodes", Nodelist.getUserNodes(id,null));
             render(ViewTemplate.SHOW_USER_HTML);
         }

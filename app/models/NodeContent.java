@@ -19,11 +19,11 @@ package models;
 
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
+import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.ObjectId;
-import org.neo4j.graphdb.Node;
 import play.Logger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -47,7 +47,6 @@ public class NodeContent extends MongoEntity {
     private ObjectId      par             ;
 
     private Integer       template    = 1;
-    public  Long          gid         = 1l;
     private String        putId       = null; // ak != null tak toto je hardlink
 
     private Integer       accessType  = 0;
@@ -80,28 +79,6 @@ public class NodeContent extends MongoEntity {
 
     public NodeContent() {}
 
-
-    public NodeContent (Node n,
-                        ObjectId ownerid,
-                        Map<String,String> params,
-                        List<String> roots)
-    {
-        content = Validator.validate(params.get(Haiku.CONTENT));
-        created = System.currentTimeMillis();
-        gid     = n.getId();
-        cr_date = DateFormat.getDateTimeInstance(DateFormat.LONG,
-                    DateFormat.LONG).format(new Date(getCreated()));
-        template =  NodeTemplate.BASIC_NODE;
-        name    = params.containsKey(Haiku.NAME) ?
-                    params.get(Haiku.NAME) : gid.toString(); // zatial
-        owner   = ownerid;
-        if (roots != null && roots.size() > 0)
-            par = new ObjectId(roots.get(0));
-        // vector     = roots;
-
-        Logger.info("Adding node with content:: " + content);
-    }
-
     public NodeContent (ObjectId ownerid,
                         Map<String,String> params)
     {
@@ -111,7 +88,7 @@ public class NodeContent extends MongoEntity {
                     DateFormat.LONG).format(new Date(getCreated()));
         template =  NodeTemplate.BASIC_NODE;
         name    = params.containsKey(Haiku.NAME) ?
-                    params.get(Haiku.NAME) : gid.toString(); // zatial
+                    params.get(Haiku.NAME) : cr_date; // zatial
         owner   = ownerid;
 
         Logger.info("Adding node with content:: " + content);
@@ -124,23 +101,31 @@ public class NodeContent extends MongoEntity {
             this.accessType = Integer.parseInt(accType);
         }
         String access = params.get("access");
-        if (access != null && ! this.access.contains(new ObjectId(access))) {
-            this.access.add(new ObjectId(access));
+        if (access != null ) {
+            ObjectId accId = toId(access);
+            if (accId != null && ! this.access.contains(accId))
+                this.access.add(accId);
         }
         String silence = params.get("silence");
-        if (silence != null && ! this.silence.contains(new ObjectId(silence))) {
-            this.silence.add(new ObjectId(silence));
+        if (silence != null ) {
+            ObjectId silId = toId(silence);
+            if (silId != null && ! this.silence.contains(silId))
+                this.silence.add(silId);
         }
         String master = params.get("master");
-        if (master != null && ! this.masters.contains(new ObjectId(master)) ) {
-            this.masters.add(new ObjectId(master));
+        if (master != null ) {
+            ObjectId masterId = toId(master);
+            if (masterId != null && ! this.masters.contains(masterId) )
+                this.masters.add(masterId);
         }
         String ban = params.get("ban");
-        if (ban != null && ! this.bans.contains(new ObjectId(ban))) {
-            this.bans.add(new ObjectId(ban));
+        if (ban != null ) {
+            ObjectId banId = toId(ban);
+            if (banId != null && ! this.bans.contains(banId))
+                this.bans.add(banId);
         }
         String chOwner = params.get("change_owner");
-        if (chOwner != null && User.load(new ObjectId(chOwner)) != null) {
+        if (chOwner != null && User.load(chOwner) != null) {
             owner = new ObjectId(chOwner);
         }
         String chParent = params.get("parent");
@@ -159,14 +144,14 @@ public class NodeContent extends MongoEntity {
         if (chContent != null) {
             content = Validator.validate(chContent);
         }
-        this.update();
+        this.update(); // TODO udpate cache
     }
 
     // hlavicka prispevku - TODO zmenit na tag
     public String getHead()
     {
         StringBuilder head = new StringBuilder();
-        head.append("<a class=\"node_link\" href=\"/id/").append(id).append("\">").append(gid);
+        head.append("<a class=\"node_link\" href=\"/id/").append(id).append("\">");
         head.append("</a>(").append(depth).append(") ").append(getName());
         head.append(" ").append("<a href=\"/user/").append(getOwner()).append("\">");
         // docasne
@@ -207,13 +192,12 @@ public class NodeContent extends MongoEntity {
     {
         try {
             Logger.info("creating new node");
-            this.dfs = new ObjectId("4bf8b6bf1e9f20a452e3b2c3");
             MongoDB.save(this, MongoDB.CNode);
             // TODO toto je snad docasne.. ked opravia driver tak aby vracal
             // last insert id
             NodeContent koko = MongoDB.getMorphia().fromDBObject(NodeContent.class,
-                           (BasicDBObject) MongoDB.getDB().getCollection("Node").findOne(
-                           (BasicDBObject) MongoDB.getMorphia().toDBObject(this)));
+               (BasicDBObject) MongoDB.getDB().getCollection(MongoDB.CNode).findOne(
+               (BasicDBObject) MongoDB.getMorphia().toDBObject(this)));
             Logger.info("new NodeContent now has ID::" + koko.getId());
             return koko;
         } catch (Exception ex) {
@@ -242,7 +226,6 @@ public class NodeContent extends MongoEntity {
         try {
             Logger.info("deleting node");
             Cache.delete("node_" + this.getId());
-            Cache.delete("node_gid_" + this.gid );
             MongoDB.delete(this, MongoDB.CNode);
             
             // + ostatne veci co treba deltnut: Activity, Bookmarks, ..?
@@ -264,26 +247,8 @@ public class NodeContent extends MongoEntity {
     // load from mongodb
     public static NodeContent load(String id)
     {
-        // Logger.info("About to load node " + id);
-        NodeContent n = Cache.get("node_" + id, NodeContent.class);
-        if (n != null )
-            return n;
-        try {
-            DBObject iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
-                    findOne(new BasicDBObject().append("_id",
-                    new ObjectId(id)));
-            if (iobj !=  null) {
-                n = MongoDB.getMorphia().fromDBObject(NodeContent.class,
-                           (BasicDBObject) iobj);
-                Cache.add("node_" + id, n);
-                Cache.add("node_gid_" + n.gid, id);
-            }
-        } catch (Exception ex) {
-            Logger.info("load node");
-            ex.printStackTrace();
-            Logger.info(ex.toString());
-        }
-        return n;
+        if (id == null || id.length() < 10) return null;
+        return load(new ObjectId(id));
     }
 
     // load from mongodb
@@ -300,39 +265,12 @@ public class NodeContent extends MongoEntity {
                 n = MongoDB.getMorphia().fromDBObject(NodeContent.class,
                            (BasicDBObject) iobj);
                 Cache.add("node_" + id, n);
-                Cache.add("node_gid_" + n.gid, id);
             }
         } catch (Exception ex) {
             Logger.info("load node");
             ex.printStackTrace();
             Logger.info(ex.toString());
         }
-        return n;
-    }
-
-    // load by graph id
-    public static NodeContent loadByGid(Long gid)
-    {
-        String id = Cache.get("node_gid_" + gid, String.class);
-        if (id != null) {
-            return load(id);
-        }
-        NodeContent n = null;
-        try {
-            DBObject iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
-                    findOne(new BasicDBObject().append("gid",gid));
-            if (iobj !=  null) {
-                n = MongoDB.getMorphia().fromDBObject(NodeContent.class,
-                           (BasicDBObject) iobj);
-                Cache.add("node_" + n.getId(), n);
-                Cache.add("node_gid_" + n.gid, n.getId());
-            }
-        } catch (Exception ex) {
-            Logger.info("load node");
-            ex.printStackTrace();
-            Logger.info(ex.toString());
-        }
-        Logger.info("node found::" + n);
         return n;
     }
 
@@ -346,15 +284,15 @@ public class NodeContent extends MongoEntity {
             return true;
         switch (accessType) {
             case ACL.PUBLIC:
-                            if (bans.contains(uid))
+                            if (bans != null && bans.contains(uid))
                                 return false;
                             break;
             case ACL.PRIVATE:
-                            if (! access.contains(uid))
+                            if (access != null && !access.contains(uid))
                                 return false;
                             break;
             case ACL.MODERATED:
-                            if (bans.contains(uid))
+                            if (bans != null  && bans.contains(uid))
                                 return false;
                             break;                
         }
@@ -480,11 +418,10 @@ public class NodeContent extends MongoEntity {
             Map<String,String> params,
             ObjectId ownerid)
     {
-        String retid = null;
         // TODO validate content & name -> antisamy?
         // TODO podstatna vec co tu potrebujeme je isPut a pripadne permissions
         List<ObjectId> roots = new LinkedList<ObjectId>();
-        String parOwner = null;
+        ObjectId parOwner = null;
         NodeContent newnode = new NodeContent(ownerid,params).save();
         ObjectId mongoId = newnode.getId();
         if (mongoId == null)
@@ -525,13 +462,55 @@ public class NodeContent extends MongoEntity {
                 }
                 User parentOwner = User.load(root.owner);
                 if (parentOwner != null) {
-                    parOwner = parentOwner.getIdString();
+                    parOwner = parentOwner.getId();
                 }
             }
         }
         newnode.update();
         Activity.newNodeActivity(mongoId, newnode, roots, ownerid, parOwner);
-        return retid;
+        return mongoId.toString(); // neskor len id
+    }
+
+
+    public static List<NodeContent> getThreadedChildren(ObjectId id,
+            Integer start, Integer count)
+    {
+        List<NodeContent> thread = null;
+        try {
+            // ach jaj
+            String evalQuery = "return getThreadedChildren(ObjectId(\"" +
+                    id.toString() + "\"), " + start + "," + count + ");";
+            DBObject iobj = MongoDB.getDB().doEval(evalQuery, "");
+            if (iobj !=  null) {
+                // Logger.info("getThreadedChildren:: " + iobj.toString());
+                BasicDBList oo = (BasicDBList) iobj.get("retval");
+                // Logger.info(oo.getClass().getCanonicalName());
+                if (oo != null) {
+                    thread = new LinkedList<NodeContent>();
+                    for (Object ooo : oo ) {
+                        BasicDBList nodef = (BasicDBList) ooo;
+                        ObjectId nodeId = (ObjectId) nodef.get(0);
+                        Double depth = (Double)  nodef.get(1);
+                        NodeContent nc = NodeContent.load(nodeId);
+                        nc.depth = depth.intValue();
+                        thread.add(nc);
+                        // Logger.info("bla:: " + ooo.toString() + " " + ooo.getClass().getCanonicalName() + "0:" + nodeId + "1:" + depth);
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            Logger.info("getThreadedChildren");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+        }
+        return thread;
+    }
+
+    // blabla
+    public static ObjectId toId(String x) {
+        ObjectId bubu = null;
+        try { bubu = new ObjectId(x);} catch (Exception e ) {};
+        return bubu;
     }
 
 }

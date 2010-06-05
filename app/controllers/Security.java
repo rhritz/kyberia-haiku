@@ -24,7 +24,6 @@ public class Security extends Secure.Security {
     static boolean authentify(String username, String password) {
         User u = User.login(username, password);
         if (u != null) {
-            session.put(User.USERID, u.getUserid());
             session.put(User.ID,     u.getIdString());
             return true;
         } else {

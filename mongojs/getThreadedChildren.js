@@ -16,29 +16,25 @@ function (rootid, start, count)
    if (lastnode.dfs == null) {
      return thread;
    }
-   nextnode = db.Node.findOne({_id:lastnode.dfs});
+   nextnode = db.Node.findOne({_id:lastnode.dfs}); // TODO partial load?
    if (nextnode == null) {
      return thread;
    }
    if (nextnode.par == null) {
      return thread;
    }
-   parent = db.Node.findOne({_id:nextnode.par});
-   if (parent == null) {
-     return thread;
-   }
-   /* thread[thread.length] = [parent._id, lastnode._id, parent._id.str == lastnode._id.str]; */
-   if (parent._id.str == lastnode._id.str) {
-     roots[lastnode._id.str] = depth;
+   parent = nextnode.par.str;
+   if (parent == lastnode._id.str) {
+     roots[parent] = depth;
      depth++;
    } else {
      // ak v tomto bode nema parenta v roots,
      // znamena to ze siahame vyssie ako rootid - koncime
-     if (roots[lastnode._id.str] == null) {
+     if (roots[parent] == null) {
        return thread;
      }
      // nasli sme parenta, sme o jedno hlbsie ako on
-     depth = roots[lastnode._id.str] + 1;
+     depth = roots[parent] + 1;
    }
    if ( i>= start) {
      // tento node chceme zobrazit

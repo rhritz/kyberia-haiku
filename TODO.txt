@@ -1,8 +1,5 @@
 Veci, ktore nie su hotove, a chceme aby boli:
 
---- 22.05.2010 ---
-* Zrejme je dobry napad oddelit grafove slubzy do samostatneho servera,
-mozeme z toho spravit Play aplikaciu s ktorou budeme komunikovat cez HTTP/JSON
 
 --- 16.05.2010 ---
 * v Play1.1 nie je config escapeInTemplates, zrejme bude treba pouzit tag verbatim
@@ -26,7 +23,7 @@ Zatial sa zda ze tomu nic nebrani, Play to priamo podporuje.
 - mozeme asi odlozit na neskor
 
 --- 12.04.2010 ---
-* nejaky admin system - init mongodb, predklopenie mongo->neo4j a podobne
+* nejaky admin system - init mongodb a podobne
 * uprava konkretnych zaznamov v mongodb cez phpmoadmin alebo nieco take
 * put/hardlink - ako specialny typ NodeContent, zobrazi sa obsah node ktory je uvedeny
 v link_to
@@ -51,11 +48,10 @@ statickym/dynamickym contentom a templates, treba domysliet
 - 3. Redirect to ^ on refusal to login; or
 - 4. mozno ta prihlasovacia funckie v Application pojde hacknut tak,
  ze bez prihlasenia nastavi default usera.
-* Mongo & Neo4j replication
+* Mongo replication
 * Proper CSS & HTML
 * Variable CSS -> ? http://www.playframework.org/modules/sass
 * Some Javascript sauce and AJAX where needed
-* License comments into *html templates - cez *{ comment }*
 * FastTags/Javatags
 * Bookmark Tags (aka delicious) - pridavanie, querying
 * Fulltext Search -> ? http://www.playframework.org/modules/search

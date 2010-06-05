@@ -61,7 +61,8 @@
     </center>
 </div>
 <div class="col2">
-   <small>${content}</small>
+   <small>parent: <a href="/id/${node.par}">${node.par}</a></small>
+   <small>dfs: <a href="/id/${node.dfs}">${node.dfs}</a></small>
    <div style="display:block;">Actions:
    #{if node}
        <form name="node_actions" action="@{Application.book(id)}" method="POST">
