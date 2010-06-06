@@ -103,6 +103,7 @@ public class Bookmark extends MongoEntity {
                 {
                     Bookmark boo = MongoDB.getMorphia().fromDBObject(
                             Bookmark.class,(BasicDBObject) iobj.next());
+                    // TODO cast z tohto mozno neskor do mongojs
                     boo.numNew = loadNotifsForBookmark(boo.destination,
                         boo.lastVisit == null ? 0 : boo.lastVisit );
                     // TODO toto by malo byt nutne len docasne
@@ -147,49 +148,72 @@ public class Bookmark extends MongoEntity {
         return b;
     }
 
-    //
-    // alebo aj nie static
-    // - v kazdom pripade ked ulozime notification, mozeme akutalny stav
-    // notifikovanej nody ulozit do cache, co nam vyrazne zlacni
-    // pohlady do bookmarkov - povedzme s expiry na 5 minut?
-    // + ked updatujeme nieco s touto nodou tak ho vyhodime z cache
+    private static Bookmark getByUserAndDest(String uid, String dest) {
+        Bookmark b = Cache.get("bookmark_" + uid + "_" + dest,
+                        Bookmark.class);
+        if (b != null)
+            return b;
+        else
+            return loadAndStore(uid, dest);
+    }
+
     public static int loadNotifsForBookmark(String nodeId, Long lastVisit)
     {
-        // pppommmallleeee
-        // List<Activity> b = new LinkedList<Activity>();
         int len = 0;
         // Integer clen = Cache.get(ID + username, String.class);
         try {
             BasicDBObject query = new BasicDBObject().append("ids",
-                    nodeId).append("date",
+                    new ObjectId(nodeId)).append("date",
                     new BasicDBObject("$gt",lastVisit));
             // Logger.info("loadNotifsForBookmark::"  + query.toString());
-            // BasicDBObject sort = new BasicDBObject().append("date", -1);
-                    // vlastne chceme natural sort
-            /*
-            DBCursor iobj = MongoDB.getDB().
-                    getCollection(MongoDB.CActivity).find(query).
-                    sort(sort);
-             */
             len = MongoDB.getDB().
                     getCollection(MongoDB.CActivity).find(query).count();
-            // Logger.info("You can haz " + len + " new nodez");
-            /* TODO zoznam novych nodes
-            if (iobj !=  null) {
-                Logger.info("loadNotifsForBookmark found");
-                while(iobj.hasNext())
-                {
-                    b.add(MongoDB.getMorphia().fromDBObject(Activity.class,
-                           (BasicDBObject) iobj.next()));
-                }
-            }*/
         } catch (Exception ex) {
             Logger.info("loadNotifsForBookmark");
             ex.printStackTrace();
             Logger.info(ex.toString());
         }
-        // anyway tu na konci mame co sme chceli
         return len;
+    }
+
+    // TODO cast z tohto mozno neskor do mongojs
+    public static List<NodeContent> getUpdatesForBookmark(
+            String nodeId,
+            String uid)
+    {
+        // 1. get bookmark
+        List<NodeContent> newNodes = null;
+        Bookmark b = getByUserAndDest(uid, nodeId);
+        Long lastVisit = b.lastVisit;
+        updateVisit(new ObjectId(uid), nodeId);
+        // 2. load notifications
+        try {
+            BasicDBObject query = new BasicDBObject().append("ids",
+                    new ObjectId(nodeId)).append("date",
+                    new BasicDBObject("$gt",lastVisit));
+            // Logger.info("loadNotifsForBookmark::"  + query.toString());
+            // BasicDBObject sort = new BasicDBObject().append("date", -1);
+            // vlastne chceme natural sort a iba idcka nodes ktore mame zobrazit
+            DBCursor iobj = MongoDB.getDB().
+                    getCollection(MongoDB.CActivity).find(query).
+                    sort(sort);
+            if (iobj !=  null) {
+                Logger.info("loadNotifsForBookmark found");
+                List<Activity> lll = Lists.transform(iobj.toArray(), 
+                        MongoDB.getSelf().toActivity());
+                // 3. load nodes we want to show
+                // - pozbierajme idcka a zavolajme na to NodeContent.loadMulti()
+                List<ObjectId> nodeIds = new LinkedList<ObjectId>();
+                for (Activity ac : lll) 
+                    nodeIds.add(ac.getOid());
+                newNodes = NodeContent.load(nodeIds);
+            }
+        } catch (Exception ex) {
+            Logger.info("loadNotifsForBookmark");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+        }
+        return newNodes;
     }
 
     // List of Bookmarks by destination id

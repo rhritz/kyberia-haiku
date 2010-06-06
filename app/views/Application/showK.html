@@ -4,10 +4,12 @@
 <div class="col1">
     <div class="nodeContent">
         #{list items:nodes, as:'node'}
-        <font color="red">${node.getK()}&nbsp;&nbsp;-${node.getMk()}</font>
-            ${node.getHead()}
-            <a href="/id/${node.id}">${node.name}</a>${node.cr_date}<a href="@{Application.showUser(node.owner)}">${models.User.getNameForId(node.owner)}</a> <br>
-                ${node.content} <br>
+            <div class="nodeContent">
+                <div>
+                <font color="red">${node.getK()}&nbsp;&nbsp;-${node.getMk()}</font>
+                #{node par:node /}</div>
+                <div>${node.content}</div>
+            </div>
         #{/list}
     </div>
 </div>

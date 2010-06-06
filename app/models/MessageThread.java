@@ -105,6 +105,7 @@ public class MessageThread extends MongoEntity {
         return r;
     }
 
+    // TODO session -> cache
     public static String viewUserThreads(ObjectId uid,
             play.mvc.Scope.Session session)
     {

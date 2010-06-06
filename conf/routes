@@ -10,6 +10,7 @@ GET     /                                       Application.index
 
 # nodes
 GET     /id/{id}                        Application.viewNode
+GET     /id/{id}/new                    Application.viewNodeUpdates
 GET     /id/{id}/edit                   Application.showEditNode
 # kompletka:
 # ? len ako mu vysvetlit ze niektore su nepovinne?

@@ -39,6 +39,7 @@ public class MongoDB {
     private ToNodeContent   nodeContent;
     private ToTag           tag;
     private ToBookmark      bookmark;
+    private ToActivity      activity;
 
     private static DB       db;
     private static Mongo    mongo;
@@ -88,6 +89,7 @@ public class MongoDB {
           nodeContent   = new ToNodeContent();
           tag           = new ToTag();
           bookmark      = new ToBookmark();
+          activity      = new ToActivity();
     }
 
     public static void start() {
@@ -215,6 +217,11 @@ public class MongoDB {
         return bookmark;
     }
 
+    public Function<DBObject, Activity> toActivity()
+    {
+        return activity;
+    }
+
     // transformacna funkcia pre Lists.transform
     public class ToMessage implements Function<DBObject, Message> {
         public Message apply(DBObject arg) {
@@ -259,6 +266,13 @@ public class MongoDB {
     public class ToBookmark implements Function<DBObject, Bookmark> {
         public Bookmark apply(DBObject arg) {
             return morphia.fromDBObject(Bookmark.class,
+                   arg);
+        }
+    }
+
+    public class ToActivity implements Function<DBObject, Activity> {
+        public Activity apply(DBObject arg) {
+            return morphia.fromDBObject(Activity.class,
                    arg);
         }
     }

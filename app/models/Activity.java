@@ -178,7 +178,7 @@ public class Activity extends MongoEntity {
         for (Activity act : acts)
         {
             // zoznam pribudnutych nodov
-            ret.append(act.oid).append(act.date).append(act.name).append("<br>");
+            ret.append(act.getOid()).append(act.date).append(act.name).append("<br>");
         }
         return ret.toString();
     }
@@ -199,9 +199,15 @@ public class Activity extends MongoEntity {
             sort(sort).limit(30);
         Morphia morphia = MongoDB.getMorphia();
         while(iobj.hasNext())
-           ll.add(NodeContent.load((morphia.fromDBObject(Activity.class,
-                   (BasicDBObject) iobj.next())).oid));
+           ll.add(NodeContent.load((morphia.fromDBObject(Activity.class, (BasicDBObject) iobj.next())).getOid()));
         return ll;
+    }
+
+    /**
+     * @return the oid
+     */
+    public ObjectId getOid() {
+        return oid;
     }
 
 }

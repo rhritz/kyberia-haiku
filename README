@@ -39,11 +39,8 @@ conf/
 application.conf - hlavny konfigurancy subor
 log4j.properties - nastavenie logovania
 messages         - preklady hlasok, zatial sa nepouziva
-play.plugins     - deklaracia aplikacnych pluginov, v nasom pripade pre Neo4j a Mongo
+play.plugins     - deklaracia aplikacnych pluginov, v nasom pripade pre MongoDB
 routes           - routovanie HTTP requestov do aplikacie
-
-data/
-- datove subory grafovej databazy
 
 lib/
 - vsetky potrebne externe kniznice

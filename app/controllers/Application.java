@@ -262,8 +262,11 @@ public class Application extends Controller {
         {
             thread = session.get("LastThreadId");
         }
-        renderArgs.put("mailMessages", 
-                Message.getMessages(new ObjectId(thread), new ObjectId(uid)));
+        if (thread != null) {
+            ObjectId threadId = new ObjectId(thread);
+            renderArgs.put("mailMessages",
+                Message.getMessages(threadId, new ObjectId(uid)));
+        }
         render(ViewTemplate.MAIL_HTML);
     }
 
@@ -390,7 +393,7 @@ public class Application extends Controller {
 
     public static void changePwd(String uid) {
         checkAuthenticity();
-        User me = User.load(new ObjectId(session.get(User.ID)));
+        User me = User.load(session.get(User.ID));
         me.changePwd(Controller.params.allSimple());
         showMe();
     }
@@ -398,6 +401,16 @@ public class Application extends Controller {
     // event - zmena property node alebo usera
     public static void event(String id) {
        // vyhryzni event z params, urob akciu, vrat displayNode
+    }
+
+    // zobraz nove prispevky pre daneho usera z danej nody
+    // - zatial len ako list
+    public static void viewNodeUpdates(String id) {
+        User u = User.load(session.get(User.ID));
+        renderArgs.put("nodes", 
+                Bookmark.getUpdatesForBookmark(id, session.get(User.ID)));
+        // TODo nahradit
+        render(ViewTemplate.SHOW_LAST_HTML);
     }
 
 

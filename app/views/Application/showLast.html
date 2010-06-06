@@ -3,10 +3,12 @@
 
 <div class="col1">
     <div class="nodeContent">
-        #{list items:nodes, as:'node'}
-            <a href="/id/${node.id}">${node.name}</a>${node.cr_date}<a href="@{Application.showUser(node.owner)}">${models.User.getNameForId(node.owner)}</a> in <a href="/id/${node.parent}">${node.parent}</a> <br>
-                ${node.content} <br>
-        #{/list}
+    #{list items:nodes, as:'node'}
+        <div>
+            <div>#{node par:node /}</div>
+            <div>${node.content}</div>
+        </div>
+    #{/list}
     </div>
 </div>
 <div class="col2">

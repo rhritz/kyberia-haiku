@@ -19,6 +19,7 @@ package models;
 
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
+import com.google.common.collect.Lists;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
@@ -147,21 +148,6 @@ public class NodeContent extends MongoEntity {
         this.update(); // TODO udpate cache
     }
 
-    // hlavicka prispevku - TODO zmenit na tag
-    public String getHead()
-    {
-        StringBuilder head = new StringBuilder();
-        head.append("<a class=\"node_link\" href=\"/id/").append(id).append("\">");
-        head.append("</a>(").append(depth).append(") ").append(getName());
-        head.append(" ").append("<a href=\"/user/").append(getOwner()).append("\">");
-        // docasne
-        if (! owner.equals("ubik") ) head.append(User.getNameForId(getOwner()));
-        head.append("</a>").append(" ");
-        head.append(getCr_date());
-        // User.getLink(owner);
-        return head.toString() ;
-    }
-
     public String getContent()
     {
         return content;
@@ -272,6 +258,26 @@ public class NodeContent extends MongoEntity {
             Logger.info(ex.toString());
         }
         return n;
+    }
+
+    // some form of smart caching?
+    static List<NodeContent> load(List<ObjectId> nodeIds) {
+        List<NodeContent> nodes = null;
+        try {
+            DBObject query = new BasicDBObject("_id", 
+                    new BasicDBObject().append("$in",
+                    nodeIds.toArray(new ObjectId[nodeIds.size()])));
+            DBCursor iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
+                    find(query);
+            if (iobj !=  null)
+                nodes = Lists.transform(iobj.toArray(),
+                        MongoDB.getSelf().toNodeContent());
+        } catch (Exception ex) {
+            Logger.info("load nodes::");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+        }
+        return nodes;
     }
 
     // bud to bude priamo v Node ALEBO v grupach ALEBO zdedene cez grupy
