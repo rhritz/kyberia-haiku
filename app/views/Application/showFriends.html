@@ -1,0 +1,12 @@
+#{extends 'main.html' /}
+#{set title:'Users' /}
+
+<div class="col1">
+    <div class="nodeContent">
+            #{list items:friends, as:'friend'}
+                <a href="@{Application.showUser(friend.id)}">${friend.username}</a><br>
+            #{/list}
+    </div>
+</div>
+<div class="col2">
+</div>

@@ -1,0 +1,13 @@
+#{extends 'main.html' /}
+#{set title:'Groups' /}
+
+<div class="col1">
+    <div class="nodeContent">
+            #{list items:groups, as:'group'}
+                <a href="@{Application.showGroup(group.id)}">${group.name}</a><br>
+            #{/list}
+    </div>
+    <!-- + New group -->
+</div>
+<div class="col2">
+</div>

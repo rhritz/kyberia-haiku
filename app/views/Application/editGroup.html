@@ -1,0 +1,18 @@
+#{extends 'main.html' /}
+#{set title:'Add/Edit Group' /}
+
+<div class="col1">
+    <div class="nodeContent">
+        Create new usergroup
+    </div>
+    <div style="display:block;">
+        #{form @Application.addGroup()}
+            #{authenticityToken /}
+            Group Name:<input type="text" name="name" />
+            <input type="submit" value="Add Group" />
+        #{/form}
+    </div>
+</div>
+<div class="col2">
+   &nbsp;
+</div>
