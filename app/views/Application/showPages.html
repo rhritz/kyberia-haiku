@@ -1,0 +1,13 @@
+#{extends 'main.html' /}
+#{set title:'Pages' /}
+
+<div class="col1">
+    <div class="nodeContent">
+            #{list items:pages, as:'page'}
+                <a href="@{Application.showPage(page.id)}">${page.name}</a><br>
+            #{/list}
+    </div>
+    <!-- + New page -->
+</div>
+<div class="col2">
+</div>
