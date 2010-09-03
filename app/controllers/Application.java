@@ -416,7 +416,7 @@ public class Application extends Controller {
     public static void viewNodeUpdates(String id) {
         User u = User.load(session.get(User.ID));
         renderArgs.put("nodes", 
-                Bookmark.getUpdatesForBookmark(id, session.get(User.ID)));
+                Bookmark.getUpdatesForBookmark(id, u.getId()));
         // TODo nahradit
         render(ViewTemplate.SHOW_LAST_HTML);
     }
@@ -478,6 +478,16 @@ public class Application extends Controller {
         p.edit(Controller.params.allSimple());
         renderArgs.put("page",  p);
         render(ViewTemplate.EDIT_PAGE_HTML);
+    }
+
+    public static void viewPage(String page) {
+        // meno alebo id... zatial len meno
+        // potrebuje Page vediet usera?
+        Page  p = Page.loadByName(page);
+        if (p != null ) {
+            p.emanate(renderArgs);
+            render(p.getTemplate());
+        }
     }
 
 }

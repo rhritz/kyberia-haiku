@@ -97,7 +97,7 @@ public class Activity extends MongoEntity {
             for (ObjectId par : parents)
                 for (Bookmark b : Bookmark.getByDest(par)) 
                     if (usersOnline.containsKey(b.getUid().toString())) 
-                        Bookmark.invalidate(b.getUid(),par.toString());
+                        Bookmark.updateVisit(b.getUid(),par.toString());
         } catch (Exception ex) {
             Logger.info("newNodeActivity failed:");
             ex.printStackTrace();

@@ -209,7 +209,6 @@ public class Page extends MongoEntity {
             DBCursor iobj = (DBCursor) MongoDB.getDB().
                     getCollection(MongoDB.CPage).
                     find();
-            Logger.info("brekeke:" + iobj.length());
             if (iobj != null) 
                 pages = Lists.transform(iobj.toArray(),
                             MongoDB.getSelf().toPage());
@@ -223,8 +222,22 @@ public class Page extends MongoEntity {
     }
 
     public static Page loadByName(String name) {
-        // query on name
         Page page = null;
+        try {
+            BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
+                    getCollection(MongoDB.CPage).
+                    findOne(new BasicDBObject().
+                    append("name",name));
+            Logger.info("Page.loadByName Found:" + iobj);
+            if (iobj != null)
+                page = (Page) MongoDB.getMorphia().
+                        fromDBObject(Page.class, (BasicDBObject) iobj);
+        } catch (Exception ex) {
+            Logger.info("user load fail");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+            return null;
+        }
         return page;
     }
 

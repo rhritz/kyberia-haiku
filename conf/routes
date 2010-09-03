@@ -27,6 +27,7 @@ POST     /id/{id}/unbook                        Application.unbook
 POST     /mail                                  Application.sendMail
 
 # pages
+GET   /view/{page}                              Application.viewPage
 GET   /add_page                                 Application.showAddPage
 POST  /add_page                                 Application.addPage
 GET   /pages                                    Application.showPages
