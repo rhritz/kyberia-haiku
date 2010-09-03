@@ -5,7 +5,7 @@
     <div class="nodeContent">
         #{list items:bookmarks, as: 'b'}
         <div>
-            <a href="/id/${b.destination}">${b.name}</a> #{if b.numNew>0}<a href="/id/${b.destination}/new"><small><i>${b.numNew} new</i></small></a>#{/if}
+            <a href="/id/${b.dest}">${b.name}</a> #{if b.numNew>0}<a href="/id/${b.dest}/new"><small><i>${b.numNew} new</i></small></a>#{/if}
         </div>
         #{/list}
     </div>

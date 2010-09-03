@@ -5,7 +5,7 @@
     <div class="nodeContent">
     #{list items:nodes, as:'node'}
         <div>
-            <div>#{node par:node /}</div>
+            <div>#{node par:node /} in ${node.parName}</div>
             <div>${node.content}</div>
         </div>
     #{/list}

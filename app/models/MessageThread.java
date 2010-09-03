@@ -203,6 +203,9 @@ public class MessageThread extends MongoEntity {
     // notifikuj thread o pridani noveho postu
     public void notify(ObjectId from, ObjectId to)
     {
+        if (unreads == null) {
+            unreads = new LinkedList<ObjectId>();
+        }
         unreads.add(to);
         MongoDB.save(this, MongoDB.CMessageThread);
     }

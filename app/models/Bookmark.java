@@ -19,15 +19,10 @@ package models;
 
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
-import com.google.code.morphia.Morphia;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
 import com.mongodb.ObjectId;
-import com.mongodb.QueryBuilder;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import plugins.*;
@@ -43,11 +38,11 @@ import play.cache.Cache;
 @Entity("Bookmark")
 public class Bookmark extends MongoEntity {
 
-    private String  destination;     // dest url/path
-    private String  alt;             // alt link to diplay next to dest url
-    private String  name;            // dest name
-    private Integer typ;             // - standard (node) + streams
-    private Long    lastVisit;
+    private ObjectId  dest;
+    private String    alt;             // alt link to diplay next to dest url
+    private String    name;            // dest name
+    private Integer   typ;             // - standard (node) + streams
+    private Long      lastVisit;
     // private List    notifications;   // list of activities since last visit(?)
     private ObjectId  uid;
 
@@ -58,18 +53,18 @@ public class Bookmark extends MongoEntity {
 
     private static final String USERID = "uid";
     private static final String NAME   = "name";
-    private static final String DEST   = "destination";
+    private static final String DEST   = "dest";
     
     private static final BasicDBObject sort = new BasicDBObject().append(NAME, 1);
 
     public Bookmark() {}
 
-    public Bookmark(String dest, ObjectId uid)
+    public Bookmark(ObjectId dest, ObjectId uid)
     {
-        this.destination = dest;
-        this.uid         = uid;
-        this.name        = NodeContent.load(dest).getName();
-        this.lastVisit   = System.currentTimeMillis();
+        this.dest       = dest;
+        this.uid        = uid;
+        this.name       = NodeContent.load(dest).getName();
+        this.lastVisit  = System.currentTimeMillis();
     }
 
     public static List<Bookmark> getUserBookmarks(String uid)
@@ -78,13 +73,13 @@ public class Bookmark extends MongoEntity {
         LinkedList<String> bkeys = Cache.get("bookmark_" + uid,
                 LinkedList.class);
         if (bkeys != null) {
+            Logger.info("user bookmarks cached");
             for (String bkey : bkeys) {
                 Bookmark boo = Cache.get("bookmark_" + uid + "_" + bkey,
                         Bookmark.class);
-                if (boo == null ) {
-                    // invalidated or expired
+                // invalidated or expired
+                if (boo == null ) 
                     boo = loadAndStore(uid, bkey);
-                }
                 b.add(boo);
             }
             return b;
@@ -104,14 +99,13 @@ public class Bookmark extends MongoEntity {
                     Bookmark boo = MongoDB.getMorphia().fromDBObject(
                             Bookmark.class,(BasicDBObject) iobj.next());
                     // TODO cast z tohto mozno neskor do mongojs
-                    boo.numNew = loadNotifsForBookmark(boo.destination,
+                    boo.numNew = loadNotifsForBookmark(boo.dest,
                         boo.lastVisit == null ? 0 : boo.lastVisit );
                     // TODO toto by malo byt nutne len docasne
-                    boo.name = NodeContent.load(boo.destination).getName();
                     b.add(boo);
-                    String bkey = "bookmark_" + uid + "_" + boo.destination;
+                    String bkey = "bookmark_" + uid + "_" + boo.dest;
                     Cache.add(bkey, boo);
-                    bkeys.add(boo.destination);
+                    bkeys.add(boo.dest.toString());
                 }
                 Cache.add("bookmark_" + uid, bkeys);
             }
@@ -126,18 +120,17 @@ public class Bookmark extends MongoEntity {
     // load one bookmark
     private static Bookmark loadAndStore(String uid, String dest) {
         Bookmark b = null;
+        Logger.info("Bookmark.loadAndStore :: " + "bookmark_" + uid + "_" + dest);
         try {
-            BasicDBObject query = new BasicDBObject().append(USERID, uid).
-                    append(DEST, dest) ;
+            BasicDBObject query = new BasicDBObject().append(USERID, new ObjectId(uid)).
+                    append(DEST, new ObjectId(dest)) ;
             BasicDBObject iobj = (BasicDBObject)
                 MongoDB.getDB().getCollection(MongoDB.CBookmark).findOne(query);
             if (iobj !=  null) {
                 b = MongoDB.getMorphia().fromDBObject(Bookmark.class,iobj);
-                b.numNew = loadNotifsForBookmark(b.destination,
+                b.numNew = loadNotifsForBookmark(b.dest,
                     b.lastVisit == null ? 0 : b.lastVisit );
-                // TODO toto by malo byt nutne len docasne
-                b.name = NodeContent.load(b.destination).getName();
-                String bkey = "bookmark_" + uid + "_" + b.destination;
+                String bkey = "bookmark_" + uid + "_" + dest;
                 Cache.add(bkey, b);
             }
         } catch (Exception ex) {
@@ -157,14 +150,13 @@ public class Bookmark extends MongoEntity {
             return loadAndStore(uid, dest);
     }
 
-    public static int loadNotifsForBookmark(String nodeId, Long lastVisit)
+    public static int loadNotifsForBookmark(ObjectId nodeId, Long lastVisit)
     {
         int len = 0;
         // Integer clen = Cache.get(ID + username, String.class);
         try {
-            BasicDBObject query = new BasicDBObject().append("ids",
-                    new ObjectId(nodeId)).append("date",
-                    new BasicDBObject("$gt",lastVisit));
+            BasicDBObject query = new BasicDBObject().append("ids",nodeId).
+                    append("date",  new BasicDBObject("$gt",lastVisit));
             // Logger.info("loadNotifsForBookmark::"  + query.toString());
             len = MongoDB.getDB().
                     getCollection(MongoDB.CActivity).find(query).count();
@@ -224,6 +216,7 @@ public class Bookmark extends MongoEntity {
             DBCursor iobj = MongoDB.getDB().
                     getCollection(MongoDB.CBookmark).
                     find(new BasicDBObject().append(DEST, dest));
+            Logger.info("getByDest::" + iobj);
             if (iobj !=  null) 
                 b = Lists.transform(iobj.toArray(),
                             MongoDB.getSelf().toBookmark());
@@ -242,12 +235,12 @@ public class Bookmark extends MongoEntity {
         Bookmark b = Cache.get("bookmark_" + uid + "_" + dest, Bookmark.class);
         if (b != null )
             return;
-        b = new Bookmark(dest, new ObjectId(uid));
+        b = new Bookmark(new ObjectId(dest), new ObjectId(uid));
         MongoDB.save(b, MongoDB.CBookmark);
         Cache.delete("bookmark_" + uid);
     }
 
-    public static void delete(String dest, String uid)
+    public static void delete(String dest, String uid) // -> ObjectId
     {
         Cache.delete("bookmark_" + uid);
         Cache.delete("bookmark_" + uid + "_" + dest);
@@ -264,8 +257,9 @@ public class Bookmark extends MongoEntity {
     }
 
     static void updateVisit(ObjectId uid, String location) {
-        // Logger.info("Updating visit::" + "bookmark_" + uid + "_" + location);
-        Bookmark b = (Bookmark) Cache.get("bookmark_" + uid + "_" + location);
+        Logger.info("Updating visit::" + "bookmark_" + uid + "_" + location);
+        Bookmark b = Cache.get("bookmark_" +
+                uid.toString() + "_" + location, Bookmark.class);
         if (b != null) {
             b.lastVisit = System.currentTimeMillis();
             Cache.replace("bookmark_" + uid.toString() + "_" + location, b);
@@ -274,7 +268,8 @@ public class Bookmark extends MongoEntity {
     }
 
     static void invalidate(ObjectId uid, String dest) {
-        Cache.delete("bookmark_" + uid + "_" + dest);
+        Logger.info("Invalidate visit::" + "bookmark_" + uid + "_" + dest);
+        Cache.delete("bookmark_" + uid.toString() + "_" + dest);
     }
 
     /**

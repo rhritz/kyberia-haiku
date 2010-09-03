@@ -18,15 +18,11 @@
 package models;
 
 import com.google.code.morphia.annotations.Entity;
-import com.google.code.morphia.annotations.Transient;
 import com.google.code.morphia.Morphia;
-import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
 import com.mongodb.ObjectId;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedSet;
@@ -97,11 +93,10 @@ public class Activity extends MongoEntity {
             HashMap<String,Integer> usersOnline = new HashMap<String,Integer>();
             for (UserLocation u : uso)
                 usersOnline.put(u.getUserid(), 1);
-
             // update bookmarks for users online
             for (ObjectId par : parents)
                 for (Bookmark b : Bookmark.getByDest(par)) 
-                    if (usersOnline.containsKey(b.getUid())) 
+                    if (usersOnline.containsKey(b.getUid().toString())) 
                         Bookmark.invalidate(b.getUid(),par.toString());
         } catch (Exception ex) {
             Logger.info("newNodeActivity failed:");

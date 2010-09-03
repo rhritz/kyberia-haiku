@@ -91,5 +91,13 @@ public class Fook extends MongoEntity {
         List<ObjectId> lf = new LinkedList<ObjectId>();
         return lf;
     }
+
+
+    // musime to preliezt hierarichicky / resp. vector by mohol byt hash (ale nie tu)
+    public boolean isFook(NodeContent node, ObjectId userId)
+    {
+        List<NodeContent> vector = node.loadVector();
+        return false;
+    }
     
 }

@@ -18,7 +18,7 @@ GET     /id/{id}/edit                   Application.showEditNode
 POST     /id/{id}/action                        Application.addNode
 POST     /id/{id}/edit                          Application.editNode
 POST     /add_node                              Application.addNode
-GET      /add_thread                             Application.addThread
+GET      /add_thread                            Application.addThread
 GET      /id/{id}/edit                          Application.showEditNode
 
 # actions
@@ -26,16 +26,32 @@ POST     /id/{id}/book                          Application.book
 POST     /id/{id}/unbook                        Application.unbook
 POST     /mail                                  Application.sendMail
 
+# pages
+GET   /add_page                                 Application.showAddPage
+POST  /add_page                                 Application.addPage
+GET   /pages                                    Application.showPages
+GET   /page/{pageId}                            Application.showPage
+POST  /page/{pageId}                            Application.editPage
+
 # user management
 GET   /add_user                                 Registration.showAddUser
 POST  /add_user                                 Registration.addUser
+GET   /friends/{uid}                            Application.showFriends
 GET   /user/{id}                                Application.showUser
 POST  /user/{uid}                               Application.uploadIcon
 POST  /user/{uid}/{action}                      Application.{action}
 
+# group management
+GET   /add_group                                Application.showAddGroup
+POST  /add_group                                Application.addGroup
+GET   /groups                                   Application.showGroups
+GET   /group/{groupId}                          Application.showGroup
+POST  /group/{groupId}                          Application.editGroup
+
 ###
 GET   /bookmarks                                Application.showBookmarks
 GET   /friends_nodes                            Application.showFriendsContent
+
 GET   /mail                                     Application.showMail
 # TODO obmedzit na dlzku threadid regexpom
 GET   /mail/{thread}                            Application.showMail
@@ -48,7 +64,7 @@ GET   /nodes                                    Application.showNodes
 GET   /tag/{tag}                                Application.showTag
 
 # toto je catch-all, musi byt preto nizsie
-POST     /id/{id}/{action}              Application.{action}
+POST     /id/{id}/{action}                      Application.{action}
 ###
 ############### bordel ################
 # zatial nepouzivane;
@@ -56,7 +72,7 @@ POST     /id/{id}/{action}              Application.{action}
 GET     /thread/{<[0-9]+>id}/{<[0-9]+>start}/{<[0-9]+>length} Application.rawThread
 
 
-#GET     /id/{<[0-9]+>id}/action                  Application.addNode
+#GET     /id/{<[0-9]+>id}/action                 Application.addNode
 #POST    /id/{<[0-9]+>id}/{<[0-9]+>parent}       Application.addNode
 # DELETE /id/{<[0-9]+>id} Application.addNode
 # + movenode cez delete + post

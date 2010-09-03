@@ -1,5 +1,5 @@
 #{extends 'main.html' /}
-#{set title:'Users' /}
+#{set title:'' /}
 
 <div class="col1">
     <div class="node_content">
@@ -18,7 +18,7 @@
 </div>
 <div class="col2">
     VECAE!<br>
-    friends<br>
+    <a href="@{Application.showFriends(uid)}">friends</a><br>
     <a href="@{Application.showFriendsContent}">friends nodes</a><br>
     ignores<br>
     fooks<br>

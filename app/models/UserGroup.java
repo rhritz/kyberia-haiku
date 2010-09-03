@@ -20,6 +20,7 @@ package models;
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
 import com.google.code.morphia.Morphia;
+import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
@@ -27,14 +28,15 @@ import com.mongodb.ObjectId;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import plugins.*;
 import play.Logger;
 import play.cache.Cache;
 
 @Entity("UserGroup")
 public class UserGroup extends MongoEntity {
-    String name;
-    ObjectId owner;
+    String         name;
+    ObjectId       owner;
     List<ObjectId> masters;
     List<ObjectId> members;
     List<ObjectId> extend; // usergroup inheritance - just a thought for now
@@ -51,15 +53,20 @@ public class UserGroup extends MongoEntity {
         this.members = members;
     }
 
-    public static UserGroup create(ObjectId uid,
+    public static UserGroup create(String uid,
             String name,
             List<ObjectId> members)
     {
-            UserGroup u = new UserGroup(uid, name, members);
+            UserGroup u = new UserGroup(new ObjectId(uid), name, members);
             MongoDB.save(u, MongoDB.CUserGroup);
             return u;
     }
 
+    public static UserGroup load(String groupid) {
+        return load(new ObjectId(groupid));
+    }
+
+    // + cache
     public static UserGroup load(ObjectId groupid) {
         UserGroup u = null;
         try {
@@ -79,20 +86,73 @@ public class UserGroup extends MongoEntity {
         return u;
     }
 
-    public static void addUser(ObjectId uid, ObjectId groupid) {
-
+    // + cache
+    public void addUser(ObjectId uid) {
+        members.add(uid);
     }
 
-    public void changeOwner() {
-
+    public void removeUser(ObjectId uid) {
+        members.remove(uid);
     }
 
-    public static void removeUser() {
-
+    public boolean isMember(ObjectId uid) {
+        if (members == null) {
+            return false;
+        } else {
+            return members.contains(uid);
+        }
     }
 
-    public static List<UserGroup> listGroups() {
-        return null;
+    // vsetky groups v ktorych je typek member
+    public static List<UserGroup> listGroupsOfUser(ObjectId uid) {
+        List<UserGroup> u = null;
+        try {
+            DBCursor iobj = (DBCursor) MongoDB.getDB().
+                    getCollection(MongoDB.CUserGroup).
+                    find();
+            if (iobj != null)
+                u = Lists.transform(iobj.toArray(),
+                            MongoDB.getSelf().toUserGroup());
+        } catch (Exception ex) {
+            Logger.info("user load fail");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+            return null;
+        }
+        return u;
+    }
+
+    // + cache
+    public void changeOwner(ObjectId newOwner) {
+        owner = newOwner;
+        MongoDB.save(this, MongoDB.CUserGroup);
+    }
+
+    public static List<UserGroup> loadGroups() {
+        List<UserGroup> u = null;
+        try {
+            DBCursor iobj = (DBCursor) MongoDB.getDB().
+                    getCollection(MongoDB.CUserGroup).
+                    find();
+            if (iobj != null) 
+                u = Lists.transform(iobj.toArray(),
+                            MongoDB.getSelf().toUserGroup());
+        } catch (Exception ex) {
+            Logger.info("user load fail");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+            return null;
+        }
+        return u;
+    }
+
+    public void edit(Map<String, String> params) {
+        save();
+    }
+
+    // + cache
+    public void save() {
+        MongoDB.save(this, MongoDB.CUserGroup);
     }
 
 }

@@ -62,9 +62,8 @@ public class Application extends Controller {
     }
 
     public static void index() {
-        // Page.getByName(Controller.params, Controller.renderArgs, Controller.request, Controller.session
-
-        Page main = Page.getByName(Page.MAIN, params, renderArgs, request, session);
+        Page main = Page.getByName(Page.MAIN, params, renderArgs, request,
+                session);
         renderArgs.put(ViewTemplate.TOP_LEVEL_TEMPLATE, "main.html"); // main.getToplevelTemplate? alebo skor z viewu -> main.view.getToplevelTemplate
         render(main.getTemplate());
     }
@@ -208,13 +207,14 @@ public class Application extends Controller {
         NodeContent node = NodeContent.load(oid);
         String uid = session.get(User.ID);
         renderArgs.put("uid", uid);
-        if (node.canRead(new ObjectId(uid))) {
+        if (node != null && node.canRead(new ObjectId(uid))) {
             // NodeContent.getThreadedChildren(oid, start, count);
             // logicky UserVisit save patri sem, lebo tu vieme co ideme zobrazit
             UserLocation.saveVisit(User.load(uid), id);
             renderArgs.put("node", node);
             renderArgs.put("thread",
-                    NodeContent.getThreadedChildren(oid, start, count));
+                    // NodeContent.getThreadedChildren(oid, start, count));
+                    node.getThreadIntern(start, count));
             renderArgs.put("id", id);
         } else {
             renderArgs.put("id", id);
@@ -280,9 +280,12 @@ public class Application extends Controller {
         renderArgs.put("threads",
                 MessageThread.viewUserThreads(new ObjectId(session.get(User.ID)),
                     session));
-        renderArgs.put("mailMessages",
+        String threadStr = session.get("LastThreadId");
+        if (threadStr != null) {
+            renderArgs.put("mailMessages",
                 Message.getMessages(new ObjectId(session.get("LastThreadId")),
                     new ObjectId(fromId)));
+        }
         render(ViewTemplate.MAIL_HTML);
     }
 
@@ -297,14 +300,19 @@ public class Application extends Controller {
         render(ViewTemplate.SHOW_LAST_HTML);
     }
 
+    public static void showFriends(String uid) {
+        // String myId = session.get(User.ID);
+        User u = User.load(uid);
+        renderArgs.put("friends", u.listFriends());
+        renderArgs.put("uid", uid);
+        render(ViewTemplate.SHOW_FRIENDS_HTML);
+    }
+
     public static void showMe() {
-        // linka na current usera
         String myId = session.get(User.ID);
-        Logger.info("showMe:: " + myId);
-        renderArgs.put("nodes",
-                Nodelist.getUserNodes(myId,null));
         User me = User.load(myId);
-        /* should this be lazily evaluated? */
+        Logger.info("showMe:: " + myId);
+        renderArgs.put("nodes", Nodelist.getUserNodes(myId,null));
         renderArgs.put("friends", me.listFriends());
         renderArgs.put("uid", myId);
         render(ViewTemplate.SHOW_ME_HTML);
@@ -413,5 +421,63 @@ public class Application extends Controller {
         render(ViewTemplate.SHOW_LAST_HTML);
     }
 
+    // Group management
+    public static void addGroup() {
+        UserGroup g = UserGroup.create(session.get(User.ID), params.get("name"),
+                null);
+        renderArgs.put("group",  g);
+        render(ViewTemplate.SHOW_GROUP_HTML);
+    }
+
+    public static void showAddGroup() {
+        render(ViewTemplate.ADD_GROUP_HTML);
+    }
+
+    public static void showGroups() {
+        renderArgs.put("groups",  UserGroup.loadGroups());
+        render(ViewTemplate.SHOW_GROUPS_HTML);
+    }
+
+    public static void showGroup(String groupId) {
+        renderArgs.put("group",  UserGroup.load(groupId));
+        render(ViewTemplate.SHOW_GROUP_HTML);
+    }
+
+    public static void editGroup(String groupId) {
+        UserGroup g = UserGroup.load(groupId);
+        g.edit(Controller.params.allSimple());
+        renderArgs.put("group",  g);
+        render(ViewTemplate.EDIT_GROUP_HTML);
+    }
+
+
+    // Pages
+    public static void addPage() {
+        Page p = Page.create(params.get("name"), params.get("template"),
+                new ObjectId(session.get(User.ID)));
+        renderArgs.put("page",  p);
+        render(ViewTemplate.SHOW_PAGE_HTML);
+    }
+
+    public static void showAddPage() {
+        render(ViewTemplate.ADD_PAGE_HTML);
+    }
+
+    public static void showPages() {
+        renderArgs.put("pages",  Page.loadPages());
+        render(ViewTemplate.SHOW_PAGES_HTML);
+    }
+
+    public static void showPage(String pageId) {
+        renderArgs.put("page",  Page.load(pageId));
+        render(ViewTemplate.SHOW_PAGE_HTML);
+    }
+
+    public static void editPage(String pageId) {
+        Page  p = Page.load(pageId);
+        p.edit(Controller.params.allSimple());
+        renderArgs.put("page",  p);
+        render(ViewTemplate.EDIT_PAGE_HTML);
+    }
 
 }

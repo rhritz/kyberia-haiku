@@ -1,20 +1,18 @@
 #{extends 'main.html' /}
 #{set title:'Node id' /}
+#{if node}
 <div class="col1">
     <div class="nodeContent" style="display:block;">
-        #{if node}
-            ${node.name}
-            ${node.content}
-            #{if node.tags}
-                <div class="tags" style="display:block; font-size:small;">
-                #{list items:node.tags, as:'tag' }
-                    <div class="tag" style="display:inline;">
-                        ${tag}
-                    </div>
-                #{/list}
-                </div>
-            #{/if}
-        #{/if}
+    ${node.content}
+    #{if node.tags}
+        <div class="tags" style="display:block; font-size:small;">
+        #{list items:node.tags, as:'tag' }
+            <div class="tag" style="display:inline;">
+                ${tag}
+            </div>
+        #{/list}
+        </div>
+    #{/if}
     </div>
     <div style="display:block;">
         <form action="@{Application.addNode(id)}" method="POST">
@@ -27,21 +25,19 @@
         </form>
     </div>
     <div class="nodeContent">
-        
-
-        *{ renderujeme thread }*
-        %{ prevDepth = 0; }%
-        #{list items:thread, as:'node' }
-            %{ if (node.depth - prevDepth <= 0)
-                out.print("</div>".multiply(1 + prevDepth - node.depth));
-               prevDepth = node.depth;
-            }%
-            <div class="comment"><!-- TODO # {if user.ignore(node.owner)} style="display:none" # {/if} resp. collapsed -->
-                <div style="background-color:#e3e3e3; display:block">#{node par:node /}</div>
-                <div>${node.getContent()}</div>
-                <!-- <img style=\"position:relative;\" src=\"/public/images/k2.gif\"> -->
-        #{/list}
-        %{out.print("</div>".multiply(prevDepth));}% <!--  -->
+    *{ renderujeme thread }*
+    %{ prevDepth = 0; }%
+    #{list items:thread, as:'node' }
+        %{ if (node.depth - prevDepth <= 0)
+            out.print("</div>".multiply(1 + prevDepth - node.depth));
+           prevDepth = node.depth;
+        }%
+        <div class="comment"><!-- TODO # {if user.ignore(node.owner)} style="display:none" # {/if} resp. collapsed -->
+            <div style="background-color:#e3e3e3; display:block">#{node par:node /}</div>
+            <div>${node.getContent()}</div>
+            <!-- <img style=\"position:relative;\" src=\"/public/images/k2.gif\"> -->
+    #{/list}
+    %{out.print("</div>".multiply(prevDepth));}%
     </div>
     <!-- Navigation -->
     <center>
@@ -61,10 +57,12 @@
     </center>
 </div>
 <div class="col2">
-   <small>parent: <a href="/id/${node.par}">${node.par}</a></small>
+    <!-- Node info -->
+   <div>Name: ${node.name}</div>
+   <div>Owner: ${node.ownerName}</div>
+   <small>Parent: <a href="/id/${node.par}">${node.par}</a></small>
    <small>dfs: <a href="/id/${node.dfs}">${node.dfs}</a></small>
    <div style="display:block;">Actions:
-   #{if node}
        <form name="node_actions" action="@{Application.book(id)}" method="POST">
             #{authenticityToken /}
             <input type="submit" value="Book" onClick="javascript:this.form.action='@{Application.book(id)}';submit();"/>
@@ -75,11 +73,11 @@
             <input type="text" size="10" name="tag" />
             <input type="submit" value="Tag" onClick="javascript:this.form.action='@{Application.tag(id)}';submit();" />
        </form>
-   #{/if}
-   #{if node && node.canEdit(new com.mongodb.ObjectId(uid))} <a href="@{Application.showEditNode(id)}">Edit</a>#{/if}
+   #{if node.canEdit(new com.mongodb.ObjectId(uid))} <a href="@{Application.showEditNode(id)}">Edit</a>#{/if}
    <form action="@{Application.viewNode(id)}" method="GET">
         <input type="text" size="10" name="id" />
         <input type="submit" value="View Node" />
     </form>
    </div>
-</div>        
+</div>
+#{/if}

@@ -4,7 +4,7 @@
 <div class="col1">
     <div class="nodeContent">
             #{list items:groups, as:'group'}
-                <a href="@{Application.showGroup(group.id)}">${group.name}</a><br>
+                <a href="@{Application.showGroup(group.id.toString())}">${group.name}</a><br>
             #{/list}
     </div>
     <!-- + New group -->

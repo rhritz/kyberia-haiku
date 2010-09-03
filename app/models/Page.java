@@ -17,28 +17,23 @@
 */
 package models;
 
-import java.util.List;
 
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
-import com.google.code.morphia.Morphia;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
 import com.mongodb.ObjectId;
-import com.mongodb.QueryBuilder;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import play.mvc.Http.Request;
 import play.mvc.Scope.Params;
 import play.mvc.Scope.Session;
 import plugins.*;
 import play.Logger;
 import play.cache.Cache;
-import play.mvc.Controller;
 import play.mvc.Scope.RenderArgs;
 
 @Entity("Page")
@@ -47,14 +42,12 @@ public class Page extends MongoEntity {
     private String              contentNode;
     private String              name;
     private String              template;
-    private String              owner;
-    List<String>                contentTags; // -> TemplateDataDef
-    // List<TemplateDataDef> ddd
-    // ddd.add(new TemplateDataDef("last10") {@Override public List<NodeContent> getData(int start, int count, int order, ...) { return NodeContent.load(blablabla)}})
-    // for (TemplateDataDef tdd : ddd) {
-    //   renderArgs.put(tdd.getName(),tdd.getData())
-    // }
-    // pri starte aplikacie pozbierat a vytvorit vsetky taketo triedy?
+    private ObjectId            owner;
+    private List<ObjectId>      feeds; // -> tag getFeed/displayFeed ?
+
+    @Transient
+    // list alebo hash?
+    private HashMap<String,Feed> content;
 
     public  static final String MAIN     = "main";
     public  static final String NAME     = "name";
@@ -65,6 +58,12 @@ public class Page extends MongoEntity {
     public Page(String name, String template) {
         this.name     = name;
         this.template = template;
+    }
+
+    public Page(String name, String template, ObjectId owner) {
+        this.name     = name;
+        this.template = template;
+        this.owner    = owner;
     }
 
     public static Page get(   String name,
@@ -179,6 +178,91 @@ public class Page extends MongoEntity {
        //    renderArgs.put(stuff.getName(),stuff.getData(uid,id,...))
        //  }
     }
+
+    public void loadFeeds() {
+        if (feeds == null)
+            return;
+        for (ObjectId feedId : feeds) {
+           Feed feed = Feed.loadContent(feedId);
+           content.put(feed.getName(), feed);
+        }
+    }
+
+    public void addFeed(ObjectId feedId) {
+        if (feeds == null)
+            feeds = new LinkedList<ObjectId>();
+        feeds.add(feedId);
+        save();
+        // + pripadne vybuit z cache
+    }
+
+    public void removeFeed(ObjectId feedId) {
+        if (feeds != null) {
+            feeds.remove(feedId); // toto asi treba na zaklade hodnoty?
+            save();
+        }
+    }
+
+    public static List<Page> loadPages() {
+        List<Page> pages = null;
+        try {
+            DBCursor iobj = (DBCursor) MongoDB.getDB().
+                    getCollection(MongoDB.CPage).
+                    find();
+            Logger.info("brekeke:" + iobj.length());
+            if (iobj != null) 
+                pages = Lists.transform(iobj.toArray(),
+                            MongoDB.getSelf().toPage());
+        } catch (Exception ex) {
+            Logger.info("Page list load fail");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+            return null;
+        }
+        return pages;
+    }
+
+    public static Page loadByName(String name) {
+        // query on name
+        Page page = null;
+        return page;
+    }
+
+    public static Page load(String pageId) {
+        Page page = null;
+        ObjectId oid = new ObjectId(pageId);
+        try {
+            BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
+                    getCollection(MongoDB.CPage).
+                    findOne(new BasicDBObject().
+                    append("_id",oid));
+            if (iobj != null)
+                page = (Page) MongoDB.getMorphia().
+                        fromDBObject(Page.class, (BasicDBObject) iobj);
+        } catch (Exception ex) {
+            Logger.info("user load fail");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+            return null;
+        }
+        return page;
+    }
+
+    public void edit(Map<String, String> params) {
+        save();
+    }
+
+    // + cache
+    public void save() {
+        MongoDB.save(this, MongoDB.CPage);
+    }
+
+    public static Page create(String name, String template, ObjectId owner) {
+        Page p = new Page(name, template, owner);
+        if (p != null)
+            p.save();
+        return p;
+    }
 }
 
 /*
@@ -186,4 +270,11 @@ public class Page extends MongoEntity {
 
     public T       getOne();
     public List<T> getList();
+ */
+
+// List<TemplateDataDef> ddd
+    // ddd.add(new TemplateDataDef("last10") {@Override public List<NodeContent> getData(int start, int count, int order, ...) { return NodeContent.load(blablabla)}})
+    // for (TemplateDataDef tdd : ddd) {
+    //   renderArgs.put(tdd.getName(),tdd.getData())
+    // }
  */

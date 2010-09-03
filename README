@@ -57,6 +57,9 @@ models           - vsetko co robi nieco s datami
 plugins          - datove pripojenia a ine objekty, ktore chceme dostupne stale
 views            - html / groovy templaty
 
+mongojs/
+- stored procedury pre mongodb
+
 Este maly hint:
 Play! je velmi priatelsky framework a pozna prikazy idealize/eclipsify/netbeansify.
 

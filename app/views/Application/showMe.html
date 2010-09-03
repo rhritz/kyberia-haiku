@@ -34,7 +34,7 @@
         <div style="display:block;">
             Mah last nodes:
             #{list items:nodes, as:'node'}
-                <a href="/id/${node.id}">${node.name}</a>${node.cr_date}<a href="@{Application.showUser(node.owner)}">${models.User.getNameForId(node.owner)}</a> <br>
+                <a href="/id/${node.id}">${node.name}</a>${node.cr_date}<a href="@{Application.showUser(node.owner)}">${node.ownerName}</a> <br>
                     ${node.content} <br>
             #{/list}
         </div>

@@ -69,7 +69,7 @@ public class UserLocation extends MongoEntity {
         ObjectId userid = user.getId();
         UserLocation ul = new UserLocation(userid.toString(), user.getUsername(),
                 location, System.currentTimeMillis());
-        Cache.set("user_location" + user.getId(), ul); // + expiry
+        Cache.set("user_location_" + user.getIdString(), ul); // + expiry
         ul.save();
         Bookmark.updateVisit(userid, location);
         // TODO z tohto asi perzistentny plugin, stale to de/serializovat z cache

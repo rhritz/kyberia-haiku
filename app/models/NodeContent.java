@@ -29,6 +29,7 @@ import play.Logger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -41,11 +42,11 @@ public class NodeContent extends MongoEntity {
 
     private String        content     = "";
     private ObjectId      owner       ; // mongoid ownera
-    private String        ownerGid; // grafove id ownera - pouziva sa niekde?
     private Long          created     = 0l;
     private String        cr_date     = "";
-    private String        name        = "";
-    private ObjectId      par             ;
+    public  String        name        = "";
+    public  ObjectId      par             ;
+    private ObjectId      dfs;
 
     private Integer       template    = 1;
     private String        putId       = null; // ak != null tak toto je hardlink
@@ -75,8 +76,11 @@ public class NodeContent extends MongoEntity {
 
     @Transient
     public Integer        depth       = 1;
-
-    private ObjectId      dfs;
+    @Transient
+    public String           parName;
+    @Transient
+    public String           ownerName;
+    
 
     public NodeContent() {}
 
@@ -250,6 +254,11 @@ public class NodeContent extends MongoEntity {
             if (iobj !=  null) {
                 n = MongoDB.getMorphia().fromDBObject(NodeContent.class,
                            (BasicDBObject) iobj);
+                n.ownerName = User.getNameForId(n.owner);
+                if (n.par != null )
+                    n.parName  = load(n.par).name;
+                else
+                    n.parName  = "";
                 Cache.add("node_" + id, n);
             }
         } catch (Exception ex) {
@@ -517,6 +526,72 @@ public class NodeContent extends MongoEntity {
         ObjectId bubu = null;
         try { bubu = new ObjectId(x);} catch (Exception e ) {};
         return bubu;
+    }
+
+    public List<NodeContent> getThreadIntern(Integer start, Integer count)
+    {
+        List<NodeContent> thread = new LinkedList<NodeContent>();
+        HashMap<ObjectId,Integer> roots = new HashMap<ObjectId,Integer>();
+        int local_depth = 0;
+        NodeContent nextnode = this;
+        NodeContent lastnode;
+        ObjectId parent;
+        for (int i = 0; i < start + count; i++) {
+            lastnode = nextnode;
+            if (lastnode.dfs == null) {
+              return thread;
+            }
+            nextnode = NodeContent.load(lastnode.dfs);
+            if (nextnode == null) {
+              return thread;
+            }
+            if (nextnode.par == null) {
+              return thread;
+            }
+            parent = nextnode.par;
+            if (parent.equals(lastnode.id)) {
+                roots.put(parent,local_depth);
+                local_depth++;
+            } else {
+                // ak v tomto bode nema parenta v roots,
+                // znamena to ze siahame vyssie ako root - koncime
+                if (roots.get(parent) == null) {
+                    return thread;
+                }
+                // nasli sme parenta, sme o jedno hlbsie ako on
+                local_depth = roots.get(parent) + 1;
+            }
+            if ( i>= start) {
+                // tento node chceme zobrazit
+                // tu je vhodne miesto na kontrolu per-node permissions, ignore a fook zalezitosti
+                // hmmm.. tu by sme potrebovali vyklonovat nextnode a priradit mu hlbku? ci ani nie?
+                // ani nie, lebo load nam vytvori novy objekt z cache alebo db
+                nextnode.depth = local_depth;
+                thread.add(nextnode);
+            }
+        }
+        return thread;
+    }
+
+    // - neskor aj mongojs na toto?
+    protected List<NodeContent> loadVector() {
+        List<NodeContent> nodes = null; 
+        // TODO estepredtym by to chcelo vybrat zacachovane a vratit ich tak
+        try {
+            DBObject query = new BasicDBObject("_id",
+                    new BasicDBObject().append("$in",
+                    vector.toArray(new ObjectId[vector.size()])));
+            DBCursor iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
+                    find(query);
+            if (iobj !=  null)
+                nodes = Lists.transform(iobj.toArray(),
+                        MongoDB.getSelf().toNodeContent());
+        } catch (Exception ex) {
+            Logger.info("load nodes::");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+        }
+        return nodes;
     }
 
 }

@@ -34,12 +34,15 @@ public class MongoDB {
     private static MongoDB  self;
     private ToMessage       message;
     private ToMessageThread messageThread;
+    private ToPage          page;
     private ToUser          user;
+    private ToUserGroup     userGroup;
     private ToUserLocation  userLocation;
     private ToNodeContent   nodeContent;
     private ToTag           tag;
     private ToBookmark      bookmark;
     private ToActivity      activity;
+    private ToFeed          feed;
 
     private static DB       db;
     private static Mongo    mongo;
@@ -51,6 +54,7 @@ public class MongoDB {
     // Collection Names
     public static final String CActivity      = "Activity";
     public static final String CBookmark      = "Bookmark";
+    public static final String CFeed          = "Feed";
     public static final String CFook          = "Fook";
     public static final String CFriend        = "Friend";
     public static final String CIgnore        = "Ignore";
@@ -85,11 +89,13 @@ public class MongoDB {
           message       = new ToMessage();
           messageThread = new ToMessageThread();
           user          = new ToUser();
+          userGroup     = new ToUserGroup();
           userLocation  = new ToUserLocation();
           nodeContent   = new ToNodeContent();
           tag           = new ToTag();
           bookmark      = new ToBookmark();
           activity      = new ToActivity();
+          page          = new ToPage();
     }
 
     public static void start() {
@@ -126,6 +132,7 @@ public class MongoDB {
             morphia.map(Vote.class);
             morphia.map(Page.class);
             morphia.map(ViewTemplate.class);
+            morphia.map(Feed.class);
             
         } catch (Exception e) {
             Logger.info("Brekeke @ mongo:: " + e.toString());
@@ -197,6 +204,11 @@ public class MongoDB {
         return user;
     }
 
+    public Function<DBObject, UserGroup> toUserGroup()
+    {
+        return userGroup;
+    }
+
     public Function<DBObject, UserLocation> toUserLocation()
     {
         return userLocation;
@@ -222,58 +234,89 @@ public class MongoDB {
         return activity;
     }
 
+    public Function<DBObject, Feed> toFeed()
+    {
+        return feed;
+    }
+
+    public Function<DBObject, Page> toPage()
+    {
+        return page;
+    }
+
     // transformacna funkcia pre Lists.transform
     public class ToMessage implements Function<DBObject, Message> {
         public Message apply(DBObject arg) {
-            return morphia.fromDBObject(Message.class,
-                   arg);
+            return morphia.fromDBObject(Message.class, arg);
         }
     }
 
     public class ToMessageThread implements Function<DBObject, MessageThread> {
         public MessageThread apply(DBObject arg) {
-            return morphia.fromDBObject(MessageThread.class,
-                    arg);
+            return morphia.fromDBObject(MessageThread.class, arg);
         }
     }
 
     public class ToUser implements Function<DBObject, User> {
         public User apply(DBObject arg) {
-            return morphia.fromDBObject(User.class,
-                   arg);
+            return morphia.fromDBObject(User.class, arg);
+        }
+    }
+
+    public class ToUserGroup implements Function<DBObject, UserGroup> {
+        public UserGroup apply(DBObject arg) {
+            return morphia.fromDBObject(UserGroup.class, arg);
         }
     }
 
     public class ToUserLocation implements Function<DBObject, UserLocation> {
         public UserLocation apply(DBObject arg) {
-            return morphia.fromDBObject(UserLocation.class,   arg);
+            return morphia.fromDBObject(UserLocation.class, arg);
         }
     }
 
+    // TODO: caching? to by asi bolo potrebne riesit pred tymto/?
     public class ToNodeContent implements Function<DBObject, NodeContent> {
         public NodeContent apply(DBObject arg) {
-            return morphia.fromDBObject(NodeContent.class,   arg);
+            NodeContent n = morphia.fromDBObject(NodeContent.class, arg);
+            n.ownerName = User.getNameForId(n.getOwner());
+            if (n.par != null )
+                n.parName  = NodeContent.load(n.par).name;
+            else
+                n.parName  = "";
+            return n;
         }
     }
 
     public class ToTag implements Function<DBObject, Tag> {
         public Tag apply(DBObject arg) {
-            return morphia.fromDBObject(Tag.class,
-                   arg);
+            return morphia.fromDBObject(Tag.class, arg);
         }
     }
 
     public class ToBookmark implements Function<DBObject, Bookmark> {
         public Bookmark apply(DBObject arg) {
-            return morphia.fromDBObject(Bookmark.class,
-                   arg);
+            return morphia.fromDBObject(Bookmark.class, arg);
         }
     }
 
     public class ToActivity implements Function<DBObject, Activity> {
         public Activity apply(DBObject arg) {
-            return morphia.fromDBObject(Activity.class,
-                   arg);
+            return morphia.fromDBObject(Activity.class, arg);
+        }
+    }
+
+    public class ToFeed implements Function<DBObject, Feed> {
+        public Feed apply(DBObject arg) {
+            Feed applied = morphia.fromDBObject(Feed.class, arg);
+            applied.loadContent();
+            return applied;
+        }
+    }
+
+    public class ToPage implements Function<DBObject, Page> {
+        public Page apply(DBObject arg) {
+            return morphia.fromDBObject(Page.class, arg);
         }
     }
 }
