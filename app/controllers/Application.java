@@ -244,6 +244,7 @@ public class Application extends Controller {
     }
 
     public static void showNodes() {
+        renderArgs.put("content", "Neviem co sem napisat");
         render(ViewTemplate.SHOW_NODES_HTML);
     }
 
@@ -429,6 +430,16 @@ public class Application extends Controller {
         render(ViewTemplate.SHOW_GROUP_HTML);
     }
 
+    public static void addUserToGroup(String groupId) {
+        String uid = params.get("newId");
+        UserGroup g = UserGroup.load(groupId);
+        ObjectId newUid = new ObjectId(uid);
+        if (newUid != null) {
+            g.addUser(newUid);
+        }
+        showGroup(groupId);
+    }
+
     public static void showAddGroup() {
         render(ViewTemplate.ADD_GROUP_HTML);
     }
@@ -488,6 +499,17 @@ public class Application extends Controller {
             p.emanate(renderArgs);
             render(p.getTemplate());
         }
+    }
+
+    // Tags
+    public static void showTags() {
+        renderArgs.put("tags",  Tag.load());
+        render(ViewTemplate.SHOW_TAGS_HTML);
+    }
+
+    public static void showNodesByTag(String tag) {
+        renderArgs.put("nodes",  Tag.getTaggedNodes(tag));
+        render(ViewTemplate.SHOW_LAST_HTML);
     }
 
 }

@@ -65,13 +65,11 @@ sub create_content {
 	return $content;
 }
 
-for (my $j = 0; $j < 2; $j++) {
-    fork();
-}
+#for (my $j = 0; $j < 2; $j++) {
+#    fork();
+#}
 for (my $i = 0; $i < $num_nodes; $i++ ) {
 	$par = $ids[rand($#ids)];
         troll($par,create_content(3),join("\n",(create_content(2),
                         create_content(3),create_content(2))));
 }
-
-# TODO a dalsi pre get req

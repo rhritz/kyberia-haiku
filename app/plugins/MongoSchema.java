@@ -47,6 +47,7 @@ public class MongoSchema {
          EnsureIndex('users') on MessageThread
          * db.Node.ensureIndex({created:-1});
          * db.createCollection("ViewTemplate");
+         * db.Tag.ensureIndex({tag: 1}, {unique: true});
      */
      }
     // find().sort({$natural:-1}) <-- sortovanie an natural colls, mozno aj idne funguje takto?

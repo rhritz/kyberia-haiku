@@ -170,7 +170,7 @@ public class NodeContent extends MongoEntity {
             return;
         if (tags == null)
             tags = new LinkedList<String>();
-        else if (tags.contains(tag))
+        if (tags.contains(tag))
             return;
         else
             tags.add(tag);
@@ -242,6 +242,7 @@ public class NodeContent extends MongoEntity {
     }
 
     // load from mongodb
+    // TODO parametrize parent loading
     public static NodeContent load(ObjectId id)
     {
         // Logger.info("About to load node " + id);

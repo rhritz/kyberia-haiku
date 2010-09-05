@@ -21,6 +21,7 @@ import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
+import com.mongodb.DB.WriteConcern;
 import com.mongodb.DBCursor;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -32,40 +33,120 @@ import play.Logger;
 import plugins.MongoDB;
 
 
-@Entity
+// TODO caching
+@Entity("Tag")
 public class Tag extends MongoEntity {
 
-    String tag;
+    String  tag;
+    Integer count;
 
+    public Tag() {}
+
+    public Tag(String name) { tag = name; count = 0; }
+    
     public static void tagNode(NodeContent nc, String tag, String uid) {
         nc.addTag(tag);
         nc.update();
-        // TagNodeUser.add(tag,nodeid,uid)
-        // Tag.add(tag)
+        Tag tagDoc = Tag.load(tag);
+        if (tagDoc == null) {
+            tagDoc = add(tag);
+        }
+        Logger.info(" tag " + tag + " count " + tagDoc.count);
+        tagDoc.inc();
         // TODO poznacit si asi aj kto ten tag dal
         // - bud v samostatnej kolekcii, alebo v zozname tagov
-        // pre kzdy zoanam aj zoznam userov ktroi ho dali
+        // nieco ako TagNodeUser.add(tag,nodeid,uid)
     }
 
-    public static void add()
+    public static Tag add(String name)
     {
-
+        Tag t = new Tag(name);
+        t.save();
+        return t;
     }
 
-    public static void load()
+    private void inc()
     {
-        
+        try {
+            // MongoDB.getDB().setWriteConcern(WriteConcern.STRICT);
+            MongoDB.getDB().getCollection(MongoDB.CTag).
+            update(new BasicDBObject().
+            append("tag",tag), new BasicDBObject().
+            append("$inc",new BasicDBObject("count",1)),
+                        false, false);
+        } catch (Exception ex) {
+            Logger.info("tag inc fail");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+        }
     }
 
+    public static Tag load(String name)
+    {
+        Tag tag = null;
+        try {
+            BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
+                    getCollection(MongoDB.CTag).
+                    findOne(new BasicDBObject().
+                    append("tag",name));
+            if (iobj != null)
+                tag = (Tag) MongoDB.getMorphia().
+                        fromDBObject(Tag.class, (BasicDBObject) iobj);
+        } catch (Exception ex) {
+            Logger.info("tag load fail");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+            return null;
+        }
+        return tag;
+    }
+
+    public static List<Tag> load()
+    {
+        List<Tag> tags = null;
+        try {
+            DBCursor iobj = (DBCursor) MongoDB.getDB().
+                    getCollection(MongoDB.CTag).
+                    find();
+            if (iobj != null)
+                tags = Lists.transform(iobj.toArray(),
+                            MongoDB.getSelf().toTag());
+        } catch (Exception ex) {
+            Logger.info("Page list load fail");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+            return null;
+        }
+        return tags;
+    }
+
+    // TODO + cache
     public void save()
     {
+        MongoDB.save(this, MongoDB.CTag);
+    }
 
+    // TODO + cache
+    public void update()
+    {
+        MongoDB.update(this, MongoDB.CTag);
     }
 
     public static List<NodeContent> getTaggedNodes(String tag)
     {
-        List<NodeContent> r = null;
-        return r;
+        List<NodeContent> nodes = null;
+        try {
+            DBCursor iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
+                    find(new BasicDBObject("tags", tag));
+            if (iobj !=  null)
+                nodes = Lists.transform(iobj.toArray(),
+                        MongoDB.getSelf().toNodeContent());
+        } catch (Exception ex) {
+            Logger.info("getTaggedNodes::");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+        }
+        return nodes;
     }
 
     public static List<Tag> getTagCloud(String tag)
@@ -80,12 +161,12 @@ public class Tag extends MongoEntity {
             if (iobj ==  null) {
                 r = new ArrayList<Tag>();
             } else {
-                Logger.info("user threads found");
+                Logger.info("tags found");
                 r = Lists.transform(iobj.toArray(),
                         MongoDB.getSelf().toTag());
             }
         } catch (Exception ex) {
-            Logger.info("getUserThreads");
+            Logger.info("getTagCloud");
             ex.printStackTrace();
             Logger.info(ex.toString());
         }

@@ -3,7 +3,9 @@
 
 <div class="col1">
     <div class="nodeContent">
-        ${content}
+    #{list items:tags}
+        <a href="@{Application.showNodesByTag(_.tag)}">${_.tag}</a>&nbsp;-&nbsp;${_.count}<br>
+    #{/list}
     </div>
 </div>
 <div class="col2">

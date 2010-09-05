@@ -35,6 +35,7 @@ GET   /page/{pageId}                            Application.showPage
 POST  /page/{pageId}                            Application.editPage
 
 # user management
+GET   /users                                    Application.showUsers
 GET   /add_user                                 Registration.showAddUser
 POST  /add_user                                 Registration.addUser
 GET   /friends/{uid}                            Application.showFriends
@@ -48,6 +49,17 @@ POST  /add_group                                Application.addGroup
 GET   /groups                                   Application.showGroups
 GET   /group/{groupId}                          Application.showGroup
 POST  /group/{groupId}                          Application.editGroup
+POST  /group/{groupId}/add_user                 Application.addUserToGroup
+
+# Tags
+GET   /tags                                     Application.showTags
+POST  /tags                                     Application.filterTags
+# ?
+GET   /tag/{tag}                                Application.showNodesByTag
+
+# Votes
+GET   /votes                                    Application.showVotes
+POST  /add_vote                                 Application.addVote
 
 ###
 GET   /bookmarks                                Application.showBookmarks
@@ -59,10 +71,8 @@ GET   /mail/{thread}                            Application.showMail
 GET   /last                                     Application.showLastNodes
 GET   /me                                       Application.showMe
 GET   /k                                        Application.showK
-GET   /users                                    Application.showUsers
 GET   /live                                     Application.showLive
 GET   /nodes                                    Application.showNodes
-GET   /tag/{tag}                                Application.showTag
 
 # toto je catch-all, musi byt preto nizsie
 POST     /id/{id}/{action}                      Application.{action}
@@ -75,8 +85,6 @@ GET     /thread/{<[0-9]+>id}/{<[0-9]+>start}/{<[0-9]+>length} Application.rawThr
 
 #GET     /id/{<[0-9]+>id}/action                 Application.addNode
 #POST    /id/{<[0-9]+>id}/{<[0-9]+>parent}       Application.addNode
-# DELETE /id/{<[0-9]+>id} Application.addNode
-# + movenode cez delete + post
 
 # Map static resources from the /app/public folder to the /public path
 GET     /public/                                staticDir:public
@@ -86,5 +94,3 @@ GET     /public/                                staticDir:public
 
 # pre 'redirecty' v ramci aplikacie
 #*        /{action}                               Application.{action}
-
-# TODO - REST routes, nieco ako GET|POST|* /rest/...  Rest.{action}{params} alebo co
