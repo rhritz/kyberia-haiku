@@ -17,23 +17,30 @@
 */
 package models;
 
+import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.ObjectId;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
 import play.Logger;
 import play.cache.Cache;
+import play.mvc.Scope.RenderArgs;
 import plugins.MongoDB;
 
+@Entity("Feed")
 public class Feed extends MongoEntity{
 
     private        String         name;
     private        ObjectId       owner;
     private        List<ObjectId> nodes;
     private        Integer        maxNodes;
+    private        String         subClass;
 
     // + pripadne neskor permisions atd
     // + unique index na name? alebo cez ID
@@ -105,4 +112,36 @@ public class Feed extends MongoEntity{
     String getName() {
         return name;
     }
+    ////////////////////////////////////////////////////////////////////////////
+    void getData(   Map<String, String> params,
+                    HashMap request,
+                    HashMap session,
+                    User    user,
+                    RenderArgs renderArgs) {
+        // renderArgs.put("data",data)...
+    }
+
+    void init(Page page) {
+    }
+
+    static Feed loadSubclass(ObjectId feedId, Page page) {
+        Feed feed = null;
+        try {
+            feed = load(feedId);
+            Class c = Class.forName(feed.subClass);
+            feed = sc(c,feed,page);
+        } catch (ClassNotFoundException ex) {
+            Logger.info("loadSubclass::");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+        }
+        return feed;
+    }
+
+    private static <T extends Feed> T sc(Class<T> c, Feed fu, Page page) {
+        T le = c.cast(fu);
+        le.init(page);
+        return c.cast(fu);
+    }
+
 }

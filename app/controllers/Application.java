@@ -371,25 +371,6 @@ public class Application extends Controller {
         renderArgs.put("messages", Alert.pop(session.get(User.ID)));
     }
 
-    // Template processing:
-    public static void viewNodeT(NodeTemplate template)
-    {
-        /*
-        for (TemplateDataDef d : template.getWantedData())
-        {
-            switch (d.getDatasetName()) {
-                    case MAIL:
-                        break;
-                        // renderArgs.put('mail',Mail.getMail(d.prop1, d.prop2, ...);
-                    //  ...
-                    // tuto treba zohladnit strankovanie, tj niektore veci pojdu z TemplateDataDef,
-                    // niektore ine z requestu / session
-            }
-        }
-         *
-         */
-    }
-
     // TODO cesta k obrazkom do konfigu + kontrolovat co sa upladuje
     public static void uploadIcon(String uid, File icon) {
         checkAuthenticity();

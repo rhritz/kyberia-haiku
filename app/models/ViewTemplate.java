@@ -23,6 +23,8 @@ import java.util.HashMap;
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
 import com.mongodb.ObjectId;
+import java.util.Map;
+import play.mvc.Scope.RenderArgs;
 
 // - zavisi od usera a sposobu pristupu
 @Entity("ViewTemplate")
@@ -64,7 +66,7 @@ public class ViewTemplate extends MongoEntity{
 	public String defaultMenu;  // '/menu/html'
 	public String defaultCss;
 	// ... and more properties
-	public HashMap<String,NodeTemplate> templates; // eg 'mail'=> mailTemplateInstance
+	public HashMap<String,Page> templates; // eg 'mail'=> mailTemplateInstance
 
 	// default View singleton
 	private static ViewTemplate defaultView; // new View(....)
@@ -80,7 +82,7 @@ public class ViewTemplate extends MongoEntity{
                 // this.superView = superView;
 	}
 
-	public void registerTemplate(String templateId, NodeTemplate t)
+	public void registerTemplate(String templateId, Page t)
 	{
 		templates.put(templateId, t);
 	}
@@ -92,26 +94,14 @@ public class ViewTemplate extends MongoEntity{
             return null;
         }
 
-	public NodeTemplate getTemplate(String templateId)
-	{
-		if (templates.containsKey(templateId))
-		{
-			return templates.get(templateId);
-		}
-		else
-		{
-			if (isDefault)
-			{
-				// we don't know how to render this
-				// throw new TemplateInstantiationException();
-				return null;
-			}
-			// return superView.getTemplate(templateId);
-                        return null;
-		}
-	}
-
-	public static void renderPage(HashMap r, HashMap s, NodeContent n, User u) // RequestParams r, Session s, Node n, User u)
+	public static void renderPage(
+                Map<String, String> params,
+                HashMap r,
+                HashMap s,
+                NodeContent n, // tu to uz budeme vediet? ale ano, ak loadujeme node
+                User u,
+                RenderArgs renderArgs
+                ) 
 	{
 		ViewTemplate v = null;
 		if (s.containsKey("view")) {
@@ -121,56 +111,27 @@ public class ViewTemplate extends MongoEntity{
 		} else {
 			v = ViewTemplate.getDefaultView();
 		}
+                // toto by sme asi mali oddelit, v/t
 
-		// Location bude nastavena v session - tyka sa hlavne veci ako mail a td. ktore nie su Node
-		NodeTemplate t = null;
+		// Location bude nastavena v sessionm alebo kde
+                // - tyka sa hlavne veci ako mail a td. ktore nie su Node
+		Page t = null;
 		if (s.containsKey("Location")) {
-			t = v.getTemplate((String) s.get("Location"));
+			t = Page.loadByName((String) s.get("Location"));
 		} else {
 			// hierarchia template: 1. request (override), 2. View<->Node
 			if(r.containsKey("template")) {
-				t = v.getTemplate((String) r.get("template"));
+				t = Page.loadByName((String) r.get("template"));
 			}
-			if (t == null) { // else + priapd ze dana tmpl neexistuje
+			if (t == null) {
+                            // else + priapd ze dana tmpl neexistuje
                             // tu samozrejme predpokladame (ale aj ninde) ze tempalte urcene v Node urcite
                             // existuju, co nemusi byt pravda
-				t = v.getTemplate(n.getTemplate().toString());
+				t = Page.loadByName(n.getTemplate().toString());
 			}
 		}
-		// bail here if t is null
-
-		// v podstate to co ma tato funkcis spravit je nastavit mena inkludovanych suborov
-		// a premennych/tagov
-		// ktore sa potom spracuju v .html subore
-		// v.render(...);
-		// t.render(...);
+                t.process(params, r, s , u, renderArgs);
 	}
-
-	public static void render()
-	{
-		// put names of files etc into renderArgs
-	}
-
-        // load all views, templates and datadefs and store them either locally
-        // in a structure or in the cache (but preferably locally)
-        // - which goes also for the html files (?)
-        public static void loadViews()
-        {
-            // first create the default view
-        }
-
-        /*
-         ViewTemplate.getTemplate(Templates.MAIL) or so?
-         render(ViewTemplate.getTmpl(Templates.MAIL), stuff); looks ok
-         but still we need to feed him session, request and view somehow
-         */
-
-        public static String getHtmlTemplate(String view, String what)
-        {
-            // zatial tmpl podla hashu #what asi len
-            // + zadefinovat staticke identifikatory tmpl
-            return null;
-        }
 
         public static ViewTemplate load(String id)
         {

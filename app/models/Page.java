@@ -49,9 +49,13 @@ public class Page extends MongoEntity {
     // list alebo hash?
     private HashMap<String,Feed> content;
 
+    @Transient
+    private List<Feed> preparedFeeds;
+
     public  static final String MAIN     = "main";
     public  static final String NAME     = "name";
     private static Page         mainPage = new Page("main","app/views/Pages/main.html");
+    private static HashMap<String,Page> templateStore;
 
     public Page() {}
 
@@ -150,23 +154,6 @@ public class Page extends MongoEntity {
      */
     public void setTemplate(String template) {
         this.template = template;
-    }
-
-    public void emit() {
-        List<TemplateData> dd = new LinkedList<TemplateData>();
-        // teraz ako to vytvorit na zkalade TemplateDataDef?
-
-        // cize dva podinterfacy, jedno pre listy a druhy pre single
-        TemplateData<NodeContent> cc = new TemplateData<NodeContent>() {
-            public List<NodeContent> getList() {
-                return new LinkedList<NodeContent>();
-            }
-
-            public NodeContent getOne() {
-                return new NodeContent();
-            }
-        };
-        dd.add(cc);
     }
 
     // page p = Page.getByName("dgfsdfj");
@@ -276,18 +263,46 @@ public class Page extends MongoEntity {
             p.save();
         return p;
     }
+
+    private String getName() {
+        return name;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    // pri starte aplikacie
+    public static void start() {
+        templateStore = new HashMap<String,Page>();
+        List<Page> allPages = loadPages();
+        if (allPages == null)
+            return;
+        for (Page page : allPages) {
+            page.prepareFeeds();
+            templateStore.put(page.getName(), page);
+        }
+    }
+
+    // pri loade templaty
+    private void prepareFeeds() {
+        preparedFeeds = new LinkedList<Feed>();
+        if (feeds == null)
+            return;
+        for (ObjectId feedId : feeds) {
+            Feed f = Feed.loadSubclass(feedId, this);
+            if (f != null)
+                preparedFeeds.add(f);
+        }
+    }
+
+    // pri spracovani Page
+    public void process(Map<String, String> params,
+                        HashMap request,
+                        HashMap session,
+                        User    user,
+                        RenderArgs renderArgs
+                        ) {
+        for (Feed f: preparedFeeds) 
+            f.getData(params, request, session, user, renderArgs);
+    }
+
 }
-
-/*
- public interface TemplateData<T> {
-
-    public T       getOne();
-    public List<T> getList();
- */
-
-// List<TemplateDataDef> ddd
-    // ddd.add(new TemplateDataDef("last10") {@Override public List<NodeContent> getData(int start, int count, int order, ...) { return NodeContent.load(blablabla)}})
-    // for (TemplateDataDef tdd : ddd) {
-    //   renderArgs.put(tdd.getName(),tdd.getData())
-    // }
- */

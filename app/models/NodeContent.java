@@ -91,7 +91,7 @@ public class NodeContent extends MongoEntity {
         created = System.currentTimeMillis();
         cr_date = DateFormat.getDateTimeInstance(DateFormat.LONG,
                     DateFormat.LONG).format(new Date(getCreated()));
-        template =  NodeTemplate.BASIC_NODE;
+        // template =  NodeTemplate.BASIC_NODE;
         name    = params.containsKey(Haiku.NAME) ?
                     params.get(Haiku.NAME) : cr_date; // zatial
         owner   = ownerid;
