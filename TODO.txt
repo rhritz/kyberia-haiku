@@ -1,9 +1,11 @@
 Veci, ktore nie su hotove, a chceme aby boli:
 
+--- 12.09.2010 ---
+* Redis 2 na spravu volatilnych dat a zrejme aj cache namiesto play! interneho resp. memcache
 
 --- 16.05.2010 ---
 * v Play1.1 nie je config escapeInTemplates, zrejme bude treba pouzit tag verbatim
-* mozno je dobre mat na bookmarku flag, ci ho zobrazovat vzdy alebo len bv kompletnom zozname
+* mozno je dobre mat na bookmarku flag, ci ho zobrazovat vzdy alebo len v kompletnom zozname
 
 --- 09.05.2010 ---
 * bolo by mozno vhodne pre dalsi vyvoj, aby bolo mozne pouzit Scalu/Scalate/Scamongo.
@@ -13,18 +15,18 @@ Zatial sa zda ze tomu nic nebrani, Play to priamo podporuje.
 * access/perms on userinfo ale len ciastocne
 
 --- 20.04.2010 ---
-* bannery
-* testovacie skripty (perl/ruby)
+* bannery - mozu byt riesene cez Feed/Page mech.
 * mail search
 
 --- 17.04.2010 ---
 *  moznost bookamrknut <Stream> napriklad new nodes ineho usera?
 - v principe by nemuselo byt prilis zlozite, len treba  specializovat (bookmark type)
 - mozeme asi odlozit na neskor
+- v konecnom dosledku ide len o to aby to bolo *nieco* co sa pise do col. Activity,
+odtial dalej moze ist o standardny bookmark, ln ineho typu ako bezny node bookmark
 
 --- 12.04.2010 ---
 * nejaky admin system - init mongodb a podobne
-* uprava konkretnych zaznamov v mongodb cez phpmoadmin alebo nieco take
 * put/hardlink - ako specialny typ NodeContent, zobrazi sa obsah node ktory je uvedeny
 v link_to
 
@@ -35,9 +37,6 @@ v link_to
 
 --- 23.03.2010 ---
 * Nativne Https (bude riesene v Play 1.1)
-* Mongo indexing
-* Templatovaci system resp. CMS - nejaky sposob linkovania medzi
-statickym/dynamickym contentom a templates, treba domysliet
 * Fook, Ignore & co
 * Odpocitavanie a obnovovanie kacok
 * Input validation -> AntiSamy (?)
@@ -55,16 +54,6 @@ statickym/dynamickym contentom a templates, treba domysliet
 * FastTags/Javatags
 * Bookmark Tags (aka delicious) - pridavanie, querying
 * Fulltext Search -> ? http://www.playframework.org/modules/search
-
-Content Tagy:
-- kazdy user moze priradit contentu 3-5? tagov
-- tabulka node-tag-pocet hlasov za tag
-- tabulka tag (cached)
-- ? budeme aj evidovat kto priadil comu aky tag?
-- user moze priradit max 100 tagov denne
-
-Templates:
-- View: default view, ostatne odvodene - view inheritance
-- Template: default template + verzia pre kazdy view + template inheritance
-- Dobre zadefinovat datovy kontrakt medzi template a modelom
-- View/jeho handle mozeme ulozit v session
+* Content Tagy: budeme aj evidovat kto priadil comu aky tag?
+* Templates - View: default view, ostatne odvodene - view inheritance
+* Templates - Template: default template + verzia pre kazdy view + template inheritance

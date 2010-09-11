@@ -5,7 +5,7 @@ snad aj userov.
 Status:
 Nasledovne veci su vo vacsej alebo mensej miere funkcne:
 Registracia, prihlasovanie userov, sessions, friends, bookmarks, K, last nodes,
-Mail, mail notifications, Nodes, Threads, Node permissions
+Mail, mail notifications, Nodes, Threads, Node permissions, Tags
 To co este nie je je popisane v TODO
 
 Licencia:
@@ -20,11 +20,11 @@ Prerekvizity:
     Staci stiahnut a rozbalit http://download.playframework.org/releases/play-1.0.2.zip
 * MongoDB, verzia 1.3 a vyssia: http://www.mongodb.org/display/DOCS/Downloads
 
-Kym nemame instalacne skripty, nasledovne kroky spravit rucne:
+Nasledovne kroky spravit rucne:
 * Rozbalit tento archiv so zachovanim adresarovej struktury
 (ak ides z gitu, vsetko do 1 adresara, pravdepodobne je vhodne nazvat ho haiku).
-* V separatnom adresari vytvorit datovy adresar, databazu a kolekcie v MongoDB
-(vid MongoSchema.java pre zoznam kolekcii)
+* Vytvorit datovy adresar pre MongoDB, ak uz neexistuje
+* V mongo shelli aplikovat prikazy ensureIndex z MongoSchema.java
 
 Spustenie:
 
