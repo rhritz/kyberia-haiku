@@ -141,7 +141,7 @@ public class Feed extends MongoEntity{
     private static <T extends Feed> T sc(Class<T> c, Feed fu, Page page) {
         T le = c.cast(fu);
         le.init(page);
-        return c.cast(fu);
+        return le;
     }
 
 }

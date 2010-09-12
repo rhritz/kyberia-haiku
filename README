@@ -20,14 +20,13 @@ Prerekvizity:
     Staci stiahnut a rozbalit http://download.playframework.org/releases/play-1.0.2.zip
 * MongoDB, verzia 1.3 a vyssia: http://www.mongodb.org/display/DOCS/Downloads
 
-Nasledovne kroky spravit rucne:
+Instalacia:
 * Rozbalit tento archiv so zachovanim adresarovej struktury
 (ak ides z gitu, vsetko do 1 adresara, pravdepodobne je vhodne nazvat ho haiku).
-* Vytvorit datovy adresar pre MongoDB, ak uz neexistuje
-* V mongo shelli aplikovat prikazy ensureIndex z MongoSchema.java
 
 Spustenie:
-
+1. Spusti MongoDb resp. pozri sa ci bezi a ma nastaveny adresar pre db
+2.
 cd [adresar v ktorom je tento subor]
 [cesta k play frameworku]/play run
 

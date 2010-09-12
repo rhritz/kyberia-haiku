@@ -102,19 +102,9 @@ public class MongoDB {
         self = new MongoDB();
         Logger.info("Mongo connecting");
         try {
-            /* The Mongo object instance actually represents a pool of connections
-                to the database; you will only need one object of class Mongo
-                even with multiple threads.
-             */
             mongo = new Mongo(ADDR, Integer.parseInt(PORT));
             db = mongo.getDB(DBNAME);
-            /*
-            Set<String> colls = db.getCollectionNames();
-            for (String s : colls) {
-                Logger.info(s);
-                morphia.map(Class.forName(s));
-            }
-             */
+            
             morphia = new Morphia();
 
             morphia.map(Message.class);
@@ -133,6 +123,31 @@ public class MongoDB {
             morphia.map(Page.class);
             morphia.map(ViewTemplate.class);
             morphia.map(Feed.class);
+
+            db.getCollection(CNode).ensureIndex(new BasicDBObject("created","-1"));
+            db.getCollection(CNode).ensureIndex(new BasicDBObject("owner","1"));
+            db.getCollection(CNode).ensureIndex(new BasicDBObject("par","1"));
+            db.getCollection(CNode).ensureIndex(new BasicDBObject("tags","1"));
+            db.getCollection(CNode).ensureIndex(new BasicDBObject("k","1"));
+            db.getCollection(CNode).ensureIndex(new BasicDBObject("mk","1"));
+            db.getCollection(CNode).ensureIndex(new BasicDBObject("name","1"));
+
+            db.getCollection(CUser).ensureIndex(new BasicDBObject("username","1"),"username_1",true);
+
+            db.getCollection(CMessageThread).ensureIndex(new BasicDBObject("users","1"));
+            
+            db.getCollection(CTag).ensureIndex(new BasicDBObject("tag","1"),"tag_1",true);
+
+            db.getCollection(CMessage).ensureIndex(new BasicDBObject("threadid","1"));
+            db.getCollection(CMessage).ensureIndex(new BasicDBObject("created","-1")); // alebo composite asi skor?
+            db.getCollection(CMessage).ensureIndex(new BasicDBObject("from","1"));
+            db.getCollection(CMessage).ensureIndex(new BasicDBObject("to","1")); // + "key" : { "from" : 1, "sent" : -1 }, "name" : "from_1_sent_-1" }
+
+            // db.getCollection(CActivity).ensureIndex(new BasicDBObject("username","1"),"username_1",true);
+            // db.getCollection(CBookmark).ensureIndex({destination: 1, uid:1}, {unique: true});
+
+            // find().sort({$natural:-1}) <-- sortovanie an natural colls, mozno aj idne funguje takto?
+            // http://www.mongodb.org/display/DOCS/Capped+Collections
             
         } catch (Exception e) {
             Logger.info("Brekeke @ mongo:: " + e.toString());
@@ -320,16 +335,3 @@ public class MongoDB {
         }
     }
 }
-/*
- TODO
- @OnApplicationStart
-public class EnsureGeoMongoIndex extends Job {
-
-        @Override
-        public void doJob() {
-                DB db = MongoDB.db();
-                DBCollection coll = db.getCollection("places");
-                coll.ensureIndex(new BasicDBObject("location", "2d"));
-        }
-}
- */
