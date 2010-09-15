@@ -20,19 +20,27 @@
             <input type="text" name="name"/>
             <textarea rows="10" cols="40" style="display:block; width:83%" name="content"></textarea>
             <input type="submit" value="Add Node" />
-            <!-- +select typu nodu -->
-            <!-- +select typu vztahu -->
         </form>
     </div>
+    <!-- Navigation -->
+    <center>
+         <a href="@{Application.viewNode(id,0)}">&lt;&lt;</a>
+         <a href="@{Application.viewNode(id,currentPage-1)}">&lt;</a>
+         <a href="@{Application.viewNode(id,currentPage+1)}">&gt;</a>
+         <a href="@{Application.viewNode(id,-1)}">&gt;&gt;</a>
+    </center>
     <div class="nodeContent">
-    *{ renderujeme thread }*
+    *{ render thread }*
     %{ prevDepth = 0; }%
     #{list items:thread, as:'node' }
-        %{ if (node.depth - prevDepth <= 0)
-            out.print("</div>".multiply(1 + prevDepth - node.depth));
+        %{ if (prevDepth-node.depth < -1)
+             out.print("<div class=\"comment\">".multiply(node.depth-prevDepth-1));
+           else if (node.depth - prevDepth <= 0)
+             out.print("</div>".multiply(1 + prevDepth - node.depth));
            prevDepth = node.depth;
         }%
-        <div class="comment"><!-- TODO # {if user.ignore(node.owner)} style="display:none" # {/if} resp. collapsed -->
+        <div class="comment" id="${prevDepth}">
+            <!-- TODO # {if user.ignore(node.owner)} style="display:none" # {/if} resp. collapsed -->
             <div style="background-color:#e3e3e3; display:block">#{node par:node /}</div>
             <div>${node.getContent()}</div>
             <!-- <img style=\"position:relative;\" src=\"/public/images/k2.gif\"> -->
@@ -41,19 +49,10 @@
     </div>
     <!-- Navigation -->
     <center>
-        <!-- viewNode -->
-        <form action="@{Application.addNode(id)}" method="POST">
-            #{authenticityToken /}
-            <!-- <a href="@ {Application.index(id,0)">&lt;&lt;</a> -->
-            <!-- <a href="@ {Application.index(id,currentPage-1)">&lt;</a> -->
-            <!-- <a href="@ {Application.index(id,currentPage+1)">&gt;</a> -->
-            <!-- ? ako vyznacit aby sme zobrazili najstarsiu stranku? -->
-            <!-- <a href="@ {Application.index(id,-1)">&gt;&gt;</a> -->
-            <button type="submit" name="nav" value="&lt;&lt;">&lt;&lt;</button>
-            <button type="submit" name="nav" value="&lt;">&lt;</button>
-            <button type="submit" name="nav" value="&gt;">&gt;</button>
-            <button type="submit" name="nav" value="&gt;&gt;">&gt;&gt;</button>
-        </form>
+         <a href="@{Application.viewNode(id,0)}">&lt;&lt;</a>
+         <a href="@{Application.viewNode(id,currentPage-1)}">&lt;</a>
+         <a href="@{Application.viewNode(id,currentPage+1)}">&gt;</a>
+         <a href="@{Application.viewNode(id,-1)}">&gt;&gt;</a>
     </center>
 </div>
 <div class="col2">

@@ -17,6 +17,7 @@
 */
 package models;
 
+import com.google.code.morphia.Morphia;
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
 import com.google.common.collect.Lists;
@@ -177,17 +178,16 @@ public class NodeContent extends MongoEntity {
     }
 
     // save to mongodb
-    // TODO invalidate cache
     public NodeContent save()
     {
         try {
             Logger.info("creating new node");
             MongoDB.save(this, MongoDB.CNode);
-            // TODO toto je snad docasne.. ked opravia driver tak aby vracal
-            // last insert id
+            // TODO generovat ID pred insertom
             NodeContent koko = MongoDB.getMorphia().fromDBObject(NodeContent.class,
                (BasicDBObject) MongoDB.getDB().getCollection(MongoDB.CNode).findOne(
                (BasicDBObject) MongoDB.getMorphia().toDBObject(this)));
+            Cache.set("node_" + koko.getId(), koko);
             Logger.info("new NodeContent now has ID::" + koko.getId());
             return koko;
         } catch (Exception ex) {
@@ -218,8 +218,8 @@ public class NodeContent extends MongoEntity {
             Cache.delete("node_" + this.getId());
             MongoDB.delete(this, MongoDB.CNode);
             
-            // + ostatne veci co treba deltnut: Activity, Bookmarks, ..?
-            // + graf
+            // TODO ostatne veci co treba deletnut: Activity, Bookmarks, ..?
+            // + threads
         } catch (Exception ex) {
             Logger.info("delete failed:");
             ex.printStackTrace();
@@ -227,21 +227,15 @@ public class NodeContent extends MongoEntity {
         }
     }
 
-    public static NodeContent load(String id, int depth)
-    {
-        NodeContent nc = load(id);
-        nc.depth = depth;
-        return nc;
-    }
-
     // load from mongodb
     public static NodeContent load(String id)
     {
-        if (id == null || id.length() < 10) return null;
-        return load(new ObjectId(id));
+        ObjectId oid = toId(id);
+        if (oid == null)
+           return null;
+        return load(oid);
     }
 
-    // load from mongodb
     // TODO parametrize parent loading
     public static NodeContent load(ObjectId id)
     {
@@ -522,7 +516,7 @@ public class NodeContent extends MongoEntity {
         return thread;
     }
 
-    // blabla
+    // TODO remove this
     public static ObjectId toId(String x) {
         ObjectId bubu = null;
         try { bubu = new ObjectId(x);} catch (Exception e ) {};
@@ -539,16 +533,11 @@ public class NodeContent extends MongoEntity {
         ObjectId parent;
         for (int i = 0; i < start + count; i++) {
             lastnode = nextnode;
-            if (lastnode.dfs == null) {
+            if (lastnode.dfs == null) 
               return thread;
-            }
             nextnode = NodeContent.load(lastnode.dfs);
-            if (nextnode == null) {
+            if (nextnode == null || nextnode.par == null)
               return thread;
-            }
-            if (nextnode.par == null) {
-              return thread;
-            }
             parent = nextnode.par;
             if (parent.equals(lastnode.id)) {
                 roots.put(parent,local_depth);
@@ -556,17 +545,15 @@ public class NodeContent extends MongoEntity {
             } else {
                 // ak v tomto bode nema parenta v roots,
                 // znamena to ze siahame vyssie ako root - koncime
-                if (roots.get(parent) == null) {
+                if (roots.get(parent) == null) 
                     return thread;
-                }
                 // nasli sme parenta, sme o jedno hlbsie ako on
                 local_depth = roots.get(parent) + 1;
             }
             if ( i>= start) {
                 // tento node chceme zobrazit
-                // tu je vhodne miesto na kontrolu per-node permissions, ignore a fook zalezitosti
-                // hmmm.. tu by sme potrebovali vyklonovat nextnode a priradit mu hlbku? ci ani nie?
-                // ani nie, lebo load nam vytvori novy objekt z cache alebo db
+                // tu je vhodne miesto na kontrolu per-node permissions,
+                // ignore a fook zalezitosti
                 nextnode.depth = local_depth;
                 thread.add(nextnode);
             }
@@ -577,7 +564,7 @@ public class NodeContent extends MongoEntity {
     // - neskor aj mongojs na toto?
     protected List<NodeContent> loadVector() {
         List<NodeContent> nodes = null; 
-        // TODO estepredtym by to chcelo vybrat zacachovane a vratit ich tak
+        // TODO este predtym by to chcelo vybrat zacachovane a vratit ich tak
         try {
             DBObject query = new BasicDBObject("_id",
                     new BasicDBObject().append("$in",
@@ -593,6 +580,32 @@ public class NodeContent extends MongoEntity {
             Logger.info(ex.toString());
         }
         return nodes;
+    }
+
+    public static List<NodeContent> userNodeChildren(ObjectId user,
+            Integer start, Integer count) {
+        List<NodeContent> ll = new LinkedList<NodeContent>();
+        if (start == null)
+            start = 0;
+        if (count == null)
+            count = 30;
+        start = start * count;
+        try {
+            BasicDBObject query = new BasicDBObject().append("parid", user);
+            BasicDBObject sort = new BasicDBObject().append("date", -1);
+            DBCursor iobj = MongoDB.getDB()
+                .getCollection(MongoDB.CActivity).find(query).
+                sort(sort).skip(start).limit(count);
+            Morphia morphia = MongoDB.getMorphia();
+            while(iobj.hasNext())
+               ll.add(NodeContent.load((morphia.fromDBObject(Activity.class,
+                       (BasicDBObject) iobj.next())).getOid()));
+        } catch (Exception ex) {
+            Logger.info("load nodes::");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+        }
+        return ll;
     }
 
 }

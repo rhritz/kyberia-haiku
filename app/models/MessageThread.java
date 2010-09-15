@@ -220,16 +220,15 @@ public class MessageThread extends MongoEntity {
             if (iobj !=  null) {
                 MessageThread m = MongoDB.getMorphia().
                         fromDBObject(MessageThread.class, iobj);
-                LinkedList<ObjectId> lr = new LinkedList<ObjectId>();
-                for (ObjectId s : m.unreads) {
-                    if (s.equals(forUser)) {
-                        lr.add(s);
-                    }
+                if (m.unreads != null && m.unreads.size() > 0) {
+                    LinkedList<ObjectId> lr = new LinkedList<ObjectId>();
+                    for (ObjectId s : m.unreads)
+                        if (s.equals(forUser))
+                            lr.add(s);
+                    for (ObjectId s : lr)
+                            m.unreads.remove(s);
+                    MongoDB.update(m, MongoDB.CMessageThread);
                 }
-                for (ObjectId s : lr) {
-                        m.unreads.remove(s);
-                }
-                MongoDB.update(m, MongoDB.CMessageThread);
             }
         } catch (Exception ex) {
             Logger.info("setRead failed:");

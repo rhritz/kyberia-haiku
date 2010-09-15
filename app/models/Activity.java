@@ -194,7 +194,8 @@ public class Activity extends MongoEntity {
             sort(sort).limit(30);
         Morphia morphia = MongoDB.getMorphia();
         while(iobj.hasNext())
-           ll.add(NodeContent.load((morphia.fromDBObject(Activity.class, (BasicDBObject) iobj.next())).getOid()));
+           ll.add(NodeContent.load((morphia.fromDBObject(Activity.class,
+                   (BasicDBObject) iobj.next())).getOid()));
         return ll;
     }
 

@@ -3,7 +3,19 @@
 
 <div class="col1">
     <div class="nodeContent">
-        ${content}
+        ${content}<br>
+    <center>
+     <a href="@{Application.showNodes()}">&lt;&lt;</a>
+     <a href="@{Application.showNodes()}">&lt;</a>
+     <a href="@{Application.showNodes()}">&gt;</a>
+     <a href="@{Application.showNodes()}">&gt;&gt;</a>
+    </center>
+    #{list items:nodes, as:'node'}
+        <div>
+            <div>#{node par:node /} in ${node.parName}</div>
+            <div>${node.content}</div>
+        </div>
+    #{/list}
     </div>
 </div>
 <div class="col2">

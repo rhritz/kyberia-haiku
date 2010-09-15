@@ -9,9 +9,11 @@ GET     /                                       Application.index
 *       /                                       module:secure
 
 # nodes
-GET     /id/{id}                        Application.viewNode
-GET     /id/{id}/new                    Application.viewNodeUpdates
-GET     /id/{id}/edit                   Application.showEditNode
+#GET     /id/{id}/{<[0-9]+>page}                Application.viewNode
+GET     /id/{id}/p/{page}                       Application.viewNode
+GET     /id/{id}                                Application.viewNode
+GET     /id/{id}/new                            Application.viewNodeUpdates
+GET     /id/{id}/edit                           Application.showEditNode
 # kompletka:
 # ? len ako mu vysvetlit ze niektore su nepovinne?
 # GET /id/{id}/{<[0-9]+>template}/{<[0-9]+>page} Application.viewNode

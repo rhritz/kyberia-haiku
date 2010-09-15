@@ -45,14 +45,15 @@ public class Tag extends MongoEntity {
     public Tag(String name) { tag = name; count = 0; }
     
     public static void tagNode(NodeContent nc, String tag, String uid) {
+        Tag tagDoc = Tag.load(tag);
+        if (tagDoc == null) 
+            tagDoc = add(tag);
+        if (tagDoc == null)
+            return;
         nc.addTag(tag);
         nc.update();
-        Tag tagDoc = Tag.load(tag);
-        if (tagDoc == null) {
-            tagDoc = add(tag);
-        }
-        Logger.info(" tag " + tag + " count " + tagDoc.count);
         tagDoc.inc();
+        Logger.info(" tag " + tag + " count " + tagDoc.count);
         // TODO poznacit si asi aj kto ten tag dal
         // - bud v samostatnej kolekcii, alebo v zozname tagov
         // nieco ako TagNodeUser.add(tag,nodeid,uid)
@@ -60,6 +61,9 @@ public class Tag extends MongoEntity {
 
     public static Tag add(String name)
     {
+        if (name == null || name.isEmpty() || name.length() > 50) {
+            return null;
+        }
         Tag t = new Tag(name);
         t.save();
         return t;
@@ -68,7 +72,6 @@ public class Tag extends MongoEntity {
     private void inc()
     {
         try {
-            // MongoDB.getDB().setWriteConcern(WriteConcern.STRICT);
             MongoDB.getDB().getCollection(MongoDB.CTag).
             update(new BasicDBObject().
             append("tag",tag), new BasicDBObject().

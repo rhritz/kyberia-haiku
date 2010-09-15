@@ -24,10 +24,6 @@ import play.Logger;
 import models.*;
 import play.mvc.Controller;
 
-// find . -name "*java" -exec cat '{}' ';' | wc -l
-// find . -name "*java" -exec grep 'TODO' '{}' ';' -print
-// JDK_HOME=/usr/lib/jvm/java-6-sun-1.6.0.20/ ./idea.sh
-
 @With(Secure.class)
 public class Application extends Controller {
 
@@ -38,17 +34,16 @@ public class Application extends Controller {
             String uid = session.get(User.ID);
             renderArgs.put("user",   session.get(User.USERNAME));
             renderArgs.put("userid", uid);
-            // Logger.info("ahojky " + uid);
+            renderArgs.put("uid", uid);
             // UserLocation.saveVisit(uid, "some location");
             // - toto enjak doriesit s bookmark visits a tak
             renderArgs.put("newMail", 
                     MessageThread.getUnreadMailNotif(new ObjectId(session.get(User.ID))));
         } else {
             // to este neznamena ze sme uplne mimo, snad
-            // moze Secure vytvorit nejaku fake session pre
-            // nrephlasenych (?)
+            // moze Secure vytvorit nejaku fake session pre neprihlasenych?
         }
-        // session.put("view", ViewTemplate.getView(uid,req,..?));
+        // cache.set("view", ViewTemplate.getView(?));
     }
 
     @After
@@ -56,8 +51,6 @@ public class Application extends Controller {
     {
         Long start    = renderArgs.get("reqstart", Long.class);
         Long duration = System.currentTimeMillis() - start;
-        // uhm toto nam nepomoze kedze je to az po uplnom ukonceni
-        // renderArgs.put("reqdur", duration.toString());
         Logger.info("Request duration " + duration);
     }
 
@@ -68,15 +61,15 @@ public class Application extends Controller {
         render(main.getTemplate());
     }
 
-    public static void viewNode(String id) {
+    public static void viewNode(String id, Integer pageNum) {
+        displayNode(id);
+    }
+
+    public static void viewNode(String id, String template, Integer pageNum) {
         displayNode(id);
     }
 
     
-    public static void viewUserGroup(Long id) {
-        render(id);
-    }
-
      public static void addNode(String id, String content) {
         Logger.info("about to add node:" + id + "," + content );
         // checkAuthenticity();
@@ -203,19 +196,22 @@ public class Application extends Controller {
     {
         int start = 0;
         int count = 30;
+        int pageNum = 0;
+        try{ pageNum = Integer.parseInt(params.get("pageNum"));
+        } catch(Exception e) {}
         ObjectId oid = new ObjectId(id);
         NodeContent node = NodeContent.load(oid);
-        String uid = session.get(User.ID);
-        renderArgs.put("uid", uid);
+        String uid  = session.get(User.ID);
+        String page = params.get("template");
+        String view = params.get("view");
         if (node != null && node.canRead(new ObjectId(uid))) {
-            // NodeContent.getThreadedChildren(oid, start, count);
             // logicky UserVisit save patri sem, lebo tu vieme co ideme zobrazit
             UserLocation.saveVisit(User.load(uid), id);
             renderArgs.put("node", node);
             renderArgs.put("thread",
-                    // NodeContent.getThreadedChildren(oid, start, count));
-                    node.getThreadIntern(start, count));
+                    node.getThreadIntern(count * pageNum, count));
             renderArgs.put("id", id);
+            renderArgs.put("currentPage",pageNum);
         } else {
             renderArgs.put("id", id);
             renderArgs.put("content", "Sorry pal, no see for you");
@@ -244,7 +240,12 @@ public class Application extends Controller {
     }
 
     public static void showNodes() {
-        renderArgs.put("content", "Neviem co sem napisat");
+        String uid = session.get(User.ID);
+        int pageNum = 0;
+        try{ pageNum = Integer.parseInt(params.get("pageNum"));
+        } catch(Exception e) {}
+        renderArgs.put("nodes", 
+                NodeContent.userNodeChildren(new ObjectId(uid),pageNum,30));
         render(ViewTemplate.SHOW_NODES_HTML);
     }
 
@@ -305,7 +306,6 @@ public class Application extends Controller {
         // String myId = session.get(User.ID);
         User u = User.load(uid);
         renderArgs.put("friends", u.listFriends());
-        renderArgs.put("uid", uid);
         render(ViewTemplate.SHOW_FRIENDS_HTML);
     }
 
@@ -315,14 +315,12 @@ public class Application extends Controller {
         Logger.info("showMe:: " + myId);
         renderArgs.put("nodes", Nodelist.getUserNodes(myId,null));
         renderArgs.put("friends", me.listFriends());
-        renderArgs.put("uid", myId);
         render(ViewTemplate.SHOW_ME_HTML);
     }
 
     public static void showUser(String id) {
         User u = User.load(id);
         if ( u !=null ) {
-            renderArgs.put("uid", u.getId());
             // renderArgs.put("user", user);
             renderArgs.put("nodes", Nodelist.getUserNodes(id,null));
             render(ViewTemplate.SHOW_USER_HTML);

@@ -143,6 +143,13 @@ public class MongoDB {
             db.getCollection(CMessage).ensureIndex(new BasicDBObject("from","1"));
             db.getCollection(CMessage).ensureIndex(new BasicDBObject("to","1")); // + "key" : { "from" : 1, "sent" : -1 }, "name" : "from_1_sent_-1" }
 
+            db.getCollection(CActivity).ensureIndex(new BasicDBObject("owner","1"));
+            db.getCollection(CActivity).ensureIndex(new BasicDBObject("parid","1"));
+            db.getCollection(CActivity).ensureIndex(new BasicDBObject("oid","1"));
+            db.getCollection(CActivity).ensureIndex(new BasicDBObject("date","-1"));
+            db.getCollection(CActivity).ensureIndex(new BasicDBObject("ids","1"));
+            db.getCollection(CActivity).ensureIndex(new BasicDBObject("uids","1"));
+
             // db.getCollection(CActivity).ensureIndex(new BasicDBObject("username","1"),"username_1",true);
             // db.getCollection(CBookmark).ensureIndex({destination: 1, uid:1}, {unique: true});
 
