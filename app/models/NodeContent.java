@@ -81,6 +81,10 @@ public class NodeContent extends MongoEntity {
     public String           parName;
     @Transient
     public String           ownerName;
+
+    public static final String CONTENT  = "content";
+    public static final String CREATED  = "created";
+    public static final String NAME     = "name";
     
 
     public NodeContent() {}
@@ -88,13 +92,13 @@ public class NodeContent extends MongoEntity {
     public NodeContent (ObjectId ownerid,
                         Map<String,String> params)
     {
-        content = Validator.validate(params.get(Haiku.CONTENT));
+        content = Validator.validate(params.get(CONTENT));
         created = System.currentTimeMillis();
         cr_date = DateFormat.getDateTimeInstance(DateFormat.LONG,
                     DateFormat.LONG).format(new Date(getCreated()));
         // template =  NodeTemplate.BASIC_NODE;
-        name    = params.containsKey(Haiku.NAME) ?
-                    params.get(Haiku.NAME) : cr_date; // zatial
+        name    = params.containsKey(NAME) ?
+                    params.get(NAME) : cr_date; // zatial
         owner   = ownerid;
 
         Logger.info("Adding node with content:: " + content);
@@ -138,7 +142,7 @@ public class NodeContent extends MongoEntity {
         if (chParent != null && NodeContent.load(chParent) != null) {
             // TODO Haiku.reparent this.owner = chOwner;
         }
-        String chName = params.get("name");
+        String chName = params.get(NAME);
         if (chName != null) {
             name = Validator.validateTextonly(chName);
         }
@@ -146,7 +150,7 @@ public class NodeContent extends MongoEntity {
         if (chTemplate != null ) {
             template = Integer.parseInt(chTemplate);
         }
-        String chContent = params.get("content");
+        String chContent = params.get(CONTENT);
         if (chContent != null) {
             content = Validator.validate(chContent);
         }

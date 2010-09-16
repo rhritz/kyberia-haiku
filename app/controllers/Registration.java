@@ -17,7 +17,6 @@
 */
 package controllers;
 
-import models.Haiku;
 import models.User;
 import models.ViewTemplate;
 import play.Logger;
@@ -27,7 +26,6 @@ public class Registration extends Controller {
 
     public static void addUser(String username, String password) {
         checkAuthenticity();
-        Haiku h = new Haiku();
         String userid = User.addUser(Controller.params.allSimple());
         Logger.info("new user:: " + username + "," + userid);
         if (userid != null ) {
