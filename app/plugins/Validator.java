@@ -26,9 +26,11 @@ import play.Play;
 import play.Logger;
 
 // User-generated content validation with AntiSamy
+// How to allow Youtube - https://www.codemagi.com/blog/term/1017
+// - useful for future additions
 public class Validator {
 
-    private static String POLICY_FILE_LOCATION = "conf/antisamy-1.3.xml";
+    private static String POLICY_FILE_LOCATION = "conf/antisamy-haiku-1.4.1.xml";
     private static AntiSamy as;
     // viac policies?
     private static Policy policy;
@@ -39,7 +41,7 @@ public class Validator {
                     Play.configuration.getProperty("validator.antisamy.path");
         else
             POLICY_FILE_LOCATION =
-                Play.applicationPath.getAbsolutePath()+"/conf/antisamy-1.3.xml";
+                Play.applicationPath.getAbsolutePath()+"/conf/antisamy-haiku-1.4.1.xml";
         Logger.info("Validator policy file is " + POLICY_FILE_LOCATION);
     }
 
@@ -53,33 +55,29 @@ public class Validator {
         }
     }
 
-    // scanTxt pre nazvy atd / scanContent pre ostatne
-    public static CleanResults scan(String input)
-    {
-        try {
-            CleanResults cr = as.scan(input, policy);
-            return cr;
-        } catch (Exception ex) {
-            Logger.info(Validator.class.getName());
-        } 
-        // vracat cr.getCleanHTML() ?
-        return null; // + nastav error
-    }
-    /*
-    The CleanResults object provides a lot of useful stuff.
-getErrorMessages() - a list of String error messages
-getCleanHTML() - the clean, safe HTML output
-getCleanXMLDocumentFragment() - the clean, safe XMLDocumentFragment which is reflected in getCleanHTML()
-getScanTime() - returns the scan time in seconds
-*/
     public static void shutdown()
     {
-     
     }
 
-    // TODO
-    public static String validate(String get) {
-        return get.replaceAll("\n", "<br>"); // TODO ak tam uz br nie je
+    public static String validate(String input) {
+        input = input.replaceAll("\n", "<br>"); // TODO ak tam uz br nie je
+        CleanResults cr = null;
+        try {
+            cr = as.scan(input, policy);
+        } catch (Exception ex) {
+            Logger.info(Validator.class.getName());
+        }
+        // TODO if (cr.getNumberOfErrors() > 0).. if cr = null tiez)
+        if (cr != null) {
+            for (Object o : cr.getErrorMessages()) {
+                Logger.info("validator massage:" + o.toString());
+            }
+            Logger.info("scan time: " + cr.getScanTime());
+            Logger.info("output: " + cr.getCleanHTML()); // getCleanXMLDocumentFragment()
+            return cr.getCleanHTML();
+        } else {
+            return null;
+        }
     }
 
     // ziadne tagy a haluze

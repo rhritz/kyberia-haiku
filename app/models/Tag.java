@@ -31,6 +31,7 @@ import java.util.TreeSet;
 import play.cache.Cache;
 import play.Logger;
 import plugins.MongoDB;
+import plugins.Validator;
 
 
 // TODO caching
@@ -61,9 +62,11 @@ public class Tag extends MongoEntity {
 
     public static Tag add(String name)
     {
-        if (name == null || name.isEmpty() || name.length() > 50) {
+        if (name == null || name.isEmpty() || name.length() > 50) 
             return null;
-        }
+        name = Validator.validateTextonly(name);
+        if (name == null)
+            return null;
         Tag t = new Tag(name);
         t.save();
         return t;

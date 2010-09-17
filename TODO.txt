@@ -19,14 +19,13 @@ Zatial sa zda ze tomu nic nebrani, Play to priamo podporuje.
 * mail search
 
 --- 17.04.2010 ---
-*  moznost bookamrknut <Stream> napriklad new nodes ineho usera?
+*  moznost bookmarknut <Stream> napriklad new nodes ineho usera?
 - v principe by nemuselo byt prilis zlozite, len treba  specializovat (bookmark type)
 - mozeme asi odlozit na neskor
 - v konecnom dosledku ide len o to aby to bolo *nieco* co sa pise do col. Activity,
 odtial dalej moze ist o standardny bookmark, ln ineho typu ako bezny node bookmark
 
 --- 12.04.2010 ---
-* nejaky admin system - init mongodb a podobne
 * put/hardlink - ako specialny typ NodeContent, zobrazi sa obsah node ktory je uvedeny
 v link_to
 
@@ -39,7 +38,6 @@ v link_to
 * Nativne Https (bude riesene v Play 1.1)
 * Fook, Ignore & co
 * Odpocitavanie a obnovovanie kacok
-* Input validation -> AntiSamy (?)
 * Feeds / Content export? -> REST
 * Ability to see some content without an account
 - 1. Hack Secure module; or

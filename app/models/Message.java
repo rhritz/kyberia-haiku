@@ -91,7 +91,8 @@ public class Message extends MongoEntity {
             Logger.info("Unable to find/create thread, bailing");
             return;
         }
-        Message m = new Message(content, fromId, toId, mt.getId());
+        Message m = new Message(Validator.validateTextonly(content),
+                fromId, toId, mt.getId());
         MongoDB.save(m, MongoDB.CMessage);
         mt.notify(fromId,toId);
     }
