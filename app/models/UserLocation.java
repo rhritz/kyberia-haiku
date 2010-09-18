@@ -19,9 +19,6 @@ package models;
 
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
-import com.google.common.collect.Lists;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBCursor;
 import com.mongodb.ObjectId;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -29,7 +26,6 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import play.cache.Cache;
-import play.Logger;
 import plugins.MongoDB;
 
 
@@ -108,63 +104,6 @@ public class UserLocation extends MongoEntity {
     public static UserLocation getUserLocation(String uid)
     {
         return (UserLocation) Cache.get("user_location" + uid);
-    }
-
-    // historia daneho usera - z mongo
-    public static List<UserLocation> getUserLocationHistory(
-            String uid,
-            Integer start,
-            Integer count)
-    {
-        List<UserLocation> r = null;
-        try {
-            BasicDBObject query = new BasicDBObject().append("userid", uid);
-            BasicDBObject sort = new BasicDBObject().append("time", -1); // TODO natural sort
-            DBCursor iobj = MongoDB.getDB().
-                    getCollection(MongoDB.CUserLocation).
-                    find(query).sort(sort).skip(start).limit(count);
-            if (iobj ==  null) {
-                r = new ArrayList<UserLocation>();
-            } else {
-                Logger.info("user threads found");
-                r = Lists.transform(iobj.toArray(),
-                        MongoDB.getSelf().toUserLocation());
-            }
-        } catch (Exception ex) {
-            Logger.info("getUserThreads");
-            ex.printStackTrace();
-            Logger.info(ex.toString());
-        }
-        return r;
-    }
-
-    // historia danej location - z mongo
-    public static List<UserLocation> getLocationHistory(
-            String uid,
-            Integer start,
-            Integer count)
-    {
-        List<UserLocation> r = null;
-        try {
-            // hm.. toto moze byt vlastne staticke/singleton...
-            BasicDBObject query = new BasicDBObject().append("location", uid);
-            BasicDBObject sort = new BasicDBObject().append("time", -1); // TODO natural sort
-            DBCursor iobj = MongoDB.getDB().
-                    getCollection(MongoDB.CUserLocation).
-                    find(query).sort(sort).skip(start).limit(count);
-            if (iobj ==  null) {
-                r = new ArrayList<UserLocation>();
-            } else {
-                Logger.info("user threads found");
-                r = Lists.transform(iobj.toArray(),
-                        MongoDB.getSelf().toUserLocation());
-            }
-        } catch (Exception ex) {
-            Logger.info("getUserThreads");
-            ex.printStackTrace();
-            Logger.info(ex.toString());
-        }
-        return r;
     }
 
     @Override

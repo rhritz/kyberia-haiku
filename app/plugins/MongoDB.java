@@ -96,6 +96,7 @@ public class MongoDB {
           bookmark      = new ToBookmark();
           activity      = new ToActivity();
           page          = new ToPage();
+          feed          = new ToFeed();
     }
 
     public static void start() {
@@ -149,6 +150,9 @@ public class MongoDB {
             db.getCollection(CActivity).ensureIndex(new BasicDBObject("date","-1"));
             db.getCollection(CActivity).ensureIndex(new BasicDBObject("ids","1"));
             db.getCollection(CActivity).ensureIndex(new BasicDBObject("uids","1"));
+
+            db.getCollection(CFeed).ensureIndex(new BasicDBObject("name","1"),"name_1",true);
+            db.getCollection(CPage).ensureIndex(new BasicDBObject("name","1"),"name_1",true);
 
             // db.getCollection(CActivity).ensureIndex(new BasicDBObject("username","1"),"username_1",true);
             // db.getCollection(CBookmark).ensureIndex({destination: 1, uid:1}, {unique: true});
@@ -331,7 +335,7 @@ public class MongoDB {
     public class ToFeed implements Function<DBObject, Feed> {
         public Feed apply(DBObject arg) {
             Feed applied = morphia.fromDBObject(Feed.class, arg);
-            applied.loadContent();
+         //   applied.loadContent();
             return applied;
         }
     }

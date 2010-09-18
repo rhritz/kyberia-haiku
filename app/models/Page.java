@@ -39,18 +39,13 @@ import play.mvc.Scope.RenderArgs;
 @Entity("Page")
 public class Page extends MongoEntity {
 
-    private String              contentNode;
     private String              name;
     private String              template;
     private ObjectId            owner;
-    private List<ObjectId>      feeds; // -> tag getFeed/displayFeed ?
+    private Map<String,String>  blocks;
 
     @Transient
-    // list alebo hash?
-    private HashMap<String,Feed> content;
-
-    @Transient
-    private List<Feed> preparedFeeds;
+    private List<Feed> preparedBlocks;
 
     public  static final String MAIN     = "main";
     public  static final String NAME     = "name";
@@ -68,17 +63,6 @@ public class Page extends MongoEntity {
         this.name     = name;
         this.template = template;
         this.owner    = owner;
-    }
-
-    public static Page get(   String name,
-                                    Params params,
-                                    RenderArgs renderArgs,
-                                    Request request,
-                                    Session session) {
-        Page p = null;
-        User u = User.load(new ObjectId(session.get(User.ID)));
-        ViewTemplate vt = ViewTemplate.load(u.getView());
-        return p;
     }
 
     public static Page getByName(   String name,
@@ -107,39 +91,6 @@ public class Page extends MongoEntity {
         if (p == null )
             p = mainPage; // default fallback
         return p;
-        /*
-         ViewTemplate v = null;
-		if (s.containsKey("view")) {
-			v = (ViewTemplate) s.get("view");
-		} else if(r.containsKey("view")) {
-			v = (ViewTemplate) r.get("view");
-		} else {
-			v = ViewTemplate.getDefaultView();
-		}
-
-		// Location bude nastavena v session - tyka sa hlavne veci ako mail a td. ktore nie su Node
-		NodeTemplate t = null;
-		if (s.containsKey("Location")) {
-			t = v.getTemplate((String) s.get("Location"));
-		} else {
-			// hierarchia template: 1. request (override), 2. View<->Node
-			if(r.containsKey("template")) {
-				t = v.getTemplate((String) r.get("template"));
-			}
-			if (t == null) { // else + priapd ze dana tmpl neexistuje
-                            // tu samozrejme predpokladame (ale aj ninde) ze tempalte urcene v Node urcite
-                            // existuju, co nemusi byt pravda
-				t = v.getTemplate(n.getTemplate().toString());
-			}
-		}
-		// bail here if t is null
-
-		// v podstate to co ma tato funkcis spravit je nastavit mena inkludovanych suborov
-		// a premennych/tagov
-		// ktore sa potom spracuju v .html subore
-		// v.render(...);
-		// t.render(...);
-         */
     }
 
     /**
@@ -156,39 +107,10 @@ public class Page extends MongoEntity {
         this.template = template;
     }
 
-    // page p = Page.getByName("dgfsdfj");
-    // p.emanate(renderArgs)
-    public void emanate(RenderArgs renderArgs) {
-     //   List<Stuff> ddd // member
-    // ddd.add(new TemplateDataDef("last10") {@Override public List<NodeContent> getData(int start, int count, int order, ...) { return NodeContent.load(blablabla)}})
-       //  for (Stuff stuff : ddd) {
-       //    renderArgs.put(stuff.getName(),stuff.getData(uid,id,...))
-       //  }
+    /* TODO
+    public void removeBlock(String blockName) {
     }
-
-    public void loadFeeds() {
-        if (feeds == null)
-            return;
-        for (ObjectId feedId : feeds) {
-           Feed feed = Feed.loadContent(feedId);
-           content.put(feed.getName(), feed);
-        }
-    }
-
-    public void addFeed(ObjectId feedId) {
-        if (feeds == null)
-            feeds = new LinkedList<ObjectId>();
-        feeds.add(feedId);
-        save();
-        // + pripadne vybuit z cache
-    }
-
-    public void removeFeed(ObjectId feedId) {
-        if (feeds != null) {
-            feeds.remove(feedId); // toto asi treba na zaklade hodnoty?
-            save();
-        }
-    }
+     */
 
     public static List<Page> loadPages() {
         List<Page> pages = null;
@@ -209,38 +131,48 @@ public class Page extends MongoEntity {
     }
 
     public static Page loadByName(String name) {
-        Page page = null;
-        try {
-            BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
-                    getCollection(MongoDB.CPage).
-                    findOne(new BasicDBObject().
-                    append("name",name));
-            Logger.info("Page.loadByName Found:" + iobj);
-            if (iobj != null)
-                page = (Page) MongoDB.getMorphia().
-                        fromDBObject(Page.class, (BasicDBObject) iobj);
-        } catch (Exception ex) {
-            Logger.info("user load fail");
-            ex.printStackTrace();
-            Logger.info(ex.toString());
-            return null;
+        Page page = templateStore.get(name);
+        if (page == null) {
+            try {
+                BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
+                        getCollection(MongoDB.CPage).
+                        findOne(new BasicDBObject().
+                        append("name",name));
+                Logger.info("Page.loadByName Found:" + iobj);
+                if (iobj != null) {
+                    page = (Page) MongoDB.getMorphia().
+                            fromDBObject(Page.class, (BasicDBObject) iobj);
+                    page.prepareBlocks();
+                }
+            } catch (Exception ex) {
+                Logger.info("page load fail");
+                ex.printStackTrace();
+                Logger.info(ex.toString());
+                return null;
+            }
         }
         return page;
     }
 
     public static Page load(String pageId) {
-        Page page = null;
         ObjectId oid = new ObjectId(pageId);
+        return load(oid);
+    }
+
+    public static Page load(ObjectId oid) {
+        Page page = null;
         try {
             BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
                     getCollection(MongoDB.CPage).
                     findOne(new BasicDBObject().
                     append("_id",oid));
-            if (iobj != null)
+            if (iobj != null) {
                 page = (Page) MongoDB.getMorphia().
                         fromDBObject(Page.class, (BasicDBObject) iobj);
+                page.prepareBlocks();
+            }
         } catch (Exception ex) {
-            Logger.info("user load fail");
+            Logger.info("page load fail");
             ex.printStackTrace();
             Logger.info(ex.toString());
             return null;
@@ -249,7 +181,22 @@ public class Page extends MongoEntity {
     }
 
     public void edit(Map<String, String> params) {
-        save();
+        String blockName   = params.get("blockName");
+        String blockValue  = params.get("blockValue");
+        boolean doUpdate = false;
+        String newTmpl = params.get("template");
+        if (newTmpl != null && !newTmpl.equals(template)) {
+            template = newTmpl;
+            doUpdate = true;
+        }
+        if (getBlocks() == null)
+            blocks = new HashMap<String,String>();
+        if (blockName != null && blockValue != null) {
+            getBlocks().put(blockName, blockValue);
+            doUpdate = true;
+        }
+        if (doUpdate)
+            MongoDB.update(this, MongoDB.CPage);
     }
 
     // + cache
@@ -270,39 +217,46 @@ public class Page extends MongoEntity {
 
     ////////////////////////////////////////////////////////////////////////////
 
-    // pri starte aplikacie
     public static void start() {
         templateStore = new HashMap<String,Page>();
         List<Page> allPages = loadPages();
         if (allPages == null)
             return;
         for (Page page : allPages) {
-            page.prepareFeeds();
+            page.prepareBlocks();
             templateStore.put(page.getName(), page);
         }
+        Logger.info("Pages loaded");
     }
 
-    // pri loade templaty
-    private void prepareFeeds() {
-        preparedFeeds = new LinkedList<Feed>();
-        if (feeds == null)
+    private void prepareBlocks() {
+        preparedBlocks = new LinkedList<Feed>();
+        if (getBlocks() == null)
             return;
-        for (ObjectId feedId : feeds) {
-            Feed f = Feed.loadSubclass(feedId, this);
+        for (String blockName : getBlocks().keySet()) {
+            Feed f = Feed.getByName(blockName, this);
             if (f != null)
-                preparedFeeds.add(f);
+                preparedBlocks.add(f);
         }
     }
 
-    // pri spracovani Page
     public void process(Map<String, String> params,
-                        HashMap request,
-                        HashMap session,
+                        Request request,
+                        Session session,
                         User    user,
                         RenderArgs renderArgs
                         ) {
-        for (Feed f: preparedFeeds) 
+        // TODO toto musi nastavovat ViewTemplate, nie my
+        renderArgs.put(ViewTemplate.TOP_LEVEL_TEMPLATE, "main.html");
+        for (Feed f: preparedBlocks)
             f.getData(params, request, session, user, renderArgs);
+    }
+
+    /**
+     * @return the blocks
+     */
+    public Map<String, String> getBlocks() {
+        return blocks;
     }
 
 }

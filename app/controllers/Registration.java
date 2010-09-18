@@ -30,6 +30,7 @@ public class Registration extends Controller {
         Logger.info("new user:: " + username + "," + userid);
         if (userid != null ) {
             // TODO zobrazime userinfo ale este nie je prihlaseny
+            
             User u = User.load(userid);
             renderArgs.put("uid", u.getIdString());
             renderArgs.put("user",u);
@@ -38,6 +39,17 @@ public class Registration extends Controller {
             // show registration errors
         }
     }
+
+    // TODO Mail.send("test.com", "t...@test.com", "test mail", "testing");
+    // + vygenerovat confirmation string + jeho potvrdenie (link/stranka)
+    // @@Registration.confirmMail(..)}
+    // col MailConfirmation? uid, mail, hash, bool confirmed
+    // http://learn-to-play.tumblr.com/post/1042330820/testing-mail-sending-by-using-mock-mailer
+    // conf>:
+    // mail.smtp.host=xxx.xxxxxxx.xxx
+    // mail.smtp.user=pedro.umbel...@xxx.xxxxxx.xxx
+    // mail.smtp.pass=xxxxx#xxx
+    // mail.smtp.channel=ssl
 
     // TODO tu by sme mali kontrolovat ci nie je prihlaseny
     public static void showAddUser() {

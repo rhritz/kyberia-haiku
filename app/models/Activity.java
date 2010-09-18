@@ -18,12 +18,8 @@
 package models;
 
 import com.google.code.morphia.annotations.Entity;
-import com.google.code.morphia.Morphia;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBCursor;
 import com.mongodb.ObjectId;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedSet;
 import plugins.*;
@@ -114,89 +110,6 @@ public class Activity extends MongoEntity {
             ex.printStackTrace();
             Logger.info(ex.toString());
         }
-    }
-
-    // toto
-    public static void load()
-    {
-        
-    }
-
-    // ako specifikovat co vlastne chceme? ake su moznosti?
-    // TODO toto je asi zle
-    public static List<Activity> getActivityList(
-            Integer type,
-            String parent,
-            String owner,
-            String parOwner,
-            Integer dateFrom,
-            Integer dateTo,
-            Integer start,
-            Integer count)
-    {
-        // tu si poskladame query z toho, co v parametroch nie je null
-        // urobime query a vratime zoznam act
-        // ...detto mozno ptorebujeme rovnaku funkciu ktora bude vracta len pocet?
-        // asi len type nemoze byt null. ale na druhejs trane, ktovie.
-        BasicDBObject query = new BasicDBObject().append("type", type);
-        BasicDBObject sort  = new BasicDBObject();
-        switch (type) {
-            case 0:
-                    query.append(owner, start);
-                    break;
-            case 1:
-                    break;
-            case 2:
-                    break;
-        }
-        DBCursor iobj = MongoDB.getDB()
-            .getCollection(MongoDB.CActivity).find(query).
-            sort(sort).limit(count);
-        Morphia morphia = MongoDB.getMorphia();
-        List<Activity> ll = new LinkedList<Activity>();
-        while(iobj.hasNext())
-        {
-           ll.add(morphia.fromDBObject(Activity.class,
-                   (BasicDBObject) iobj.next()));
-        }
-        return ll;
-    }
-
-    // potrebujeme robit query podla bookedId
-    public static String viewBookmarkActivity()
-    {
-        StringBuilder ret = new StringBuilder();
-        String bookId = "uuu";
-        Integer   dateFrom = 0; // nacitame z bookmarku
-        List<Activity> acts = getActivityList(0,bookId,null,null,
-                dateFrom,null,null,null);
-        for (Activity act : acts)
-        {
-            // zoznam pribudnutych nodov
-            ret.append(act.getOid()).append(act.date).append(act.name).append("<br>");
-        }
-        return ret.toString();
-    }
-
-    public static void getBookmarkActs(List bmarkIds)
-    {
-        // pozbieraj data o bookmarkoch - bude sucastou bookmarklistu neskor
-    }
-
-    // TODO - check permissions
-    public static List<NodeContent> showFriendsContent(String uid)
-    {
-        List<NodeContent> ll = new LinkedList<NodeContent>();
-        BasicDBObject query = new BasicDBObject().append("uids", uid);
-        BasicDBObject sort = new BasicDBObject().append("date", -1);
-        DBCursor iobj = MongoDB.getDB()
-            .getCollection(MongoDB.CActivity).find(query).
-            sort(sort).limit(30);
-        Morphia morphia = MongoDB.getMorphia();
-        while(iobj.hasNext())
-           ll.add(NodeContent.load((morphia.fromDBObject(Activity.class,
-                   (BasicDBObject) iobj.next())).getOid()));
-        return ll;
     }
 
     /**

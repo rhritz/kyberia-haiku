@@ -42,12 +42,12 @@ import plugins.Validator;
 public class NodeContent extends MongoEntity {
 
     private String        content     = "";
-    private ObjectId      owner       ; // mongoid ownera
+    public  ObjectId      owner       ; // mongoid ownera
     private Long          created     = 0l;
     private String        cr_date     = "";
     public  String        name        = "";
     public  ObjectId      par             ;
-    private ObjectId      dfs;
+    public  ObjectId      dfs;
 
     private Integer       template    = 1;
     private String        putId       = null; // ak != null tak toto je hardlink
@@ -85,7 +85,7 @@ public class NodeContent extends MongoEntity {
     public static final String CONTENT  = "content";
     public static final String CREATED  = "created";
     public static final String NAME     = "name";
-    
+    public static final String OWNER   = "owner";
 
     public NodeContent() {}
 
@@ -486,12 +486,11 @@ public class NodeContent extends MongoEntity {
     }
 
 
-    public static List<NodeContent> getThreadedChildren(ObjectId id,
+    private static List<NodeContent> getThreadedChildren(ObjectId id,
             Integer start, Integer count)
     {
         List<NodeContent> thread = null;
         try {
-            // ach jaj
             String evalQuery = "return getThreadedChildren(ObjectId(\"" +
                     id.toString() + "\"), " + start + "," + count + ");";
             DBObject iobj = MongoDB.getDB().doEval(evalQuery, "");
@@ -508,7 +507,6 @@ public class NodeContent extends MongoEntity {
                         NodeContent nc = NodeContent.load(nodeId);
                         nc.depth = depth.intValue();
                         thread.add(nc);
-                        // Logger.info("bla:: " + ooo.toString() + " " + ooo.getClass().getCanonicalName() + "0:" + nodeId + "1:" + depth);
                     }
                 }
             }
@@ -586,30 +584,37 @@ public class NodeContent extends MongoEntity {
         return nodes;
     }
 
-    public static List<NodeContent> userNodeChildren(ObjectId user,
-            Integer start, Integer count) {
-        List<NodeContent> ll = new LinkedList<NodeContent>();
-        if (start == null)
-            start = 0;
-        if (count == null)
-            count = 30;
-        start = start * count;
-        try {
-            BasicDBObject query = new BasicDBObject().append("parid", user);
-            BasicDBObject sort = new BasicDBObject().append("date", -1);
-            DBCursor iobj = MongoDB.getDB()
-                .getCollection(MongoDB.CActivity).find(query).
-                sort(sort).skip(start).limit(count);
-            Morphia morphia = MongoDB.getMorphia();
-            while(iobj.hasNext())
-               ll.add(NodeContent.load((morphia.fromDBObject(Activity.class,
-                       (BasicDBObject) iobj.next())).getOid()));
-        } catch (Exception ex) {
-            Logger.info("load nodes::");
-            ex.printStackTrace();
-            Logger.info(ex.toString());
-        }
-        return ll;
+    // +K
+    public void giveK(User user)
+    {
+        //TODO error messages + Odpocitaj userovi Kacka, ak ma dost, ak nie bail
+        if (kgivers == null)
+            kgivers = new LinkedList<ObjectId>();
+        else if (kgivers.contains(user.getId()))
+            return;
+        else
+            kgivers.add(user.getId());
+        if (getK() == null)
+            setK(1l);
+        else 
+            setK(getK() + 1);
+        update();
     }
 
+    // -K
+    public void giveMK(User user)
+    {
+        //TODO error messages + Odpocitaj userovi Kacka, ak ma dost, ak nie bail
+        if (kgivers == null)
+            kgivers = new LinkedList<ObjectId>();
+        else if (kgivers.contains(user.getId()))
+            return;
+        else
+            kgivers.add(user.getId());
+        if (getMk() == null)
+            setMk(1l);
+        else
+            setMk(getMk() + 1);
+        update();
+    }
 }

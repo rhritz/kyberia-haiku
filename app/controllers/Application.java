@@ -43,7 +43,9 @@ public class Application extends Controller {
             // to este neznamena ze sme uplne mimo, snad
             // moze Secure vytvorit nejaku fake session pre neprihlasenych?
         }
-        // cache.set("view", ViewTemplate.getView(?));
+        // TODO - do request.args nastavit viewtemplate
+        // .set("view", ViewTemplate.getView(?));
+        // (ak sa daju objekty, tak asi aj usera)
     }
 
     @After
@@ -54,6 +56,7 @@ public class Application extends Controller {
         Logger.info("Request duration " + duration);
     }
 
+    //TODO
     public static void index() {
         Page main = Page.getByName(Page.MAIN, params, renderArgs, request,
                 session);
@@ -160,10 +163,9 @@ public class Application extends Controller {
         checkAuthenticity();
         Logger.info("K ::" + id);
         NodeContent nc = NodeContent.load(id);
+        User user = User.load(session.get(User.ID));
         if (nc != null)
-        {
-            Nodelist.giveK(nc, session.get(User.ID));
-        }
+            nc.giveK(user);
         displayNode(id);
     }
 
@@ -172,10 +174,9 @@ public class Application extends Controller {
         checkAuthenticity();
         Logger.info("K ::" + id);
         NodeContent nc = NodeContent.load(id);
+        User user = User.load(session.get(User.ID));
         if (nc != null)
-        {
-            Nodelist.giveMK(nc, session.get(User.ID));
-        }
+            nc.giveMK(user);
         displayNode(id);
     }
 
@@ -185,9 +186,7 @@ public class Application extends Controller {
         Logger.info("Tag id ::" + id + " with tag ::" + tag);
         NodeContent nc = NodeContent.load(id);
         if (nc != null)
-        {
             Tag.tagNode(nc,tag,session.get(User.ID));
-        }
         displayNode(id);
     }
 
@@ -244,8 +243,8 @@ public class Application extends Controller {
         int pageNum = 0;
         try{ pageNum = Integer.parseInt(params.get("pageNum"));
         } catch(Exception e) {}
-        renderArgs.put("nodes", 
-                NodeContent.userNodeChildren(new ObjectId(uid),pageNum,30));
+       // renderArgs.put("nodes",
+       //         NodeContent.userNodeChildren(new ObjectId(uid),pageNum,30));
         render(ViewTemplate.SHOW_NODES_HTML);
     }
 
@@ -292,14 +291,11 @@ public class Application extends Controller {
     }
 
     public static void showLastNodes() {
-        renderArgs.put("nodes", Nodelist.getLastNodes(30));
-        render(ViewTemplate.SHOW_LAST_HTML);
+        viewPage("Last");
     }
 
     public static void showFriendsContent() {
-        renderArgs.put("nodes",
-                Activity.showFriendsContent(session.get(User.ID)));
-        render(ViewTemplate.SHOW_LAST_HTML);
+        viewPage("Friends Nodes");
     }
 
     public static void showFriends(String uid) {
@@ -313,7 +309,7 @@ public class Application extends Controller {
         String myId = session.get(User.ID);
         User me = User.load(myId);
         Logger.info("showMe:: " + myId);
-        renderArgs.put("nodes", Nodelist.getUserNodes(myId,null));
+        // TODO PAGE  renderArgs.put("nodes", Nodelist.getUserNodes(myId,null));
         renderArgs.put("friends", me.listFriends());
         render(ViewTemplate.SHOW_ME_HTML);
     }
@@ -322,15 +318,14 @@ public class Application extends Controller {
         User u = User.load(id);
         if ( u !=null ) {
             // renderArgs.put("user", user);
-            renderArgs.put("nodes", Nodelist.getUserNodes(id,null));
+            // TODO PAGE  renderArgs.put("nodes", Nodelist.getUserNodes(id,null));
             render(ViewTemplate.SHOW_USER_HTML);
         }
         // inak co?
     }
 
     public static void showK() {
-        renderArgs.put("nodes", Nodelist.getKlist(100));
-        render(ViewTemplate.SHOW_K_HTML);
+        viewPage("K");
     }
 
     public static void showTag(String tag) {
@@ -386,18 +381,11 @@ public class Application extends Controller {
         showMe();
     }
 
-    // event - zmena property node alebo usera
-    public static void event(String id) {
-       // vyhryzni event z params, urob akciu, vrat displayNode
-    }
-
-    // zobraz nove prispevky pre daneho usera z danej nody
-    // - zatial len ako list
     public static void viewNodeUpdates(String id) {
         User u = User.load(session.get(User.ID));
         renderArgs.put("nodes", 
                 Bookmark.getUpdatesForBookmark(id, u.getId()));
-        // TODo nahradit
+        // TODO nahradit
         render(ViewTemplate.SHOW_LAST_HTML);
     }
 
@@ -460,30 +448,35 @@ public class Application extends Controller {
 
     public static void showPage(String pageId) {
         renderArgs.put("page",  Page.load(pageId));
-        render(ViewTemplate.SHOW_PAGE_HTML);
+        renderArgs.put("feeds", Feed.load(true, null));
+        renderArgs.put("classes",
+                Feed.getClasses("models.feeds"));
+        render(ViewTemplate.EDIT_PAGE_HTML);
     }
 
     public static void editPage(String pageId) {
         Page  p = Page.load(pageId);
         p.edit(Controller.params.allSimple());
         renderArgs.put("page",  p);
+        renderArgs.put("feeds", Feed.load(true, null));
+        renderArgs.put("classes",
+                Feed.getClasses("models.feeds"));
         render(ViewTemplate.EDIT_PAGE_HTML);
     }
 
-    public static void viewPage(String page) {
-        // meno alebo id... zatial len meno
-        // potrebuje Page vediet usera?
+    // view page by its name
+    private static void viewPage(String page) {
         Page  p = Page.loadByName(page);
+        User u = User.load(session.get(User.ID));
         if (p != null ) {
-            p.emanate(renderArgs);
+            p.process(params.allSimple(), request, session, u, renderArgs);
             render(p.getTemplate());
         }
     }
 
     // Tags
     public static void showTags() {
-        renderArgs.put("tags",  Tag.load());
-        render(ViewTemplate.SHOW_TAGS_HTML);
+        viewPage("Tags");
     }
 
     public static void showNodesByTag(String tag) {

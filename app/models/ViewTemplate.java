@@ -24,7 +24,9 @@ import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
 import com.mongodb.ObjectId;
 import java.util.Map;
+import play.mvc.Http.Request;
 import play.mvc.Scope.RenderArgs;
+import play.mvc.Scope.Session;
 
 // - zavisi od usera a sposobu pristupu
 @Entity("ViewTemplate")
@@ -94,20 +96,26 @@ public class ViewTemplate extends MongoEntity{
             return null;
         }
 
+        public static ViewTemplate loadByName(String name) {
+            ViewTemplate vt = null;
+
+            return vt;
+        }
+
 	public static void renderPage(
                 Map<String, String> params,
-                HashMap r,
-                HashMap s,
+                Request r,
+                Session s,
                 NodeContent n, // tu to uz budeme vediet? ale ano, ak loadujeme node
                 User u,
                 RenderArgs renderArgs
                 ) 
 	{
 		ViewTemplate v = null;
-		if (s.containsKey("view")) {
-			v = (ViewTemplate) s.get("view");
-		} else if(r.containsKey("view")) {
-			v = (ViewTemplate) r.get("view");
+		if (s.contains("view")) {
+			v = loadByName(s.get("view"));
+		} else if(params.containsKey("view")) {
+			v = loadByName(params.get("view"));
 		} else {
 			v = ViewTemplate.getDefaultView();
 		}
@@ -116,16 +124,16 @@ public class ViewTemplate extends MongoEntity{
 		// Location bude nastavena v sessionm alebo kde
                 // - tyka sa hlavne veci ako mail a td. ktore nie su Node
 		Page t = null;
-		if (s.containsKey("Location")) {
+		if (s.contains("Location")) {
 			t = Page.loadByName((String) s.get("Location"));
 		} else {
 			// hierarchia template: 1. request (override), 2. View<->Node
-			if(r.containsKey("template")) {
-				t = Page.loadByName((String) r.get("template"));
+			if(params.containsKey("template")) {
+				t = Page.loadByName(params.get("template"));
 			}
 			if (t == null) {
                             // else + priapd ze dana tmpl neexistuje
-                            // tu samozrejme predpokladame (ale aj ninde) ze tempalte urcene v Node urcite
+                            // tu samozrejme predpokladame (ale aj inde) ze tempalte urcene v Node urcite
                             // existuju, co nemusi byt pravda
 				t = Page.loadByName(n.getTemplate().toString());
 			}

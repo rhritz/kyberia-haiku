@@ -1,7 +1,8 @@
 Veci, ktore nie su hotove, a chceme aby boli:
 
 --- 12.09.2010 ---
-* Redis 2 na spravu volatilnych dat a zrejme aj cache namiesto play! interneho resp. memcache
+* Redis 2 na spravu volatilnych dat (zoznamy, hashe)
+alebo zistit nakolko vhodne je na toto ehcache
 
 --- 16.05.2010 ---
 * v Play1.1 nie je config escapeInTemplates, zrejme bude treba pouzit tag verbatim
@@ -16,7 +17,6 @@ Zatial sa zda ze tomu nic nebrani, Play to priamo podporuje.
 
 --- 20.04.2010 ---
 * bannery - mozu byt riesene cez Feed/Page mech.
-* mail search
 
 --- 17.04.2010 ---
 *  moznost bookmarknut <Stream> napriklad new nodes ineho usera?
@@ -35,23 +35,21 @@ v link_to
 * Registracie (akoze tie kackovacie + posielanie + potvrdzovanie mailov, normalne funguju)
 
 --- 23.03.2010 ---
-* Nativne Https (bude riesene v Play 1.1)
 * Fook, Ignore & co
 * Odpocitavanie a obnovovanie kacok
-* Feeds / Content export? -> REST
+* Content export - REST, JSON & AJAX
 * Ability to see some content without an account
 - 1. Hack Secure module; or
 - 2. Create a different Controller for that; or
 - 3. Redirect to ^ on refusal to login; or
-- 4. mozno ta prihlasovacia funckie v Application pojde hacknut tak,
+- 4. mozno ta prihlasovacia funkcia v Application pojde hacknut tak,
  ze bez prihlasenia nastavi default usera.
 * Mongo replication
-* Proper CSS & HTML
+* Proper CSS & HTML & Javascript
 * Variable CSS -> ? http://www.playframework.org/modules/sass
-* Some Javascript sauce and AJAX where needed
 * FastTags/Javatags
 * Bookmark Tags (aka delicious) - pridavanie, querying
-* Fulltext Search -> ? http://www.playframework.org/modules/search
+* Fulltext Search in nodes & mail
 * Content Tagy: budeme aj evidovat kto priadil comu aky tag?
 * Templates - View: default view, ostatne odvodene - view inheritance
-* Templates - Template: default template + verzia pre kazdy view + template inheritance
+* Templates - Template: default template + verzia pre kazdy view

@@ -410,11 +410,10 @@ public class User extends MongoEntity {
     }
 
     public List<User> listFriends() {
-        if (friends == null) {
+        if (friends == null)
             return new ArrayList<User>();
-        } else {
+        else
             return Lists.transform(friends, new ToUser());
-        }
     }
 
     /**

@@ -24,31 +24,33 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.ObjectId;
-import java.util.HashMap;
+import java.io.File;
+import java.lang.Class;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import play.Logger;
 import play.cache.Cache;
+import play.mvc.Http.Request;
 import play.mvc.Scope.RenderArgs;
+import play.mvc.Scope.Session;
 import plugins.MongoDB;
 
 @Entity("Feed")
 public class Feed extends MongoEntity{
 
-    private        String         name;
-    private        ObjectId       owner;
-    private        List<ObjectId> nodes;
-    private        Integer        maxNodes;
-    private        String         subClass;
+    protected        String         name;
+    protected        ObjectId       owner;
+    protected        List<ObjectId> nodes;
+    protected        Integer        maxNodes;
+    protected        String         subClass;
+    protected        String         dataName;
 
     // + pripadne neskor permisions atd
     // + unique index na name? alebo cez ID
     @Transient
     private         List<NodeContent> content;
-    @Transient
-    private        String         ownerName; //?
-
+    
     // pridaj 'clanok' do feedu
     public static void addToFeed(String feedName, ObjectId contentId)
     {
@@ -70,7 +72,6 @@ public class Feed extends MongoEntity{
 
     public static Feed load(ObjectId id)
     {
-        // Logger.info("About to load node " + id);
         Feed n = Cache.get("feed_" + id, Feed.class);
         if (n != null )
             return n;
@@ -90,17 +91,22 @@ public class Feed extends MongoEntity{
         return n;
     }
 
-    static List<Feed> load(List<ObjectId> feedIds) {
+    public static List<Feed> load(boolean loadAll, List<ObjectId> feedIds) {
         List<Feed> feeds = null;
         try {
-            DBObject query = new BasicDBObject("_id",
+            DBCursor iobj = null;
+            if (!loadAll) {
+                DBObject query = new BasicDBObject("_id",
                     new BasicDBObject().append("$in",
                     feedIds.toArray(new ObjectId[feedIds.size()])));
-            DBCursor iobj = MongoDB.getDB().getCollection(MongoDB.CFeed).
-                    find(query);
+                iobj = MongoDB.getDB().getCollection(MongoDB.CFeed).find(query);
+            } else {
+                iobj = MongoDB.getDB().getCollection(MongoDB.CFeed).find();
+            }
+            Logger.info("load feeds::" + iobj);
             if (iobj !=  null)
                 feeds = Lists.transform(iobj.toArray(),
-                        MongoDB.getSelf().toFeed()); //? .toFeedWithContent()
+                        MongoDB.getSelf().toFeed());
         } catch (Exception ex) {
             Logger.info("load feeds::");
             ex.printStackTrace();
@@ -113,35 +119,89 @@ public class Feed extends MongoEntity{
         return name;
     }
     ////////////////////////////////////////////////////////////////////////////
-    void getData(   Map<String, String> params,
-                    HashMap request,
-                    HashMap session,
+    public void getData(   Map<String, String> params,
+                    Request request,
+                    Session session,
                     User    user,
                     RenderArgs renderArgs) {
-        // renderArgs.put("data",data)...
+        // mali by sme vyhodit error?
+        Logger.info("Hello from Feed base class. You really shouldn't see this.");
     }
 
-    void init(Page page) {
+    public void init(Page page) {}
+
+    static <T extends Feed> T getByName(String name, Page page) {
+        T le = null;
+        try {
+            Class<T> fu = (Class<T>) Class.forName(name);
+            le = fu.newInstance();
+            le.init(page);
+        } catch (Exception ex) {
+            Logger.info("Feed.loadSubclass::");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+        }
+        return le;
     }
 
     static Feed loadSubclass(ObjectId feedId, Page page) {
         Feed feed = null;
         try {
             feed = load(feedId);
-            Class c = Class.forName(feed.subClass);
+            Class c = Class.forName("models." + feed.subClass);
             feed = sc(c,feed,page);
         } catch (ClassNotFoundException ex) {
-            Logger.info("loadSubclass::");
+            Logger.info("Feed.loadSubclass::");
             ex.printStackTrace();
             Logger.info(ex.toString());
         }
         return feed;
     }
 
+    // TODO toto sa urcite da spravit elegantnejsie
     private static <T extends Feed> T sc(Class<T> c, Feed fu, Page page) {
-        T le = c.cast(fu);
-        le.init(page);
+        T le = null;
+        try {
+            le = c.newInstance();
+            le.id = fu.id;
+            le.name = fu.name;
+            le.maxNodes = fu.maxNodes;
+            le.owner = fu.owner;
+            le.init(page);
+        } catch (Exception ex) {
+            Logger.info("Feed.sc::");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+        }
         return le;
     }
+
+   /*
+    Dirty hacks ftw!
+    list Java files (not classes, since they are not going to be there)
+    inside a given package directory, and use them as a list of available feeds
+    adapted from Jon Peck http://jonpeck.com
+    adapted from http://www.javaworld.com/javaworld/javatips/jw-javatip113.html
+   */
+  public static List<Class> getClasses(String pckgname) {
+    List<Class> classes=new LinkedList<Class>();
+    try {
+      File directory=new File(Thread.currentThread().getContextClassLoader()
+              .getResource('/'+pckgname.replace('.', '/')).getFile());
+        if(directory.exists()) {
+          String[] files=directory.list();
+          for( int i=0 ; i < files.length; i++)
+            if(files[i].endsWith(".java"))
+              classes.add(Class.forName(pckgname+'.'+
+                files[i].substring(0, files[i].length()-5)));
+        } else 
+          Logger.info(pckgname + " does not appear to be a valid package");
+    } catch(Exception x) {
+        Logger.info(pckgname + " does not appear to be a valid package");
+        x.printStackTrace();
+        Logger.info(x.toString());
+    }
+    return classes;
+  }
 
 }

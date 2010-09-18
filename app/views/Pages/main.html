@@ -4,5 +4,14 @@
     <img src="/public/images/top.gif">
     <div>
         Ahojky! toto je uvodna stranka!
+
+        ${content}
+
+        #{list items:nodes, as:'node'}
+            <div>
+                <div>#{node par:node /} in ${node.parName}</div>
+                <div>${node.content}</div>
+            </div>
+        #{/list}
     </div>
 </div>

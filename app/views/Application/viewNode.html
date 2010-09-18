@@ -1,5 +1,15 @@
 #{extends 'main.html' /}
 #{set title:'Node id' /}
+#{if flash.success}
+    <div class="success">
+        ${flash.success}
+    </div>
+#{/if}
+#{if flash.error }
+    <div class="error">
+        ${flash.error}
+    </div>
+#{/if}
 #{if node}
 <div class="col1">
     <div class="nodeContent" style="display:block;">
@@ -39,11 +49,12 @@
              out.print("</div>".multiply(1 + prevDepth - node.depth));
            prevDepth = node.depth;
         }%
-        <div class="comment" id="${prevDepth}">
+        <div style="position:relative;" class="comment" id="${prevDepth}">
             <!-- TODO # {if user.ignore(node.owner)} style="display:none" # {/if} resp. collapsed -->
+            <img style="position:absolute;left:-57px;top:-4px;width:50px;" src="/public/images/k2.gif" />
             <div style="background-color:#e3e3e3; display:block">#{node par:node /}</div>
             <div>${node.getContent()}</div>
-            <!-- <img style=\"position:relative;\" src=\"/public/images/k2.gif\"> -->
+            
     #{/list}
     %{out.print("</div>".multiply(prevDepth));}%
     </div>
