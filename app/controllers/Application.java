@@ -299,19 +299,16 @@ public class Application extends Controller {
     }
 
     public static void showFriends(String uid) {
-        // String myId = session.get(User.ID);
         User u = User.load(uid);
         renderArgs.put("friends", u.listFriends());
         render(ViewTemplate.SHOW_FRIENDS_HTML);
     }
 
     public static void showMe() {
-        String myId = session.get(User.ID);
-        User me = User.load(myId);
-        Logger.info("showMe:: " + myId);
+        /*
         // TODO PAGE  renderArgs.put("nodes", Nodelist.getUserNodes(myId,null));
-        renderArgs.put("friends", me.listFriends());
-        render(ViewTemplate.SHOW_ME_HTML);
+        */
+        viewPage("Me");
     }
 
     public static void showUser(String id) {
@@ -336,11 +333,7 @@ public class Application extends Controller {
     }
 
     public static void showUsers() {
-        // list all users
-        // re.append(u.id).append(u.getGid()).append(u.username).append("<br>");
-        // renderArgs.put("content", User.listUsers());
-        renderArgs.put("users", User.loadUsers(null, 0 , 30, null));
-        render(ViewTemplate.SHOW_USERS_HTML);
+        viewPage("Users");
     }
 
     public static void showLive() {
@@ -448,7 +441,6 @@ public class Application extends Controller {
 
     public static void showPage(String pageId) {
         renderArgs.put("page",  Page.load(pageId));
-        renderArgs.put("feeds", Feed.load(true, null));
         renderArgs.put("classes",
                 Feed.getClasses("models.feeds"));
         render(ViewTemplate.EDIT_PAGE_HTML);
@@ -458,7 +450,6 @@ public class Application extends Controller {
         Page  p = Page.load(pageId);
         p.edit(Controller.params.allSimple());
         renderArgs.put("page",  p);
-        renderArgs.put("feeds", Feed.load(true, null));
         renderArgs.put("classes",
                 Feed.getClasses("models.feeds"));
         render(ViewTemplate.EDIT_PAGE_HTML);
@@ -480,8 +471,7 @@ public class Application extends Controller {
     }
 
     public static void showNodesByTag(String tag) {
-        renderArgs.put("nodes",  Tag.getTaggedNodes(tag));
-        render(ViewTemplate.SHOW_LAST_HTML);
+        viewPage("NodesByTag");
     }
 
 }

@@ -29,14 +29,11 @@ public class Registration extends Controller {
         String userid = User.addUser(Controller.params.allSimple());
         Logger.info("new user:: " + username + "," + userid);
         if (userid != null ) {
-            // TODO zobrazime userinfo ale este nie je prihlaseny
-            
-            User u = User.load(userid);
-            renderArgs.put("uid", u.getIdString());
-            renderArgs.put("user",u);
-            render(ViewTemplate.SHOW_ME_HTML);
+            flash.success("Your registration was succesful, you may now login");
+            Application.index();
         } else {
             // show registration errors
+            showAddUser();
         }
     }
 

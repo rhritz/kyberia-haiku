@@ -405,7 +405,7 @@ public class User extends MongoEntity {
     /**
      * @return the friends
      */
-    public List<ObjectId> getFriends() {
+    protected List<ObjectId> getFriends() {
         return friends;
     }
 
@@ -416,6 +416,13 @@ public class User extends MongoEntity {
             return Lists.transform(friends, new ToUser());
     }
 
+    public List<User> listIgnores() {
+        if (ignores == null)
+            return new ArrayList<User>();
+        else
+            return Lists.transform(ignores, new ToUser());
+    }
+
     /**
      * @return the view
      */
@@ -423,7 +430,7 @@ public class User extends MongoEntity {
         return view;
     }
 
-    // transform
+    // transform ObjectId to User
     class ToUser implements Function<ObjectId, User> {
         public User apply(ObjectId arg) {
             return User.load(arg);
@@ -474,7 +481,7 @@ public class User extends MongoEntity {
         {
            Logger.info("addUser failed " + e.toString() );
         }
-        return id == null ? null : id.toString();
+        return id == null ? "" : id.toString();
     }
 
 }

@@ -50,7 +50,7 @@ public class NodeContent extends MongoEntity {
     public  ObjectId      dfs;
 
     private Integer       template    = 1;
-    private String        putId       = null; // ak != null tak toto je hardlink
+    private ObjectId      putId;
 
     private Integer       accessType  = 0;
     private Integer       contentType = 0; // zatial nic
@@ -221,9 +221,6 @@ public class NodeContent extends MongoEntity {
             Logger.info("deleting node");
             Cache.delete("node_" + this.getId());
             MongoDB.delete(this, MongoDB.CNode);
-            
-            // TODO ostatne veci co treba deletnut: Activity, Bookmarks, ..?
-            // + threads
         } catch (Exception ex) {
             Logger.info("delete failed:");
             ex.printStackTrace();
@@ -268,6 +265,23 @@ public class NodeContent extends MongoEntity {
         return n;
     }
 
+    private static NodeContent loadByDfs(ObjectId id)
+    {
+        NodeContent n = null;
+        try {
+            DBObject iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
+                    findOne(new BasicDBObject("dfs",id));
+            if (iobj !=  null)
+                n = MongoDB.getMorphia().fromDBObject(NodeContent.class,
+                           (BasicDBObject) iobj);
+        } catch (Exception ex) {
+            Logger.info("load node");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+        }
+        return n;
+    }
+
     // some form of smart caching?
     static List<NodeContent> load(List<ObjectId> nodeIds) {
         List<NodeContent> nodes = null;
@@ -277,6 +291,22 @@ public class NodeContent extends MongoEntity {
                     nodeIds.toArray(new ObjectId[nodeIds.size()])));
             DBCursor iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
                     find(query);
+            if (iobj !=  null)
+                nodes = Lists.transform(iobj.toArray(),
+                        MongoDB.getSelf().toNodeContent());
+        } catch (Exception ex) {
+            Logger.info("load nodes::");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+        }
+        return nodes;
+    }
+
+    static List<NodeContent> loadByPar(ObjectId parId) {
+        List<NodeContent> nodes = null;
+        try {
+            DBCursor iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
+                    find(new BasicDBObject("par", parId));
             if (iobj !=  null)
                 nodes = Lists.transform(iobj.toArray(),
                         MongoDB.getSelf().toNodeContent());
@@ -427,43 +457,86 @@ public class NodeContent extends MongoEntity {
         this.mk = mk;
     }
 
-    // docasne
+    // TODO - make sure no node is a child of a put node,
+    // that would cause serious trouble
+    // + update threading functions to maek them aware of putnodes
+    public ObjectId putNode(ObjectId parentId)
+    {
+        if (parentId == null || load(parentId) == null)
+            // put into null makes no sense
+            return null;
+        NodeContent parent = load(parentId);
+        // TODO check & set permissions
+        ObjectId pid = null;
+        NodeContent putNode = new NodeContent();
+        putNode.owner   = owner;
+        putNode.name    = name;
+        putNode.created = created;
+        putNode.putId   = id;
+        putNode.par     = parent.id;
+        putNode = putNode.save();
+        pid = putNode.id;
+        if (parent.dfs == null) {
+            parent.dfs = pid;
+            putNode.dfs = parent.getId();
+        } else {
+            putNode.dfs = parent.dfs;
+        }
+        putNode.update();
+        parent.update();
+        // Notifications
+        List<ObjectId> roots = new LinkedList<ObjectId>();
+        NodeContent upnode = parent;
+        for (int i = 0; i < 10; i++)
+            // 10 - max hier depth for notif update
+        {
+              roots.add(upnode.getId());
+              ObjectId re = upnode.getParent();
+              if (re == null) break;
+              upnode = NodeContent.load(re);
+        }
+        Activity.newNodeActivity(pid, putNode, roots, owner, parent.owner);
+        
+        return pid;
+    }
+
+    // TODO - should be simple reverse of the above, if caled on the putNode
+    public void unputNode() {
+        
+    }
+
     public static String addNode(ObjectId parent,
             Map<String,String> params,
             ObjectId ownerid)
     {
-        // TODO validate content & name -> antisamy?
-        // TODO podstatna vec co tu potrebujeme je isPut a pripadne permissions
+        // TODO check & set permissions
         List<ObjectId> roots = new LinkedList<ObjectId>();
         ObjectId parOwner = null;
         NodeContent newnode = new NodeContent(ownerid,params).save();
         ObjectId mongoId = newnode.getId();
         if (mongoId == null)
         {
-            // throw new Exception();
+            // validation errors...
             return null;
         }
         Logger.info("parent :: " + parent);
         if (parent != null) {
             NodeContent root = NodeContent.load(parent);
-            NodeContent sibling = null;
             ObjectId dfs;
             if (root != null) {
                 newnode.par = parent;
                 Logger.info("parent loaded :: " + root.dfs);
                 dfs = root.dfs;
-                if (dfs != null ) {
-                    sibling = NodeContent.load(dfs);
-                }
                 root.dfs = mongoId;
                 root.update();
                 Logger.info("parent saved:: " + root.dfs);
-                if (sibling != null) {
-                    newnode.dfs = sibling.getId();
+                if (dfs != null) {
+                    newnode.dfs = dfs;
                 } else {
                     newnode.dfs = root.getId();
                 }
                 Logger.info("newnode dfs:: " + newnode.dfs );
+                // TODO change this - load vector etc
                 // nizsie su updaty notifikacii
                 NodeContent upnode = root;
                 for (int i = 0; i < 10; i++)
@@ -485,6 +558,39 @@ public class NodeContent extends MongoEntity {
         return mongoId.toString(); // neskor len id
     }
 
+    public void deleteNode() {
+        NodeContent dfsNode = null;
+        NodeContent dfsSource = null;
+        if (dfs != null) {
+            dfsNode = load(dfs);
+            // if we have dfs-out, we have a dfs-in too -
+            dfsSource = loadByDfs(id);
+        }
+        if (dfsNode != null) {
+            // dfsSource.dfs = dfs; // !!! unless this is our child
+            // we have to unlink all direct children, making them orphans
+            List<NodeContent> children = loadByPar(id);
+            for (NodeContent child : children) {
+                child.par = null;
+                // also have to remove all connections between their respective 
+                // subtrees - each child will become root of it's own subtree
+                // if (child.dfs)
+                // ...
+                // if we or anyone above us (in our vector) is a dfs from the
+                // sub tree of a child, change this dfs = that child.id
+                child.update();
+            }
+        }
+
+        // + rm bookmarks, perhaps activities too
+        delete();
+    }
+
+    public void moveNode(ObjectId to) {
+        par = to;
+        // fix old dfs, if dfs goes out of the subtree;
+        // set new dfs, -||-
+    }
 
     private static List<NodeContent> getThreadedChildren(ObjectId id,
             Integer start, Integer count)

@@ -47,9 +47,10 @@ public class Feed extends MongoEntity{
     protected        String         dataName;
 
     // + pripadne neskor permisions atd
-    // + unique index na name? alebo cez ID
     @Transient
     private         List<NodeContent> content;
+
+    public Feed () { name = getClass().getCanonicalName(); }
     
     // pridaj 'clanok' do feedu
     public static void addToFeed(String feedName, ObjectId contentId)
@@ -137,7 +138,7 @@ public class Feed extends MongoEntity{
             le = fu.newInstance();
             le.init(page);
         } catch (Exception ex) {
-            Logger.info("Feed.loadSubclass::");
+            Logger.info("Feed.getByName::");
             ex.printStackTrace();
             Logger.info(ex.toString());
         }

@@ -24,14 +24,6 @@
                 ${feed.name}<br>
             #{/list}
             </div>
-            <div>
-                <select name="feed">
-                    <option value="" selected></option>
-                    #{list items:feeds, as:'feed'}
-                        <option value="${feed.id}">${feed.name}</option>
-                    #{/list}
-                </select>
-            </div>
             <p>blockValue<input type="text" name="blockValue" /></p>
             <div>
                 <select name="blockName">

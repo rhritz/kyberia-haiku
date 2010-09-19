@@ -107,25 +107,6 @@ public class Tag extends MongoEntity {
         return tag;
     }
 
-    public static List<Tag> load()
-    {
-        List<Tag> tags = null;
-        try {
-            DBCursor iobj = (DBCursor) MongoDB.getDB().
-                    getCollection(MongoDB.CTag).
-                    find();
-            if (iobj != null)
-                tags = Lists.transform(iobj.toArray(),
-                            MongoDB.getSelf().toTag());
-        } catch (Exception ex) {
-            Logger.info("Page list load fail");
-            ex.printStackTrace();
-            Logger.info(ex.toString());
-            return null;
-        }
-        return tags;
-    }
-
     // TODO + cache
     public void save()
     {
