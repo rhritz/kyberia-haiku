@@ -64,65 +64,61 @@ public class ViewTemplate extends MongoEntity{
 	public boolean isDefault; // true - this is the root/default view
 	// public String superViewId;  // view inheritance
 	public ObjectId superView; // view inheritance
-	public String defaultFrame; // '/main.html'
 	public String defaultMenu;  // '/menu/html'
 	public String defaultCss;
-	// ... and more properties
-	public HashMap<String,Page> templates; // eg 'mail'=> mailTemplateInstance
+        public String template;
+        
+	private static HashMap<String,ViewTemplate> views;
 
-	// default View singleton
-	private static ViewTemplate defaultView; // new View(....)
-
-	public static ViewTemplate getDefaultView()
-	{
-		return defaultView;
-	}
-
-	public ViewTemplate(boolean isDefault, ViewTemplate superView)
-	{
-		this.isDefault = isDefault;
-                // this.superView = superView;
-	}
-
-	public void registerTemplate(String templateId, Page t)
-	{
-		templates.put(templateId, t);
-	}
-
-        // eventualne get a getTemplate budu jedno a to iste
-        public static String getHtml(String wat)
-        {
-         //   
-            return null;
+        public static void start() {
+            ViewTemplate def = new ViewTemplate(true,null,"main.html");
+            views = new HashMap<String,ViewTemplate>();
+            views.put("default", def);
         }
+
+	public ViewTemplate(boolean isDefault, 
+                            ViewTemplate superView,
+                            String template)
+	{
+            this.isDefault = isDefault;
+            this.template  = template;
+            // this.superView = superView;
+	}
 
         public static ViewTemplate loadByName(String name) {
-            ViewTemplate vt = null;
-
-            return vt;
+            return views.get(name);
         }
 
-	public static void renderPage(
+        public static ViewTemplate get(
                 Map<String, String> params,
                 Request r,
                 Session s,
-                NodeContent n, // tu to uz budeme vediet? ale ano, ak loadujeme node
+                User u,
+                RenderArgs renderArgs
+                )
+        {
+            ViewTemplate view = null;
+            if (s.contains("view")) {
+                view = loadByName(s.get("view"));
+            } else if(params.containsKey("view")) {
+                view = loadByName(params.get("view"));
+                //... and maybe some other mechanisms, from User etc
+            } else {
+                view = views.get("default");
+            }
+            renderArgs.put(ViewTemplate.TOP_LEVEL_TEMPLATE, view.template);
+            return view;
+        }
+
+	private void renderPage(
+                Map<String, String> params,
+                Request r,
+                Session s,
+                NodeContent n,
                 User u,
                 RenderArgs renderArgs
                 ) 
 	{
-		ViewTemplate v = null;
-		if (s.contains("view")) {
-			v = loadByName(s.get("view"));
-		} else if(params.containsKey("view")) {
-			v = loadByName(params.get("view"));
-		} else {
-			v = ViewTemplate.getDefaultView();
-		}
-                // toto by sme asi mali oddelit, v/t
-
-		// Location bude nastavena v sessionm alebo kde
-                // - tyka sa hlavne veci ako mail a td. ktore nie su Node
 		Page t = null;
 		if (s.contains("Location")) {
 			t = Page.loadByName((String) s.get("Location"));
@@ -140,10 +136,5 @@ public class ViewTemplate extends MongoEntity{
 		}
                 t.process(params, r, s , u, renderArgs);
 	}
-
-        public static ViewTemplate load(String id)
-        {
-            return null;
-        }
 
 }

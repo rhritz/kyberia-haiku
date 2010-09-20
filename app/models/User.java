@@ -437,7 +437,6 @@ public class User extends MongoEntity {
         }
     }
 
-
     private static final class PasswordService
     {
       MessageDigest md;

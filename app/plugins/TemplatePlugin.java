@@ -18,6 +18,7 @@
 package plugins;
 
 import models.Page;
+import models.ViewTemplate;
 import play.PlayPlugin;
 import play.exceptions.UnexpectedException;
 
@@ -26,6 +27,7 @@ public class TemplatePlugin extends PlayPlugin {
     public void onApplicationStart() {
         try {
             Page.start();
+            ViewTemplate.start();
         } catch (Exception e) {
             throw new UnexpectedException (e);
         }

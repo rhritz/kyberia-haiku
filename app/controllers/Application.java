@@ -30,22 +30,29 @@ public class Application extends Controller {
     @Before
     static void setConnectedUser() {
         renderArgs.put("reqstart", System.currentTimeMillis());
+        String uid;
         if(Security.isConnected()) {
-            String uid = session.get(User.ID);
+            uid = session.get(User.ID);
             renderArgs.put("user",   session.get(User.USERNAME));
             renderArgs.put("userid", uid);
             renderArgs.put("uid", uid);
             // UserLocation.saveVisit(uid, "some location");
             // - toto enjak doriesit s bookmark visits a tak
             renderArgs.put("newMail", 
-                    MessageThread.getUnreadMailNotif(new ObjectId(session.get(User.ID))));
+                    MessageThread.getUnreadMailNotif(new ObjectId(uid)));
         } else {
             // to este neznamena ze sme uplne mimo, snad
-            // moze Secure vytvorit nejaku fake session pre neprihlasenych?
+            // mozeme vytvorit nejaku fake session pre neprihlasenych?
+            uid = "nobody";
         }
-        // TODO - do request.args nastavit viewtemplate
-        // .set("view", ViewTemplate.getView(?));
-        // (ak sa daju objekty, tak asi aj usera)
+        // pozor aby sme si nieco neprepisali
+        User user = User.load(uid);
+        // private static User getUser() { return (User) Application.request.args.get("app-user");}
+        // - bude to fungovat alebo musi byt thread-local?
+        Application.request.args.put("app-view", 
+                ViewTemplate.get(params.allSimple(),
+                request, session, user, renderArgs));
+        Application.request.args.put("app-user", user);
     }
 
     @After
@@ -56,12 +63,8 @@ public class Application extends Controller {
         Logger.info("Request duration " + duration);
     }
 
-    //TODO
     public static void index() {
-        Page main = Page.getByName(Page.MAIN, params, renderArgs, request,
-                session);
-        renderArgs.put(ViewTemplate.TOP_LEVEL_TEMPLATE, "main.html"); // main.getToplevelTemplate? alebo skor z viewu -> main.view.getToplevelTemplate
-        render(main.getTemplate());
+        viewPage("main");
     }
 
     public static void viewNode(String id, Integer pageNum) {
@@ -77,7 +80,8 @@ public class Application extends Controller {
         Logger.info("about to add node:" + id + "," + content );
         // checkAuthenticity();
         NodeContent parentNode = NodeContent.load(id);
-        String newId = NodeContent.addNode(id == null ? null : new ObjectId(id),
+        String newId = NodeContent.addNode(
+                    parentNode == null ? null : parentNode.getId(),
                     Controller.params.allSimple(),
                     new ObjectId(session.get(User.ID))
                 );
@@ -275,7 +279,6 @@ public class Application extends Controller {
         checkAuthenticity();
         //String toId   = User.getIdForName(to);
         String fromId = session.get(User.ID);
-        // TODO filter content
         Message.send(fromId, to, content);
         renderArgs.put("users", User.loadUsers(null, 0 , 30, null));
         renderArgs.put("threads",
@@ -305,9 +308,7 @@ public class Application extends Controller {
     }
 
     public static void showMe() {
-        /*
         // TODO PAGE  renderArgs.put("nodes", Nodelist.getUserNodes(myId,null));
-        */
         viewPage("Me");
     }
 
@@ -325,36 +326,12 @@ public class Application extends Controller {
         viewPage("K");
     }
 
-    public static void showTag(String tag) {
-        renderArgs.put("taglist",  Tag.getTaggedNodes(tag)); // tymto tagom otagovane nody zoradene nejak
-        renderArgs.put("tagcloud", Tag.getTagCloud(tag)); // pribuzne tagy
-        renderArgs.put("taggers", Tag.getTaggers(tag)); // ti co najcastejsie pozuvaju tento tag
-        render(ViewTemplate.SHOW_K_HTML);
-    }
-
     public static void showUsers() {
         viewPage("Users");
     }
 
     public static void showLive() {
-        // list all online users and their current/last activities
-        renderArgs.put("locations", UserLocation.getAll());
-        render(ViewTemplate.SHOW_LIVE_HTML);
-    }
-
-    // Set notif. messages
-    private static void setMessages()
-    {
-        // List messages = Cache.get(session.get(User.ID) + "-messages", List.class);
-        /*
-        if(messages == null) {
-            // Cache miss
-            messages = Message.findByUser(session.get("user"));
-            Cache.set(session.getId() + "-messages", messages, "30mn");
-        }
-         */
-        // Controller.renderArgs.get/put?
-        renderArgs.put("messages", Alert.pop(session.get(User.ID)));
+        viewPage("Live");
     }
 
     // TODO cesta k obrazkom do konfigu + kontrolovat co sa upladuje
