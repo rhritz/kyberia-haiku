@@ -45,8 +45,11 @@ public class UserNodeChildren extends Feed {
                     RenderArgs renderArgs) {
         Integer start = 0;
         Integer count = 30;
+        int pageNum = 0;
+        try{ pageNum = Integer.parseInt(params.get("pageNum"));
+        } catch(Exception e) {}
+        start = count * pageNum;
         List<NodeContent> ll = new LinkedList<NodeContent>();
-        start = start * count;
         try {
             BasicDBObject query = new BasicDBObject().append("parid", 
                     user.getId());

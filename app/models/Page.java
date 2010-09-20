@@ -40,6 +40,7 @@ import play.mvc.Scope.RenderArgs;
 public class Page extends MongoEntity {
 
     private String              name;
+    private String              title;
     private String              template;
     private ObjectId            owner;
     private Map<String,String>  blocks;
@@ -49,7 +50,6 @@ public class Page extends MongoEntity {
 
     public  static final String MAIN     = "main";
     public  static final String NAME     = "name";
-    private static Page         mainPage = new Page("main","app/views/Pages/main.html");
     private static HashMap<String,Page> templateStore;
 
     public Page() {}
@@ -88,8 +88,6 @@ public class Page extends MongoEntity {
             Logger.info(ex.toString());
             return null;
         }
-        if (p == null )
-            p = mainPage; // default fallback
         return p;
     }
 
@@ -246,8 +244,6 @@ public class Page extends MongoEntity {
                         User    user,
                         RenderArgs renderArgs
                         ) {
-        // TODO toto musi nastavovat ViewTemplate, nie my
-        renderArgs.put(ViewTemplate.TOP_LEVEL_TEMPLATE, "main.html");
         for (Feed f: preparedBlocks)
             f.getData(params, request, session, user, renderArgs);
     }

@@ -243,19 +243,11 @@ public class Application extends Controller {
     }
 
     public static void showNodes() {
-        String uid = session.get(User.ID);
-        int pageNum = 0;
-        try{ pageNum = Integer.parseInt(params.get("pageNum"));
-        } catch(Exception e) {}
-       // renderArgs.put("nodes",
-       //         NodeContent.userNodeChildren(new ObjectId(uid),pageNum,30));
-        render(ViewTemplate.SHOW_NODES_HTML);
+        viewPage("UserNodeChildren");
     }
 
     public static void showBookmarks() {
-        renderArgs.put("bookmarks",
-                Bookmark.getUserBookmarks(session.get(User.ID)));
-        render(ViewTemplate.SHOW_BOOKMARKS_HTML);
+        viewPage("Bookmarks");
     }
 
     public static void showMail(String thread) {
