@@ -1,0 +1,28 @@
+Zopar zakladnych konceptov:
+* Veci, ktore maju tendenciu byt pomale pri vyberoch, chceme urychlit tak,
+ze budu pocitane alebo ukladane dopredu a ich vyber bude jednoduchy.
+vyuzivame na to vlastnosti mongodb a denormalizaciu. napriklad pri vlozeni prispevku
+vytvorime notifikaciu pre vsetky nadradene prispevky, vsetkych priatelov autora
+prispevku, autora nadradeneho prispevku a pod. To vsetko tvori iba jeden novy zaznam
+v MongoDB.
+
+* MongoDB sice robi vela cachovania za nas, ale napriek tomu je dobre pouzivat
+cache tak vela ako je to len vhodne - hlavne ak do objektu este nieco doplname
+po ziskani z databazy. S nastavenim timeoutov, samozrejme.
+
+* Vyhodou MongoDB je absencia Object-Relational Impedance. Vytvorenie novej kolekcie
+a s nou asociovanej triedy nas nestoji nic a je s tym spojene minimum prace. Mozeme
+to teda robit casto.
+
+* Kod v Groovy/HTML sablonach by sa mal zaoberat len logikou zobrazovania
+uz pritomnych dat. Nechceme pripustit miesanie aplikacnej logiky a prezentacie.
+Aplikacia vsak potrebuje vediet, ktore data sablona pozaduje. Preto pre kazdu
+sablonu existuje objekt Page, ktory obsahuje o.i. zoznam dat, ktore sablona
+potrebuje. Kazdy 'kus' dat z tohto zoznamu je zaobaleny v jednom objekte Feed.
+Pri naplnani dat pre sablonu funkcia getData kazdeho jej Feedu naplni data
+do sablony.
+
+* Objektom Page je nadradeny objekt ViewTemplate, ktory ma na starosti celkovu
+visaz stranky - na tejto urovni mozeme realizovat alternativne verzie stranky,
+hlavne teda odlahcenu mobilnu. kazdy takyto ViewTemplate bude obsahovat aj vlastnu
+mnozinu sablon (Page), tie ktore nie su definovane moze zdedit z defaultu.

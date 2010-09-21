@@ -11,8 +11,6 @@ To co este nie je je popisane v TODO
 Licencia:
 AGPL
 
-Instalacia:
-
 Prerekvizity:
 * Linux
 * Sun/OpenJDK Java 1.5 a vyssie
@@ -27,12 +25,14 @@ Instalacia:
 * Stiahnut source archiv z githubu
     http://github.com/rhritz/kyberia-haiku/archives/master
 * Rozbalit tento archiv so zachovanim adresarovej struktury
+* do adresara lib/ nalinkovat alebo skopirovat xercesImpl.jar
+(nie je sucastou distribucie, vzhladom na to ze je sucastou JDK)
 
 Spustenie:
 cd [adresar v ktorom je tento subor]
 [cesta k play frameworku]/play run
 
-pripoj sa na http://localhost:4567 a mozes sa hrat.
+Pripoj sa na http://localhost:4567 a mozes sa hrat.
 
 Struktura projektu:
 
@@ -42,6 +42,9 @@ log4j.properties - nastavenie logovania
 messages         - preklady hlasok, zatial sa nepouziva
 play.plugins     - deklaracia aplikacnych pluginov, v nasom pripade pre MongoDB
 routes           - routovanie HTTP requestov do aplikacie
+antisamy-haiku-1.4.1.xml
+                 - nastavenie pravidiel parsera html inputu. inak povedane,
+ak chceme povolit vkladat videa z youtube, upravime tento subor
 
 lib/
 - vsetky potrebne externe kniznice
@@ -65,5 +68,7 @@ mongojs/
 
 Este maly hint:
 Play! je velmi priatelsky framework a pozna prikazy idealize/eclipsify/netbeansify.
+
+Pripomienky/otazky - kontaktuje ma
 
 Enjoy!

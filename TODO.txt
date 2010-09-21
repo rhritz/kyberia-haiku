@@ -44,12 +44,9 @@ v link_to
 - 3. Redirect to ^ on refusal to login; or
 - 4. mozno ta prihlasovacia funkcia v Application pojde hacknut tak,
  ze bez prihlasenia nastavi default usera.
-* Mongo replication
 * Proper CSS & HTML & Javascript
 * Variable CSS -> ? http://www.playframework.org/modules/sass
 * FastTags/Javatags
 * Bookmark Tags (aka delicious) - pridavanie, querying
 * Fulltext Search in nodes & mail
-* Content Tagy: budeme aj evidovat kto priadil comu aky tag?
-* Templates - View: default view, ostatne odvodene - view inheritance
-* Templates - Template: default template + verzia pre kazdy view
+* View & Template inheritance
