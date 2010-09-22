@@ -22,6 +22,7 @@ import java.io.File;
 import play.mvc.*;
 import play.Logger;
 import models.*;
+import play.cache.Cache;
 import play.mvc.Controller;
 
 @With(Secure.class)
@@ -84,6 +85,7 @@ public class Application extends Controller {
                     parentNode == null ? null : parentNode.getId(),
                     Controller.params.allSimple(),
                     new ObjectId(session.get(User.ID))
+                    // ((User) request.args.get("app-user")).getId() alebo rovno celeho usera
                 );
         String nid = null;
         Logger.info("newid::" + newId);
@@ -206,7 +208,6 @@ public class Application extends Controller {
         NodeContent node = NodeContent.load(oid);
         String uid  = session.get(User.ID);
         String page = params.get("template");
-        String view = params.get("view");
         if (node != null && node.canRead(new ObjectId(uid))) {
             // logicky UserVisit save patri sem, lebo tu vieme co ideme zobrazit
             UserLocation.saveVisit(User.load(uid), id);
@@ -253,17 +254,17 @@ public class Application extends Controller {
     public static void showMail(String thread) {
         String uid = session.get(User.ID);
         renderArgs.put("threads",
-                MessageThread.viewUserThreads(new ObjectId(uid),session));
+                MessageThread.getMailThreads(new ObjectId(uid)));
         renderArgs.put("users", User.loadUsers(null, 0 , 30, null));
-        if (thread == null)
-        {
-            thread = session.get("LastThreadId");
-        }
-        if (thread != null) {
-            ObjectId threadId = new ObjectId(thread);
+        // TODO move this into message/thread
+        ObjectId threadId = null;
+        if (thread != null)
+            threadId = new ObjectId(thread);
+        if (threadId == null)
+            threadId = Cache.get(uid + "_lastThreadId", ObjectId.class);
+        if (threadId != null)
             renderArgs.put("mailMessages",
                 Message.getMessages(threadId, new ObjectId(uid)));
-        }
         render(ViewTemplate.MAIL_HTML);
     }
 
@@ -274,14 +275,11 @@ public class Application extends Controller {
         Message.send(fromId, to, content);
         renderArgs.put("users", User.loadUsers(null, 0 , 30, null));
         renderArgs.put("threads",
-                MessageThread.viewUserThreads(new ObjectId(session.get(User.ID)),
-                    session));
-        String threadStr = session.get("LastThreadId");
-        if (threadStr != null) {
+            MessageThread.getMailThreads(new ObjectId(fromId)));
+        ObjectId threadId = Cache.get(fromId + "_lastThreadId", ObjectId.class);
+        if (threadId != null)
             renderArgs.put("mailMessages",
-                Message.getMessages(new ObjectId(session.get("LastThreadId")),
-                    new ObjectId(fromId)));
-        }
+                Message.getMessages(threadId, new ObjectId(fromId)));
         render(ViewTemplate.MAIL_HTML);
     }
 
@@ -294,6 +292,8 @@ public class Application extends Controller {
     }
 
     public static void showFriends(String uid) {
+        // TODO - how to switch between viewed user and the user from session?
+        // somehow from the Page?
         User u = User.load(uid);
         renderArgs.put("friends", u.listFriends());
         render(ViewTemplate.SHOW_FRIENDS_HTML);
@@ -327,6 +327,8 @@ public class Application extends Controller {
     }
 
     // TODO cesta k obrazkom do konfigu + kontrolovat co sa upladuje
+    // play.libs.Images.resize(icon, icon, Integer.SIZE, Integer.SIZE);
+    // TemplateLoader.load(String key, String templateContent)
     public static void uploadIcon(String uid, File icon) {
         checkAuthenticity();
         

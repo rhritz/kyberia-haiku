@@ -40,52 +40,60 @@
                 #{list items:node.access, as: 'access_user'}
                         <a href="/user/${access_user}">${models.User.getNameForId(access_user)}</a><!-- TODO tu checkbox na odstranenie -->
                 #{/list}
-                Add:
-                <select name="access">
-                    <option value="" selected></option>
-                    #{list items:users, as:'luser'}
-                        <option value="${luser.id}">${luser.username}</option>
-                    #{/list}
-                </select>
+                <div>
+                    Add:
+                    <select name="access">
+                        <option value="" selected></option>
+                        #{list items:users, as:'luser'}
+                            <option value="${luser.id}">${luser.username}</option>
+                        #{/list}
+                    </select>
+                </div>
             </div>
             <div>
                 <label for="silence">Silencelist</label>
                 #{list items:node.silence, as: 'silence_user'}
                         <a href="/user/${silence_user}">${models.User.getNameForId(silence_user)}</a>
                 #{/list}
-                Add:
-                <select name="silence">
-                    <option value="" selected></option>
-                    #{list items:users, as:'luser'}
-                        <option value="${luser.id}">${luser.username}</option>
-                    #{/list}
-                </select>
+                <div>
+                    Add:
+                    <select name="silence">
+                        <option value="" selected></option>
+                        #{list items:users, as:'luser'}
+                            <option value="${luser.id}">${luser.username}</option>
+                        #{/list}
+                    </select>
+                </div>
             </div>
             <div>
                 <label for="master">Masterlist</label>
                 #{list items:node.masters, as: 'masters_user'}
                         <a href="/user/${masters_user}">${models.User.getNameForId(masters_user)}</a>
                 #{/list}
-                Add:
-                <select name="master">
-                    <option value="" selected></option>
-                    #{list items:users, as:'luser'}
-                        <option value="${luser.id}">${luser.username}</option>
-                    #{/list}
-                </select>
+                <div>
+                    Add:
+                    <select name="master">
+                        <option value="" selected></option>
+                        #{list items:users, as:'luser'}
+                            <option value="${luser.id}">${luser.username}</option>
+                        #{/list}
+                    </select>
+                </div>
             </div>
             <div>
                 <label for="ban">Banlist</label>
                 #{list items:node.bans, as: 'bans_user'}
                         <a href="/user/${bans_user}">${models.User.getNameForId(bans_user)}</a>
                 #{/list}
-                Add:
-                <select name="ban">
-                    <option value="" selected></option>
-                    #{list items:users, as:'luser'}
-                        <option value="${luser.id}">${luser.username}</option>
-                    #{/list}
-                </select>
+                <div>
+                    Add:
+                    <select name="ban">
+                        <option value="" selected></option>
+                        #{list items:users, as:'luser'}
+                            <option value="${luser.id}">${luser.username}</option>
+                        #{/list}
+                    </select>
+                </div>
             </div>
             <input type="submit" value="Update" />
         </form>
@@ -109,10 +117,4 @@
     </form>
    </div>
 </div>
-<!--
-%{
-   fullName = "bububu";
-   out.print('<h1>'+fullName+'</h1>');
-}%
--->
         

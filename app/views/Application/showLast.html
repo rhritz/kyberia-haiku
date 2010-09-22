@@ -6,7 +6,7 @@
     #{list items:nodes, as:'node'}
         <div>
             <div>#{node par:node /} in ${node.parName}</div>
-            <div>${node.content}</div>
+            <div>${node.content.raw()}</div>
         </div>
     #{/list}
     </div>

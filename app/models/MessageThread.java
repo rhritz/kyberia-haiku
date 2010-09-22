@@ -37,7 +37,6 @@ import play.cache.Cache;
 public class MessageThread extends MongoEntity {
 
     // { _id: '...', users: [user1, user2...]}
-    // @Indexed
     private List<ObjectId> users;
     private List<ObjectId> unreads;
     private List<ObjectId> deleted;
@@ -96,6 +95,8 @@ public class MessageThread extends MongoEntity {
                 Logger.info("user threads found");
                 r = Lists.transform(iobj.toArray(),
                         MongoDB.getSelf().toMessageThread());
+                if (! r.isEmpty())
+                    Cache.set(uid + "_lastThreadId", r.get(0).id);
             }
         } catch (Exception ex) {
             Logger.info("getUserThreads");
@@ -105,45 +106,32 @@ public class MessageThread extends MongoEntity {
         return r;
     }
 
-    // TODO session -> cache
-    public static String viewUserThreads(ObjectId uid,
-            play.mvc.Scope.Session session)
+    public static List<LinkPair> getMailThreads(ObjectId uid)
     {
+        List<LinkPair> ll = new LinkedList<LinkPair>();
         List<MessageThread> r = getUserThreads(uid);
-        StringBuilder ret = new StringBuilder();
-        // LAME - prerobit!
-        boolean i = true;
-        if (r!= null) {
+        if (r!= null) 
             for (MessageThread m : r)
-            {
                 if (m != null)
                 {
-                    if (i) {session.put("lastThreadId", m.id);i=false;}
-                    ret.append("<a href=/mail/").append(m.id).append(">");
+                    String lnk = m.getIdString();
+                    String txt = null;
                     if (m.users != null )
-                    {
-                        for (ObjectId oid : m.users) {
-                            // TODO ObjectId vs. equals je na tom ako?
+                        for (ObjectId oid : m.users) 
                             if (! uid.equals(oid)) {
-                                ret.append(User.getNameForId(oid) );
+                                txt = User.getNameForId(oid);
                                 if (m.unreads != null) {
                                     int un = 0;
-                                    for (ObjectId uu : m.unreads) {
-                                        // toto je pocet nami neprecitanych
-                                        // v tomto threade
+                                    for (ObjectId uu : m.unreads) 
                                         un += uid.equals(uu) ? 1 : 0;
-                                    }
-                                    if (un > 0)
-                                        ret.append("(" + un + ")");
+                                    if (un > 0) // TODO toto treba zmenit
+                                        txt += "(" + un + ")";
                                 }
                             }
-                        }
-                    }
-                    ret.append("</a>").append("<br>");
+                    if (txt != null)
+                        ll.add(new LinkPair(txt,lnk));
                 }
-            }
-        }
-        return ret.toString();
+        return ll;
     }
 
     // vratime thread 

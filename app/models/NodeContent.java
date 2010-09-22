@@ -49,7 +49,7 @@ public class NodeContent extends MongoEntity {
     public  ObjectId      par             ;
     public  ObjectId      dfs;
 
-    private Integer       template    = 1;
+    private String        template;
     private ObjectId      putId;
 
     private Integer       accessType  = 0;
@@ -108,39 +108,49 @@ public class NodeContent extends MongoEntity {
     {
         String accType = params.get("access_type");
         if (accType != null) {
-            this.accessType = Integer.parseInt(accType);
+            accessType = Integer.parseInt(accType);
         }
-        String access = params.get("access");
-        if (access != null ) {
-            ObjectId accId = toId(access);
-            if (accId != null && ! this.access.contains(accId))
-                this.access.add(accId);
+        String addAccess = params.get("access");
+        if (addAccess != null ) {
+            ObjectId accId = toId(addAccess);
+            if (access == null)
+                access = new LinkedList<ObjectId>();
+            if (accId != null && ! access.contains(accId))
+                access.add(accId);
         }
-        String silence = params.get("silence");
-        if (silence != null ) {
-            ObjectId silId = toId(silence);
-            if (silId != null && ! this.silence.contains(silId))
-                this.silence.add(silId);
+        String addSilence = params.get("silence");
+        if (addSilence != null ) {
+            ObjectId silId = toId(addSilence);
+            if (silence == null)
+                silence = new LinkedList<ObjectId>();
+            if (silId != null && ! silence.contains(silId))
+                silence.add(silId);
         }
-        String master = params.get("master");
-        if (master != null ) {
-            ObjectId masterId = toId(master);
-            if (masterId != null && ! this.masters.contains(masterId) )
-                this.masters.add(masterId);
+        String addMaster = params.get("master");
+        if (addMaster != null ) {
+            ObjectId masterId = toId(addMaster);
+            if (masters == null)
+                masters = new LinkedList<ObjectId>();
+            if (masterId != null && !masters.contains(masterId) )
+                masters.add(masterId);
         }
         String ban = params.get("ban");
         if (ban != null ) {
             ObjectId banId = toId(ban);
-            if (banId != null && ! this.bans.contains(banId))
-                this.bans.add(banId);
+            if (bans == null)
+                bans = new LinkedList<ObjectId>();
+            if (banId != null && ! bans.contains(banId))
+                bans.add(banId);
         }
         String chOwner = params.get("change_owner");
         if (chOwner != null && User.load(chOwner) != null) {
             owner = new ObjectId(chOwner);
         }
         String chParent = params.get("parent");
-        if (chParent != null && NodeContent.load(chParent) != null) {
-            // TODO Haiku.reparent this.owner = chOwner;
+        if (chParent != null) {
+            NodeContent np = load(chParent);
+            if (np != null)
+                moveNode(np.getId());
         }
         String chName = params.get(NAME);
         if (chName != null) {
@@ -148,7 +158,7 @@ public class NodeContent extends MongoEntity {
         }
         String chTemplate = params.get("template");
         if (chTemplate != null ) {
-            template = Integer.parseInt(chTemplate);
+            template = Validator.validateTextonly(chTemplate);
         }
         String chContent = params.get(CONTENT);
         if (chContent != null) {
@@ -432,7 +442,7 @@ public class NodeContent extends MongoEntity {
     /**
      * @return the template
      */
-    public Integer getTemplate() {
+    public String getTemplate() {
         return template;
     }
 

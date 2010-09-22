@@ -13,7 +13,7 @@
     </div>
     #{list items:nodes, as:'node'}
         <a href="/id/${node.id}">${node.name}</a>${node.cr_date}<a href="@{Application.showUser(node.owner)}">${models.User.getNameForId(node.owner)}</a> <br>
-            ${node.content} <br>
+            ${node.content.raw()} <br>
     #{/list}
 </div>
 <div class="col2">

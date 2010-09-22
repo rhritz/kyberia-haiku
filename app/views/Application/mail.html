@@ -23,7 +23,7 @@
             &nbsp;&nbsp;&nbsp;${message.sent}
             </div>
             <div>
-                ${message.content}
+                ${message.content.raw()}
             </div>
         </div>
     #{/list}
@@ -31,5 +31,7 @@
     </div>
 </div>
 <div class="col2">
-   ${threads}
+   #{list items:threads, as:'thread'}
+    <div>#{a @Application.showMail(thread.link)}${thread.name}#{/a}</div>
+   #{/list}
 </div>
