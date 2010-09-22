@@ -273,7 +273,10 @@ public class MongoDB {
     // transformacna funkcia pre Lists.transform
     public class ToMessage implements Function<DBObject, Message> {
         public Message apply(DBObject arg) {
-            return morphia.fromDBObject(Message.class, arg);
+            Message m = morphia.fromDBObject(Message.class, arg);
+            m.fromUser = User.getNameForId(m.from);
+            m.toUser   = User.getNameForId(m.to);
+            return m;
         }
     }
 

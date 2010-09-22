@@ -34,11 +34,15 @@ import play.Logger;
 public class Message extends MongoEntity {
     private String content;
     private Long sent;
-    private ObjectId from;
-    private ObjectId to;
+    public ObjectId from;
+    public ObjectId to;
     private ObjectId thread;
     private List <ObjectId> deleted;
-    // TODO String<>ObjectID?
+
+    @Transient
+    public String fromUser;
+    @Transient
+    public String toUser;
 
     public Message() {}
 
@@ -108,15 +112,19 @@ public class Message extends MongoEntity {
     {
         BasicDBObject query = new BasicDBObject().append("thread", threadId);
         BasicDBObject sort  = new BasicDBObject().append("sent", -1);
+        List<Message> ll = null;
         if (start == null) start = 0;
         if (count == null) count = 30;
         DBCursor iobj = MongoDB.getDB()
             .getCollection(MongoDB.CMessage).find(query).sort(sort).skip(start).
             limit(count);
-        if (doUpdate)
-            MessageThread.setAsRead(threadId, forUser);
-        // Hilarity ensues :)
-        return Lists.transform(iobj.toArray(), MongoDB.getSelf().toMessage());
+        if (iobj != null) {
+            if (doUpdate)
+                MessageThread.setAsRead(threadId, forUser);
+            ll = Lists.transform(iobj.toArray(), 
+                    MongoDB.getSelf().toMessage());
+        }
+        return ll;
     }
 
     public static List<Message> getMessages(ObjectId threadId,
