@@ -17,10 +17,22 @@
 */
 package plugins;
 
+import com.mongodb.DBObject;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import models.Page;
 import models.ViewTemplate;
+import play.Play;
 import play.PlayPlugin;
 import play.exceptions.UnexpectedException;
+
+/*
+ load Pages & Views
+ if Pages are missing, populate the collection with the contents of a init file
+ such file can be produced with the following command:
+ ./mongoexport -d local -c Page
+ where 'local' is the db name
+*/
 
 public class TemplatePlugin extends PlayPlugin {
     @Override
@@ -28,6 +40,22 @@ public class TemplatePlugin extends PlayPlugin {
         try {
             Page.start();
             ViewTemplate.start();
+        } catch (Exception e) {
+            throw new UnexpectedException (e);
+        }
+
+        try {
+            BufferedReader reader = new BufferedReader( new
+                    FileReader(Play.applicationPath.getAbsolutePath()
+                    + "/mongojs/Page.js"));
+            String strLine;
+        
+            while ((strLine = reader.readLine()) != null)   {
+                DBObject page = (DBObject) com.mongodb.util.JSON.parse(strLine);
+                if (page != null)
+                    MongoDB.getDB().getCollection(MongoDB.CPage).insert(page);
+            }
+            reader.close();
         } catch (Exception e) {
             throw new UnexpectedException (e);
         }
