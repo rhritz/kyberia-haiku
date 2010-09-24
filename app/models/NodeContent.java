@@ -600,12 +600,12 @@ public class NodeContent extends MongoEntity {
                 for (NodeContent child : children)
                     childrenMap.put(child.getId(), Boolean.TRUE);
                 for (NodeContent child : children) {
-                    List<NodeContent> childrensSubtree = child.getTree(childrenMap);
+                    List<NodeContent> childrenSubtree = child.getTree(childrenMap);
                     // the last one of this list links either to the next child
                     // or somewhere outside the subtree - we don't know exactly
-                    if (childrensSubtree != null) {
-                        NodeContent lastOne = childrensSubtree.
-                                               get(childrensSubtree.size() - 1);
+                    if (childrenSubtree != null) {
+                        NodeContent lastOne = childrenSubtree.
+                                               get(childrenSubtree.size() - 1);
                         if (! childrenMap.containsKey(lastOne.dfs)) {
                             // this one is out of the tree
                             dfsSource.dfs = lastOne.dfs;
@@ -633,10 +633,48 @@ public class NodeContent extends MongoEntity {
         delete();
     }
 
+    // + add activity to new place, remove from old one
+    // + updates in one place
     public void moveNode(ObjectId to) {
-        par = to;
+        NodeContent toNode = load(to);
+        if (toNode == null) // + permissions
+            return;
         // fix old dfs, if dfs goes out of the subtree;
         // set new dfs, -||-
+        NodeContent dfsNode = null;
+        NodeContent dfsSource = null;
+        NodeContent lastOne = null;
+        if (dfs != null) {
+            dfsNode = load(dfs);
+            dfsSource = loadByDfs(id);
+
+            // 1. - remove from the old place
+            if (dfsNode != null) {
+                List<NodeContent> childrenSubtree = getTree(null);
+                if (childrenSubtree != null) {
+                    lastOne = childrenSubtree.get(childrenSubtree.size() - 1);
+                    if (lastOne.dfs.equals(id)) {
+                        // this one is out of the tree
+                        dfsSource.dfs = lastOne.dfs;
+                        dfsSource.update();
+                    }
+                } else { // no children
+                    dfsSource.dfs = dfs;
+                    dfsSource.update();
+                }
+            }
+        }
+        // 2. - move to the new one - added to the top, not sorted by time!
+        if (lastOne == null) 
+            dfs = toNode.dfs;
+        else {
+            lastOne.dfs = toNode.dfs;
+            lastOne.update();
+        }
+        toNode.dfs = id;
+        toNode.update();
+        par = to;
+        update();
     }
 
     private static List<NodeContent> getThreadedChildren(ObjectId id,
