@@ -76,9 +76,8 @@ public class Tag extends MongoEntity {
     {
         try {
             MongoDB.getDB().getCollection(MongoDB.CTag).
-            update(new BasicDBObject().
-            append("tag",tag), new BasicDBObject().
-            append("$inc",new BasicDBObject("count",1)),
+                update(new BasicDBObject("tag",tag),
+                    new BasicDBObject("$inc",new BasicDBObject("count",1)),
                         false, false);
         } catch (Exception ex) {
             Logger.info("tag inc fail");

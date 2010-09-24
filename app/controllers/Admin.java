@@ -1,9 +1,20 @@
 package controllers;
 
-/*
- Tu budu veci ako init databazy a priame editovanie nejakych onych
- */
+import play.mvc.*;
+import models.User;
+import models.ViewTemplate;
+import play.mvc.Controller;
 
-public class Admin {
+@With(Secure.class)
+public class Admin  extends Controller {
+
+    public static void showAdminPage() {
+        render(ViewTemplate.ADMIN_PAGE_HTML);
+    }
+
+    public static void doAdminStuff() {
+        User.refreshDailyK(30);
+        showAdminPage();
+    }
 
 }

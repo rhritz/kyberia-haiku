@@ -94,7 +94,7 @@ public class Validator {
                  Pattern.CASE_INSENSITIVE);
         Matcher m = p.matcher(text);
 
-        StringBuffer out = new StringBuffer();
+        StringBuilder out = new StringBuilder();
         int lastPos = 0;
         while (m.find()) {
             String tag = m.group(1);

@@ -29,6 +29,7 @@ import java.util.List;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.Map;
 import sun.misc.BASE64Encoder;
 import plugins.*;
@@ -48,15 +49,13 @@ public class User extends MongoEntity {
     private Map<String,String> menu; // userovo menu
     
     private List<String>       tags;     // given tags
-    private List<ObjectId>       friends;  // friends and stuff
-    private List<ObjectId>       ignores;  // users whom this user ignores
-    private List<ObjectId>       ignoreMail; // users whom this user ignores mail from
-    private List<ObjectId>       groups;   // user groups this user is part of
+    private List<ObjectId>     friends;  // friends and stuff
+    private List<ObjectId>     ignores;  // users whom this user ignores
+    private List<ObjectId>     ignoreMail; // users whom this user ignores mail from
+    private List<ObjectId>     groups;   // user groups this user is part of
 
-    // kackove hospodarstvo :)
-    private Long               usedK; // na dnesny den
-    private Long               availableK; // na dnesny den
-    private Long               kDay;  // v ktorom 24h cykle kacok sme
+    private Integer            dailyK;
+    private Integer            k;
 
     public static final String USERNAME = "username";
     public static final String BOOKMARKS = "bookmarks";
@@ -70,7 +69,9 @@ public class User extends MongoEntity {
     private static PasswordService pwdService = new PasswordService();
 
     @Transient
-    private List<Bookmark>     bookmarks;
+    public HashMap<ObjectId,Boolean>   prepIgnores;
+    @Transient
+    public HashMap<ObjectId,Boolean>   prepGroups;
 
     public User() {}
 
@@ -154,39 +155,23 @@ public class User extends MongoEntity {
         }
     }
 
-    // loadni dalsie user data do session pri logine
     public void loadUserData()
     {
         // mail status,
         // list bookmarks,
-        // list of friends,
         // and possibly more things
-        // Cache.set(User.FRIENDS + id, getFriends());
-        Cache.set(User.IGNORES + id, getIgnores());
-        Cache.set(User.FOOKS + id, getFooks());
-        Cache.set(User.UPDATES + id, getUpdates());
-    }
 
-    /*
-    public List<Friend> getFriends()
-    {
-        return Friends.getUserFriends(id);
-    }
-     */
+        prepIgnores = new HashMap<ObjectId,Boolean>();
+        if (ignores != null)
+            for (ObjectId ignore : ignores)
+                prepIgnores.put(ignore, Boolean.TRUE);
 
-    public List<ObjectId> getIgnores()
-    {
-        return new ArrayList<ObjectId>();
-    }
+        prepGroups = new HashMap<ObjectId,Boolean>  () ;
+        if (groups != null)
+            for (ObjectId group : groups)
+                prepGroups.put(group, Boolean.TRUE);
+        // foreach friend...
 
-    public List<StatusUpdate> getUpdates()
-    {
-        return new ArrayList<StatusUpdate>();
-    }
-
-    public List<ObjectId> getFooks()
-    {
-        return Fook.getUserFooks(this.getIdString());
     }
 
     // false ak uz je username pouzite
@@ -266,6 +251,19 @@ public class User extends MongoEntity {
             return null;
         }
         return u;
+    }
+
+    public static void refreshDailyK(Integer howMuch) {
+        try {
+            MongoDB.getDB().getCollection(MongoDB.CUser).
+                update(new BasicDBObject(),
+                    new BasicDBObject("$set",new BasicDBObject("dailyK",howMuch)),
+                        false, true);
+        } catch (Exception ex) {
+            Logger.info("tag inc fail");
+            ex.printStackTrace();
+            Logger.info(ex.toString());
+        }
     }
 
 
@@ -428,6 +426,14 @@ public class User extends MongoEntity {
      */
     public String getView() {
         return view;
+    }
+
+    void setDailyK(int i) {
+        dailyK = i;
+    }
+
+    int getDailyK() {
+        return dailyK;
     }
 
     // transform ObjectId to User

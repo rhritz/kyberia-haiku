@@ -20,6 +20,7 @@ package models.feeds;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
+import com.mongodb.ObjectId;
 import java.util.List;
 import java.util.Map;
 import play.Logger;
@@ -27,12 +28,16 @@ import play.mvc.Http.Request;
 import play.mvc.Scope.RenderArgs;
 import play.mvc.Scope.Session;
 import models.Feed;
+import models.MongoEntity;
 import models.NodeContent;
 import models.Page;
 import models.User;
 import plugins.MongoDB;
 
-public class NodesByTag extends Feed{
+// ergo 'show flat'
+public class NodeChildren extends Feed{
+
+    private static final BasicDBObject sort = new BasicDBObject("created", -1);
 
     @Override
     public void getData(   Map<String, String> params,
@@ -40,17 +45,20 @@ public class NodesByTag extends Feed{
                     Session session,
                     User    user,
                     RenderArgs renderArgs) {
-        String tag = params.get("tag");
+        ObjectId id   = MongoEntity.toId(params.get("id"));
+        Integer start = 0;
+        Integer count = 30;
 
         List<NodeContent> l = null;
         try {
             DBCursor iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
-                    find(new BasicDBObject("tags", tag));
+                    find(new BasicDBObject("par", id)).
+                    sort(sort).skip(start).limit(count);
             if (iobj !=  null)
                 l = Lists.transform(iobj.toArray(),
                         MongoDB.getSelf().toNodeContent());
         } catch (Exception ex) {
-            Logger.info("NodesByTag::");
+            Logger.info("NodeChildren::");
             ex.printStackTrace();
             Logger.info(ex.toString());
         }
@@ -63,3 +71,4 @@ public class NodesByTag extends Feed{
     }
 
 }
+

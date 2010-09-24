@@ -76,6 +76,10 @@ GET   /k                                        Application.showK
 GET   /live                                     Application.showLive
 GET   /nodes                                    Application.showNodes
 
+# admin stuff
+GET   /admin                                    Admin.showAdminPage
+POST  /admin                                    Admin.doAdminStuff
+
 # toto je catch-all, musi byt preto nizsie
 POST     /id/{id}/{action}                      Application.{action}
 ###

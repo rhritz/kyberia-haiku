@@ -61,7 +61,7 @@ public class NodeContent extends MongoEntity {
     private Boolean       kAllowed    = true;
 
     // tu by asi mali byt idcka tagov a nie tagy samotne
-    private List<String>  tags;
+    private List<String>    tags;
     private List<ObjectId>  kgivers;  // +k
     private List<ObjectId>  mkgivers; // -k
 
@@ -70,7 +70,7 @@ public class NodeContent extends MongoEntity {
     private List<ObjectId>  silence;
     private List<ObjectId>  masters;
 
-    private List<ObjectId>  fooks;
+    private Map<ObjectId,Boolean>  fook;
 
     @Transient
     private List<ObjectId>  vector;
@@ -113,34 +113,34 @@ public class NodeContent extends MongoEntity {
         String addAccess = params.get("access");
         if (addAccess != null ) {
             ObjectId accId = toId(addAccess);
-            if (access == null)
+            if (getAccess() == null)
                 access = new LinkedList<ObjectId>();
             if (accId != null && ! access.contains(accId))
-                access.add(accId);
+                getAccess().add(accId);
         }
         String addSilence = params.get("silence");
         if (addSilence != null ) {
             ObjectId silId = toId(addSilence);
-            if (silence == null)
+            if (getSilence() == null)
                 silence = new LinkedList<ObjectId>();
             if (silId != null && ! silence.contains(silId))
-                silence.add(silId);
+                getSilence().add(silId);
         }
         String addMaster = params.get("master");
         if (addMaster != null ) {
             ObjectId masterId = toId(addMaster);
-            if (masters == null)
+            if (getMasters() == null)
                 masters = new LinkedList<ObjectId>();
             if (masterId != null && !masters.contains(masterId) )
-                masters.add(masterId);
+                getMasters().add(masterId);
         }
         String ban = params.get("ban");
         if (ban != null ) {
             ObjectId banId = toId(ban);
-            if (bans == null)
+            if (getBans() == null)
                 bans = new LinkedList<ObjectId>();
             if (banId != null && ! bans.contains(banId))
-                bans.add(banId);
+                getBans().add(banId);
         }
         String chOwner = params.get("change_owner");
         if (chOwner != null && User.load(chOwner) != null) {
@@ -338,15 +338,15 @@ public class NodeContent extends MongoEntity {
             return true;
         switch (accessType) {
             case ACL.PUBLIC:
-                            if (bans != null && bans.contains(uid))
+                            if (getBans() != null && getBans().contains(uid))
                                 return false;
                             break;
             case ACL.PRIVATE:
-                            if (access != null && !access.contains(uid))
+                            if (getAccess() != null && !access.contains(uid))
                                 return false;
                             break;
             case ACL.MODERATED:
-                            if (bans != null  && bans.contains(uid))
+                            if (getBans() != null  && getBans().contains(uid))
                                 return false;
                             break;                
         }
@@ -365,7 +365,7 @@ public class NodeContent extends MongoEntity {
             return false;
         switch (accessType) {
             case ACL.PUBLIC:
-                            if (bans.contains(uid) || silence.contains(uid))
+                            if (getBans().contains(uid) || getSilence().contains(uid))
                                 return false;
                             break;
             case ACL.PRIVATE:
@@ -373,7 +373,7 @@ public class NodeContent extends MongoEntity {
                                 return false;
                             break;
             case ACL.MODERATED:
-                            if (bans.contains(uid))
+                            if (getBans().contains(uid))
                                 return false;
                             break;
         }
@@ -384,7 +384,7 @@ public class NodeContent extends MongoEntity {
     public boolean canEdit(ObjectId uid)
     {
         // Logger.info("canEdit:: " + User.getNameForId(owner) + " acc type " + accessType + " owner:" + User.getNameForId(owner));
-        return owner.equals(uid) || (masters != null && masters.contains(uid));
+        return owner.equals(uid) || (getMasters() != null && getMasters().contains(uid));
     }
 
     // if null inherit everything
@@ -395,12 +395,22 @@ public class NodeContent extends MongoEntity {
 
     public void fook(ObjectId uid)
     {
-        if (fooks == null) {
-            fooks = new LinkedList<ObjectId>();
-        } else if (fooks.contains(uid)) {
+        if (getFook() == null) {
+            fook = new HashMap<ObjectId,Boolean>();
+        } else if (getFook().containsKey(uid)) {
             return;
         }
-        fooks.add(uid);
+        getFook().put(uid,Boolean.TRUE);
+        update();
+    }
+
+    public void unfook(ObjectId uid)
+    {
+        if (getFook() == null) {
+            return;
+        } else if (getFook().containsKey(uid)) {
+            getFook().remove(uid);
+        }
         update();
     }
     
@@ -634,13 +644,6 @@ public class NodeContent extends MongoEntity {
         return thread;
     }
 
-    // TODO remove this
-    public static ObjectId toId(String x) {
-        ObjectId bubu = null;
-        try { bubu = new ObjectId(x);} catch (Exception e ) {};
-        return bubu;
-    }
-
     public List<NodeContent> getThreadIntern(Integer start, Integer count)
     {
         List<NodeContent> thread = new LinkedList<NodeContent>();
@@ -703,24 +706,31 @@ public class NodeContent extends MongoEntity {
     // +K
     public void giveK(User user)
     {
-        //TODO error messages + Odpocitaj userovi Kacka, ak ma dost, ak nie bail
+        //TODO error messages
+        if (user.getDailyK() < 1)
+            return;
         if (kgivers == null)
             kgivers = new LinkedList<ObjectId>();
         else if (kgivers.contains(user.getId()))
             return;
         else
             kgivers.add(user.getId());
+
         if (getK() == null)
             setK(1l);
         else 
             setK(getK() + 1);
+        user.setDailyK(user.getDailyK() - 1);
+        user.update();
         update();
     }
 
     // -K
     public void giveMK(User user)
     {
-        //TODO error messages + Odpocitaj userovi Kacka, ak ma dost, ak nie bail
+        //TODO error messages
+        if (user.getDailyK() < 1)
+            return;
         if (kgivers == null)
             kgivers = new LinkedList<ObjectId>();
         else if (kgivers.contains(user.getId()))
@@ -731,6 +741,43 @@ public class NodeContent extends MongoEntity {
             setMk(1l);
         else
             setMk(getMk() + 1);
+        user.setDailyK(user.getDailyK() - 1);
+        user.update();
         update();
+    }
+
+    /**
+     * @return the bans
+     */
+    protected List<ObjectId> getBans() {
+        return bans;
+    }
+
+    /**
+     * @return the access
+     */
+    protected List<ObjectId> getAccess() {
+        return access;
+    }
+
+    /**
+     * @return the silence
+     */
+    protected List<ObjectId> getSilence() {
+        return silence;
+    }
+
+    /**
+     * @return the masters
+     */
+    protected List<ObjectId> getMasters() {
+        return masters;
+    }
+
+    /**
+     * @return the fook
+     */
+    protected Map<ObjectId, Boolean> getFook() {
+        return fook;
     }
 }

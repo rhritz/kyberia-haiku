@@ -48,16 +48,14 @@ public class ViewTemplate extends MongoEntity{
         public static final String ADD_GROUP_HTML      = "app/views/Application/editGroup.html";
         public static final String SHOW_ME_HTML        =  "app/views/Application/showMe.html";
         public static final String SHOW_FRIENDS_HTML   =  "app/views/Application/showFriends.html";
-        public static final String SHOW_K_HTML         = "app/views/Application/showK.html";
-        public static final String SHOW_USERS_HTML     = "app/views/Application/showUsers.html";
         public static final String SHOW_USER_HTML      = "app/views/Application/viewUser.html";
-        public static final String SHOW_LIVE_HTML      = "app/views/Application/showLive.html";
-        public static final String SHOW_TAGS_HTML      = "app/views/Application/showTags.html";
         public static final String ADD_USER_HTML       = "app/views/Application/addUser.html";
         public static final String ADD_PAGE_HTML       = "app/views/Application/addPage.html";
         public static final String EDIT_PAGE_HTML      = "app/views/Application/editPage.html";
         public static final String SHOW_PAGE_HTML      = "app/views/Application/showPage.html";
         public static final String SHOW_PAGES_HTML     = "app/views/Application/showPages.html";
+
+        public static final String ADMIN_PAGE_HTML     = "app/views/Admin/admin.html";
 
         public static final String TOP_LEVEL_TEMPLATE = "topLevelTemplate";
 

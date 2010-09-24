@@ -41,4 +41,10 @@ public abstract class MongoEntity implements Serializable {
     public void setIdString(String id) {
         this.id = new ObjectId(id);
     }
+
+    public static ObjectId toId(String x) {
+        ObjectId bubu = null;
+        try { bubu = new ObjectId(x);} catch (Exception e ) {};
+        return bubu;
+    }
 }

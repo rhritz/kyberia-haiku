@@ -5,38 +5,18 @@ Veci, ktore nie su hotove, a chceme aby boli:
 alebo zistit nakolko vhodne je na toto ehcache
 
 --- 16.05.2010 ---
-* v Play1.1 nie je config escapeInTemplates, zrejme bude treba pouzit tag verbatim
-* mozno je dobre mat na bookmarku flag, ci ho zobrazovat vzdy alebo len v kompletnom zozname
-
---- 09.05.2010 ---
-* bolo by mozno vhodne pre dalsi vyvoj, aby bolo mozne pouzit Scalu/Scalate/Scamongo.
-Zatial sa zda ze tomu nic nebrani, Play to priamo podporuje.
+* Bookmark Tags (aka delicious), flags - ci ho zobrazovat vzdy alebo len v kompletnom zozname
 
 --- 24.04.2010 ---
 * access/perms on userinfo ale len ciastocne
 
---- 20.04.2010 ---
-* bannery - mozu byt riesene cez Feed/Page mech.
-
---- 17.04.2010 ---
-*  moznost bookmarknut <Stream> napriklad new nodes ineho usera?
-- v principe by nemuselo byt prilis zlozite, len treba  specializovat (bookmark type)
-- mozeme asi odlozit na neskor
-- v konecnom dosledku ide len o to aby to bolo *nieco* co sa pise do col. Activity,
-odtial dalej moze ist o standardny bookmark, ln ineho typu ako bezny node bookmark
-
---- 12.04.2010 ---
-* put/hardlink - ako specialny typ NodeContent, zobrazi sa obsah node ktory je uvedeny
-v link_to
-
 --- 09.04.2010 ---
 * status updates
 * personal home/landing page
-* Registracie (akoze tie kackovacie + posielanie + potvrdzovanie mailov, normalne funguju)
+* Registracie (akoze tie kackovacie + posielanie + potvrdzovanie mailov)
 
 --- 23.03.2010 ---
 * Fook, Ignore & co
-* Odpocitavanie a obnovovanie kacok
 * Content export - REST, JSON & AJAX
 * Ability to see some content without an account
 - 1. Hack Secure module; or
@@ -44,9 +24,7 @@ v link_to
 - 3. Redirect to ^ on refusal to login; or
 - 4. mozno ta prihlasovacia funkcia v Application pojde hacknut tak,
  ze bez prihlasenia nastavi default usera.
-* Proper CSS & HTML & Javascript
-* Variable CSS -> ? http://www.playframework.org/modules/sass
+* Proper CSS & HTML & Javascript, Variable CSS? http://www.playframework.org/modules/sass
 * FastTags/Javatags
-* Bookmark Tags (aka delicious) - pridavanie, querying
 * Fulltext Search in nodes & mail
 * View & Template inheritance

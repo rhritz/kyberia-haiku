@@ -55,7 +55,6 @@ public class MongoDB {
     public static final String CActivity      = "Activity";
     public static final String CBookmark      = "Bookmark";
     public static final String CFeed          = "Feed";
-    public static final String CFook          = "Fook";
     public static final String CFriend        = "Friend";
     public static final String CIgnore        = "Ignore";
     public static final String CMessage       = "Message";
@@ -116,7 +115,6 @@ public class MongoDB {
             morphia.map(NodeContent.class);
             morphia.map(UserLocation.class);
             morphia.map(Friend.class);
-            morphia.map(Fook.class);
             morphia.map(Ignore.class);
             morphia.map(UserGroup.class);
             morphia.map(Tag.class);

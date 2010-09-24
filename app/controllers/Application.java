@@ -141,9 +141,11 @@ public class Application extends Controller {
 
     public static void book(String id)
     {
+        // TODO set bookmark type - "ids" for nodes, "owner" for user etc
         checkAuthenticity();
         Logger.info("Bookmark action:: " + id);
-        Bookmark.add(id, session.get(User.ID));
+        String type = "ids";
+        Bookmark.add(id, session.get(User.ID), type);
         displayNode(id);
     }
 
