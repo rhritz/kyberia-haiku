@@ -21,6 +21,7 @@ import com.google.code.morphia.Morphia;
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
@@ -578,6 +579,7 @@ public class NodeContent extends MongoEntity {
         return mongoId.toString(); // neskor len id
     }
 
+    // unles it's a putNode...
     public void deleteNode() {
         NodeContent dfsNode = null;
         NodeContent dfsSource = null;
@@ -590,15 +592,40 @@ public class NodeContent extends MongoEntity {
             // dfsSource.dfs = dfs; // !!! unless this is our child
             // we have to unlink all direct children, making them orphans
             List<NodeContent> children = loadByPar(id);
-            for (NodeContent child : children) {
-                child.par = null;
-                // also have to remove all connections between their respective 
-                // subtrees - each child will become root of it's own subtree
-                // if (child.dfs)
-                // ...
-                // if we or anyone above us (in our vector) is a dfs from the
-                // sub tree of a child, change this dfs = that child.id
-                child.update();
+            if (children == null || children.isEmpty()) {
+                dfsSource.dfs = dfs;
+                dfsSource.update();
+            } else {
+                HashMap<ObjectId,Boolean> childrenMap = Maps.newHashMap();
+                for (NodeContent child : children)
+                    childrenMap.put(child.getId(), Boolean.TRUE);
+                for (NodeContent child : children) {
+                    List<NodeContent> childrensSubtree = child.getTree(childrenMap);
+                    // the last one of this list links either to the next child
+                    // or somewhere outside the subtree - we don't know exactly
+                    if (childrensSubtree != null) {
+                        NodeContent lastOne = childrensSubtree.
+                                               get(childrensSubtree.size() - 1);
+                        if (! childrenMap.containsKey(lastOne.dfs)) {
+                            // this one is out of the tree
+                            dfsSource.dfs = lastOne.dfs;
+                            dfsSource.update();
+                        }
+                        // create a subtree
+                        lastOne.dfs = child.getId();
+                        lastOne.update();
+                    }
+                    if (childrenMap.containsKey(child.dfs)) {
+                        child.dfs = null;
+                    }  else {
+                        // same as above
+                        dfsSource.dfs = child.dfs;
+                        dfsSource.update();
+                        child.dfs = null; // sure?
+                    }
+                    child.par = null;
+                    child.update();
+                }
             }
         }
 
@@ -682,13 +709,45 @@ public class NodeContent extends MongoEntity {
         return thread;
     }
 
-    // - neskor aj mongojs na toto?
+    // returns the whole subtree of a node, optionally stop on stopNodes.
+    // with stopNodes being usually either the vector of a node, or its siblings
+    private List<NodeContent> getTree(Map<ObjectId,Boolean> stopNodes)
+    {
+        List<NodeContent> thread = new LinkedList<NodeContent>();
+        HashMap<ObjectId,Integer> roots = new HashMap<ObjectId,Integer>();
+        int localDepth = 0;
+        NodeContent nextnode = this;
+        NodeContent lastnode;
+        ObjectId parent;
+        for (int i = 0; i < 1000000; i++) {
+            lastnode = nextnode;
+            if (lastnode.dfs == null)
+              break;
+            if (stopNodes != null && stopNodes.containsKey(lastnode.dfs))
+              break;
+            nextnode = NodeContent.load(lastnode.dfs);
+            if (nextnode == null || nextnode.par == null)
+              break;
+            parent = nextnode.par;
+            if (parent.equals(lastnode.id)) {
+                roots.put(parent,localDepth);
+                localDepth++;
+            } else {
+                if (roots.get(parent) == null)
+                    break;
+                localDepth = roots.get(parent) + 1;
+            }
+            nextnode.depth = localDepth;
+            thread.add(nextnode);
+        }
+        return thread;
+    }
+
     protected List<NodeContent> loadVector() {
         List<NodeContent> nodes = null; 
         // TODO este predtym by to chcelo vybrat zacachovane a vratit ich tak
         try {
-            DBObject query = new BasicDBObject("_id",
-                    new BasicDBObject().append("$in",
+            DBObject query = new BasicDBObject("_id", new BasicDBObject("$in",
                     vector.toArray(new ObjectId[vector.size()])));
             DBCursor iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
                     find(query);
