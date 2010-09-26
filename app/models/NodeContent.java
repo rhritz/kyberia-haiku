@@ -292,7 +292,7 @@ public class NodeContent extends MongoEntity {
     }
 
     // some form of smart caching?
-    static List<NodeContent> load(List<ObjectId> nodeIds) {
+    public static List<NodeContent> load(List<ObjectId> nodeIds) {
         List<NodeContent> nodes = null;
         try {
             DBObject query = new BasicDBObject("_id", 

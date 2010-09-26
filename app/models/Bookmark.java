@@ -133,12 +133,21 @@ public class Bookmark extends MongoEntity {
         return b;
     }
 
-    private static Bookmark getByUserAndDest(ObjectId uid, String dest) {
+    public static Bookmark getByUserAndDest(ObjectId uid, String dest) {
         Bookmark b = Cache.get(key(uid.toString(), dest), Bookmark.class);
         if (b != null)
             return b;
         else
             return loadAndStore(uid.toString(), dest);
+    }
+
+    // TODO
+    public static Bookmark getByUserAndDest(ObjectId uid, ObjectId dest) {
+        Bookmark b = Cache.get(key(uid.toString(), dest.toString()), Bookmark.class);
+        if (b != null)
+            return b;
+        else
+            return loadAndStore(uid.toString(), dest.toString());
     }
 
     public int loadNotifsForBookmark()
@@ -159,45 +168,6 @@ public class Bookmark extends MongoEntity {
             Logger.info(ex.toString());
         }
         return len;
-    }
-
-    public static List<NodeContent> getUpdatesForBookmark(
-            String nodeId,
-            ObjectId uid)
-    {
-        // 1. get bookmark
-        List<NodeContent> newNodes = null;
-        Bookmark b = getByUserAndDest(uid, nodeId);
-        Long lastVisit = b.lastVisit;
-        updateVisit(uid, nodeId);
-        // 2. load notifications
-        try {
-            BasicDBObject query = new BasicDBObject().
-                    append(b.typ == null ? "ids" : b.typ,
-                    new ObjectId(nodeId)).append("date",
-                    new BasicDBObject("$gt",lastVisit));
-            // Logger.info("getUpdatesForBookmark::"  + query.toString());
-            // BasicDBObject sort = new BasicDBObject().append("date", -1);
-            // vlastne chceme natural sort a iba idcka nodes ktore mame zobrazit
-            DBCursor iobj = MongoDB.getDB().
-                    getCollection(MongoDB.CActivity).find(query).
-                    sort(sort);
-            if (iobj !=  null) {
-                // Logger.info("getUpdatesForBookmark found");
-                List<Activity> lll = Lists.transform(iobj.toArray(),
-                        MongoDB.getSelf().toActivity());
-                // 3. load nodes we want to show
-                List<ObjectId> nodeIds = new LinkedList<ObjectId>();
-                for (Activity ac : lll)
-                    nodeIds.add(ac.getOid());
-                newNodes = NodeContent.load(nodeIds);
-            }
-        } catch (Exception ex) {
-            Logger.info("getUpdatesForBookmark");
-            ex.printStackTrace();
-            Logger.info(ex.toString());
-        }
-        return newNodes;
     }
 
     // List of Bookmarks by destination id
@@ -248,7 +218,7 @@ public class Bookmark extends MongoEntity {
         }
     }
 
-    static void updateVisit(ObjectId uid, String location) {
+    public static void updateVisit(ObjectId uid, String location) {
         String key = key(uid.toString(),location);
         Logger.info("Updating visit::" + key);
         Bookmark b = Cache.get(key, Bookmark.class);
@@ -275,5 +245,33 @@ public class Bookmark extends MongoEntity {
 
     private static String key(String uid, String dest) {
         return "bookmark_" + uid + "_" + dest;
+    }
+
+    /**
+     * @return the lastVisit
+     */
+    public Long getLastVisit() {
+        return lastVisit;
+    }
+
+    /**
+     * @param lastVisit the lastVisit to set
+     */
+    public void setLastVisit(Long lastVisit) {
+        this.lastVisit = lastVisit;
+    }
+
+    /**
+     * @return the typ
+     */
+    public String getTyp() {
+        return typ;
+    }
+
+    /**
+     * @param typ the typ to set
+     */
+    public void setTyp(String typ) {
+        this.typ = typ;
     }
 }

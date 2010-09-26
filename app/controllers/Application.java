@@ -128,7 +128,7 @@ public class Application extends Controller {
          NodeContent toNode = NodeContent.load(params.get("to"));
          if (node != null && toNode != null)
             node.moveNode(toNode.getId());
-         displayNode(null);
+         displayNode(id);
      }
 
     //
@@ -362,11 +362,7 @@ public class Application extends Controller {
     }
 
     public static void viewNodeUpdates(String id) {
-        User u = User.load(session.get(User.ID));
-        renderArgs.put("nodes", 
-                Bookmark.getUpdatesForBookmark(id, u.getId()));
-        // TODO nahradit
-        render(ViewTemplate.SHOW_LAST_HTML);
+        viewPage("BookmarkUpdates");        
     }
 
     // Group management
