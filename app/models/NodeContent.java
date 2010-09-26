@@ -224,7 +224,7 @@ public class NodeContent extends MongoEntity {
         }
     }
 
-    public void delete()
+    private void delete()
     {
         try {
             Logger.info("deleting node");
@@ -599,7 +599,7 @@ public class NodeContent extends MongoEntity {
                     List<NodeContent> childrenSubtree = child.getTree(children);
                     // the last one of this list links either to the next child
                     // or somewhere outside the subtree - we don't know exactly
-                    if (childrenSubtree != null) {
+                    if (childrenSubtree != null && !childrenSubtree.isEmpty()) {
                         NodeContent lastOne = childrenSubtree.
                                                get(childrenSubtree.size() - 1);
                         if (! children.containsKey(lastOne.dfs)) {

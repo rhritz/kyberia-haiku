@@ -42,18 +42,18 @@
     <div class="nodeContent">
     *{ render thread }*
     %{ prevDepth = 0; }%
-    #{list items:thread, as:'node' }
-        %{ if (prevDepth-node.depth < -1)
-             out.print("<div class=\"comment\">".multiply(node.depth-prevDepth-1));
-           else if (node.depth - prevDepth <= 0)
-             out.print("</div>".multiply(1 + prevDepth - node.depth));
-           prevDepth = node.depth;
+    #{list items:thread}
+        %{ if (prevDepth-_.depth < -1)
+             out.print("<div class=\"comment\">".multiply(_.depth-prevDepth-1));
+           else if (_.depth - prevDepth <= 0)
+             out.print("</div>".multiply(1 + prevDepth - _.depth));
+           prevDepth = _.depth;
         }%
         <div style="position:relative;" class="comment" id="${prevDepth}">
             <!-- TODO # {if user.ignore(node.owner)} style="display:none" # {/if} resp. collapsed -->
             <img style="position:absolute;left:-57px;top:-4px;width:50px;" src="/public/images/k2.gif" />
-            <div style="background-color:#e3e3e3; display:block">#{node par:node /}</div>
-            <div>${node.getContent().raw()}</div>
+            <div style="background-color:#e3e3e3; display:block">#{node par:_ /}</div>
+            <div>${_.getContent().raw()}</div>
             
     #{/list}
     %{out.print("</div>".multiply(prevDepth));}%
@@ -70,8 +70,9 @@
     <!-- Node info -->
    <div>Name: ${node.name}</div>
    <div>Owner: ${node.ownerName}</div>
-   <small>Parent: <a href="/id/${node.par}">${node.par}</a></small>
-   <small>dfs: <a href="/id/${node.dfs}">${node.dfs}</a></small>
+   <div>Parent: <a href="/id/${node.par}">${node.par}</a></div>
+   <div>Dfs: <a href="/id/${node.dfs}">${node.dfs}</a></div>
+   <div>${node.k}K  -${node.mk}K</div>
    <div style="display:block;">Actions:
        <form name="node_actions" action="@{Application.book(id)}" method="POST">
             #{authenticityToken /}
@@ -82,12 +83,21 @@
             <input type="submit" value="-K" onClick="javascript:this.form.action='@{Application.mk(id)}';submit();" />
             <input type="text" size="10" name="tag" />
             <input type="submit" value="Tag" onClick="javascript:this.form.action='@{Application.tag(id)}';submit();" />
+            #{if node.canEdit(new com.mongodb.ObjectId(uid))} 
+                <input type="submit" value="Delete" onClick="javascript:this.form.action='@{Application.deleteNode(id)}';submit();" />
+                <input type="submit" value="Move" onClick="javascript:this.form.action='@{Application.moveNode(id)}';submit();"/>
+                <input type="submit" value="Unput" onClick="javascript:this.form.action='@{Application.unputNode(id)}';submit();"/>
+            #{/if}
+            <input type="submit" value="Put" onClick="javascript:this.form.action='@{Application.putNode(id)}';submit();"/>
+            <input type="text" size="10" name="to" />
        </form>
    #{if node.canEdit(new com.mongodb.ObjectId(uid))} <a href="@{Application.showEditNode(id)}">Edit</a>#{/if}
+   <!--
    <form action="@{Application.viewNode(id)}" method="GET">
         <input type="text" size="10" name="id" />
         <input type="submit" value="View Node" />
     </form>
+   -->
    </div>
 </div>
 #{/if}

@@ -19,6 +19,10 @@ GET     /id/{id}/edit                           Application.showEditNode
 # GET /id/{id}/{<[0-9]+>template}/{<[0-9]+>page} Application.viewNode
 POST     /id/{id}/action                        Application.addNode
 POST     /id/{id}/edit                          Application.editNode
+POST     /id/{id}/delete                        Application.deleteNode
+POST     /id/{id}/put                           Application.putNode
+POST     /id/{id}/move                          Application.moveNode
+POST     /id/{id}/unput                         Application.unputNode
 POST     /add_node                              Application.addNode
 GET      /add_thread                            Application.addThread
 GET      /id/{id}/edit                          Application.showEditNode

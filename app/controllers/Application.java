@@ -97,6 +97,39 @@ public class Application extends Controller {
         displayNode(nid);
     }
 
+     public static void putNode(String id) {
+         checkAuthenticity();
+         NodeContent node = NodeContent.load(id);
+         NodeContent toNode = NodeContent.load(params.get("to"));
+         if (node != null && toNode != null)
+            node.putNode(toNode.getId());
+         displayNode(id);
+     }
+
+     public static void unputNode(String id) {
+         checkAuthenticity();
+         NodeContent node = NodeContent.load(id);
+         if (node != null)
+            node.unputNode();
+         index();
+     }
+
+     public static void deleteNode(String id) {
+         checkAuthenticity();
+         NodeContent node = NodeContent.load(id);
+         if (node != null)
+            node.deleteNode();
+         index();
+     }
+
+     public static void moveNode(String id) {
+         checkAuthenticity();
+         NodeContent node = NodeContent.load(id);
+         NodeContent toNode = NodeContent.load(params.get("to"));
+         if (node != null && toNode != null)
+            node.moveNode(toNode.getId());
+         displayNode(null);
+     }
 
     //
     // akcie
@@ -290,7 +323,7 @@ public class Application extends Controller {
     public static void showUser(String id) {
         User u = User.load(id);
         if ( u !=null ) {
-            // renderArgs.put("user", user);
+            renderArgs.put("user", u);
             // TODO PAGE  renderArgs.put("nodes", Nodelist.getUserNodes(id,null));
             render(ViewTemplate.SHOW_USER_HTML);
         }
