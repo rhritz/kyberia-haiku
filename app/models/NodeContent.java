@@ -17,7 +17,6 @@
 */
 package models;
 
-import com.google.code.morphia.Morphia;
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
 import com.google.common.collect.Lists;
@@ -29,7 +28,6 @@ import com.mongodb.DBObject;
 import com.mongodb.ObjectId;
 import play.Logger;
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -257,7 +255,7 @@ public class NodeContent extends MongoEntity {
             return n;
         try {
             DBObject iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
-                    findOne(new BasicDBObject().append("_id",id));
+                    findOne(new BasicDBObject("_id",id));
             if (iobj !=  null) {
                 n = MongoDB.getMorphia().fromDBObject(NodeContent.class,
                            (BasicDBObject) iobj);
@@ -298,8 +296,8 @@ public class NodeContent extends MongoEntity {
         List<NodeContent> nodes = null;
         try {
             DBObject query = new BasicDBObject("_id", 
-                    new BasicDBObject().append("$in",
-                    nodeIds.toArray(new ObjectId[nodeIds.size()])));
+                    new BasicDBObject("$in",
+                        nodeIds.toArray(new ObjectId[nodeIds.size()])));
             DBCursor iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
                     find(query);
             if (iobj !=  null)
@@ -313,14 +311,15 @@ public class NodeContent extends MongoEntity {
         return nodes;
     }
 
-    static List<NodeContent> loadByPar(ObjectId parId) {
-        List<NodeContent> nodes = null;
+    static Map<ObjectId,NodeContent> loadByPar(ObjectId parId) {
+        Map<ObjectId,NodeContent> nodes = Maps.newHashMap();
         try {
             DBCursor iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
                     find(new BasicDBObject("par", parId));
             if (iobj !=  null)
-                nodes = Lists.transform(iobj.toArray(),
-                        MongoDB.getSelf().toNodeContent());
+                for (NodeContent node : Lists.transform(iobj.toArray(),
+                        MongoDB.getSelf().toNodeContent()))
+                    nodes.put(node.getId(), node);
         } catch (Exception ex) {
             Logger.info("load nodes::");
             ex.printStackTrace();
@@ -591,22 +590,19 @@ public class NodeContent extends MongoEntity {
         if (dfsNode != null) {
             // dfsSource.dfs = dfs; // !!! unless this is our child
             // we have to unlink all direct children, making them orphans
-            List<NodeContent> children = loadByPar(id);
+            Map<ObjectId,NodeContent> children = loadByPar(id);
             if (children == null || children.isEmpty()) {
                 dfsSource.dfs = dfs;
                 dfsSource.update();
             } else {
-                HashMap<ObjectId,Boolean> childrenMap = Maps.newHashMap();
-                for (NodeContent child : children)
-                    childrenMap.put(child.getId(), Boolean.TRUE);
-                for (NodeContent child : children) {
-                    List<NodeContent> childrenSubtree = child.getTree(childrenMap);
+                for (NodeContent child : children.values()) {
+                    List<NodeContent> childrenSubtree = child.getTree(children);
                     // the last one of this list links either to the next child
                     // or somewhere outside the subtree - we don't know exactly
                     if (childrenSubtree != null) {
                         NodeContent lastOne = childrenSubtree.
                                                get(childrenSubtree.size() - 1);
-                        if (! childrenMap.containsKey(lastOne.dfs)) {
+                        if (! children.containsKey(lastOne.dfs)) {
                             // this one is out of the tree
                             dfsSource.dfs = lastOne.dfs;
                             dfsSource.update();
@@ -615,7 +611,7 @@ public class NodeContent extends MongoEntity {
                         lastOne.dfs = child.getId();
                         lastOne.update();
                     }
-                    if (childrenMap.containsKey(child.dfs)) {
+                    if (children.containsKey(child.dfs)) {
                         child.dfs = null;
                     }  else {
                         // same as above
@@ -749,10 +745,10 @@ public class NodeContent extends MongoEntity {
 
     // returns the whole subtree of a node, optionally stop on stopNodes.
     // with stopNodes being usually either the vector of a node, or its siblings
-    private List<NodeContent> getTree(Map<ObjectId,Boolean> stopNodes)
+    private List<NodeContent> getTree(Map<ObjectId,NodeContent> stopNodes)
     {
-        List<NodeContent> thread = new LinkedList<NodeContent>();
-        HashMap<ObjectId,Integer> roots = new HashMap<ObjectId,Integer>();
+        List<NodeContent> thread = Lists.newLinkedList();
+        HashMap<ObjectId,Integer> roots = Maps.newHashMap();
         int localDepth = 0;
         NodeContent nextnode = this;
         NodeContent lastnode;

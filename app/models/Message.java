@@ -19,13 +19,7 @@ package models;
 
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
-import com.google.common.collect.Lists;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
 import com.mongodb.ObjectId;
-import java.text.DateFormat;
-import java.util.ArrayList;
 import java.util.List;
 import plugins.*;
 import play.Logger;
@@ -99,38 +93,6 @@ public class Message extends MongoEntity {
                 fromId, toId, mt.getId());
         MongoDB.save(m, MongoDB.CMessage);
         mt.notify(fromId,toId);
-    }
-
-    // list of last messages from a mailthread
-    // TODO errorchecking
-    public static List<Message> getLastMessages (
-            ObjectId threadId,
-            boolean doUpdate,
-            ObjectId forUser,
-            Integer start,
-            Integer count)
-    {
-        BasicDBObject query = new BasicDBObject().append("thread", threadId);
-        BasicDBObject sort  = new BasicDBObject().append("sent", -1);
-        List<Message> ll = null;
-        if (start == null) start = 0;
-        if (count == null) count = 30;
-        DBCursor iobj = MongoDB.getDB()
-            .getCollection(MongoDB.CMessage).find(query).sort(sort).skip(start).
-            limit(count);
-        if (iobj != null) {
-            if (doUpdate)
-                MessageThread.setAsRead(threadId, forUser);
-            ll = Lists.transform(iobj.toArray(), 
-                    MongoDB.getSelf().toMessage());
-        }
-        return ll;
-    }
-
-    public static List<Message> getMessages(ObjectId threadId,
-            ObjectId forUser)
-    {
-        return getLastMessages(threadId, true, forUser, 0, 30);
     }
 
 }

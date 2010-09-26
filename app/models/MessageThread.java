@@ -106,34 +106,6 @@ public class MessageThread extends MongoEntity {
         return r;
     }
 
-    public static List<LinkPair> getMailThreads(ObjectId uid)
-    {
-        List<LinkPair> ll = new LinkedList<LinkPair>();
-        List<MessageThread> r = getUserThreads(uid);
-        if (r!= null) 
-            for (MessageThread m : r)
-                if (m != null)
-                {
-                    String lnk = m.getIdString();
-                    String txt = null;
-                    if (m.users != null )
-                        for (ObjectId oid : m.users) 
-                            if (! uid.equals(oid)) {
-                                txt = User.getNameForId(oid);
-                                if (m.unreads != null) {
-                                    int un = 0;
-                                    for (ObjectId uu : m.unreads) 
-                                        un += uid.equals(uu) ? 1 : 0;
-                                    if (un > 0) // TODO toto treba zmenit
-                                        txt += "(" + un + ")";
-                                }
-                            }
-                    if (txt != null)
-                        ll.add(new LinkPair(txt,lnk));
-                }
-        return ll;
-    }
-
     // vratime thread 
     // doRead - oznacime neprecitane posty v nom ako precitane
     // pre aktualneho usera
@@ -196,6 +168,7 @@ public class MessageThread extends MongoEntity {
         }
         unreads.add(to);
         MongoDB.save(this, MongoDB.CMessageThread);
+        Cache.set(from + "_lastThreadId", id);
     }
 
     // oznac thread ako precitany danym userom
@@ -279,6 +252,20 @@ public class MessageThread extends MongoEntity {
     {
         deleted.add(uid);
         MongoDB.save(this, MongoDB.CMessageThread);
+    }
+
+    /**
+     * @return the users
+     */
+    public List<ObjectId> getUsers() {
+        return users;
+    }
+
+    /**
+     * @return the unreads
+     */
+    public List<ObjectId> getUnreads() {
+        return unreads;
     }
 
 }

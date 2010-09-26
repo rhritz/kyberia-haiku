@@ -254,35 +254,16 @@ public class Application extends Controller {
     }
 
     public static void showMail(String thread) {
-        String uid = session.get(User.ID);
-        renderArgs.put("threads",
-                MessageThread.getMailThreads(new ObjectId(uid)));
-        renderArgs.put("users", User.loadUsers(null, 0 , 30, null));
-        // TODO move this into message/thread
-        ObjectId threadId = null;
-        if (thread != null)
-            threadId = new ObjectId(thread);
-        if (threadId == null)
-            threadId = Cache.get(uid + "_lastThreadId", ObjectId.class);
-        if (threadId != null)
-            renderArgs.put("mailMessages",
-                Message.getMessages(threadId, new ObjectId(uid)));
-        render(ViewTemplate.MAIL_HTML);
+        viewPage("Mail");
     }
 
     public static void sendMail(String to, String content) {
         checkAuthenticity();
-        //String toId   = User.getIdForName(to);
         String fromId = session.get(User.ID);
         Message.send(fromId, to, content);
-        renderArgs.put("users", User.loadUsers(null, 0 , 30, null));
-        renderArgs.put("threads",
-            MessageThread.getMailThreads(new ObjectId(fromId)));
-        ObjectId threadId = Cache.get(fromId + "_lastThreadId", ObjectId.class);
-        if (threadId != null)
-            renderArgs.put("mailMessages",
-                Message.getMessages(threadId, new ObjectId(fromId)));
-        render(ViewTemplate.MAIL_HTML);
+        params.put("thread",
+                Cache.get(fromId + "_lastThreadId", ObjectId.class).toString());
+        viewPage("Mail");
     }
 
     public static void showLastNodes() {

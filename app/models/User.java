@@ -328,9 +328,9 @@ public class User extends MongoEntity {
         if (uname != null)
             return uname;
         try {
-            BasicDBObject query = new BasicDBObject().append("_id", id);
             BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
-                    getCollection(MongoDB.CUser).findOne(query);
+                    getCollection(MongoDB.CUser).
+                    findOne(new BasicDBObject("_id", id));
             if (iobj != null)
             {
                 uname = iobj.getString(USERNAME);
@@ -352,7 +352,6 @@ public class User extends MongoEntity {
             return;
         }
         friends.add(uid);
-        // + mozno vytvorit nejaky iny zaznam inde?
         update();
     }
 

@@ -28,7 +28,7 @@ import play.exceptions.UnexpectedException;
 
 /*
  load Pages & Views
- if Pages are missing, populate the collection with the contents of a init file
+ if Pages are missing, populate the collection with the contents of a init file.
  such file can be produced with the following command:
  ./mongoexport -d local -c Page
  where 'local' is the db name
