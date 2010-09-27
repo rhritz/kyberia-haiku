@@ -19,6 +19,7 @@ package models;
 
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mongodb.BasicDBList;
@@ -56,10 +57,9 @@ public class NodeContent extends MongoEntity {
 
     private Long          k           = 0l;
     private Long          mk          = 0l;
-    private Long          numVisits   = 0l; // TODO
+    private Long          numVisits   = 0l;
     private Boolean       kAllowed    = true;
 
-    // tu by asi mali byt idcka tagov a nie tagy samotne
     private List<String>    tags;
     private List<ObjectId>  kgivers;  // +k
     private List<ObjectId>  mkgivers; // -k
@@ -75,6 +75,9 @@ public class NodeContent extends MongoEntity {
     private List<ObjectId>  vector;
 
     @Transient
+    private ImmutableMap<ObjectId,ACL> acl;
+
+    @Transient
     public Integer        depth       = 1;
     @Transient
     public String           parName;
@@ -85,6 +88,10 @@ public class NodeContent extends MongoEntity {
     public static final String CREATED  = "created";
     public static final String NAME     = "name";
     public static final String OWNER   = "owner";
+
+    public static final int PUBLIC    = 0;
+    public static final int PRIVATE   = 1;
+    public static final int MODERATED = 2;
 
     public NodeContent() {}
 
@@ -264,6 +271,7 @@ public class NodeContent extends MongoEntity {
                     n.parName  = load(n.par).name;
                 else
                     n.parName  = "";
+                n.loadRights();
                 Cache.add("node_" + id, n);
             }
         } catch (Exception ex) {
@@ -328,69 +336,58 @@ public class NodeContent extends MongoEntity {
         return nodes;
     }
 
-    // bud to bude priamo v Node ALEBO v grupach ALEBO zdedene cez grupy
     public boolean canRead(ObjectId uid)
     {
         Logger.info("canRead:: uid " + uid.toString() + " acc type " + accessType);
-        if (owner.equals(uid))
-            return true;
-        if (accessType == null) 
-            return true;
+        if (accessType == null) // ale to by sa nemalo stat -> load
+            return Boolean.TRUE;
+        ACL ur = acl.get(uid);
+        if (ACL.BAN == ur)
+            return Boolean.FALSE;
         switch (accessType) {
-            case ACL.PUBLIC:
-                            if (getBans() != null && getBans().contains(uid))
-                                return false;
-                            break;
-            case ACL.PRIVATE:
-                            if (getAccess() != null && !access.contains(uid))
-                                return false;
-                            break;
-            case ACL.MODERATED:
-                            if (getBans() != null  && getBans().contains(uid))
-                                return false;
-                            break;                
+            case MODERATED:
+            case PUBLIC:
+                            return Boolean.TRUE;
+            case PRIVATE:
+                            if (ur == null || ACL.SILENCE == ur )
+                                return Boolean.FALSE;
+                            return Boolean.TRUE;
         }
-
-        return true;
+        return Boolean.TRUE;
     }
 
     // moze pridavat reakcie, tagy etc?
     public boolean canWrite(ObjectId uid)
     {
         Logger.info("canWrite:: uid " + uid.toString() + " acc type " + accessType);
-
-        if (owner.equals(uid))
-            return true;
-        if (accessType == null) 
-            return false;
+        if (accessType == null) // TODO remove this
+            return Boolean.FALSE;
+        ACL ur = acl.get(uid);
+        if (ACL.BAN ==  ur || ACL.SILENCE == ur)
+            return Boolean.FALSE;
         switch (accessType) {
-            case ACL.PUBLIC:
-                            if (getBans().contains(uid) || getSilence().contains(uid))
-                                return false;
-                            break;
-            case ACL.PRIVATE:
-                            if (! access.contains(uid))
-                                return false;
-                            break;
-            case ACL.MODERATED:
-                            if (getBans().contains(uid))
-                                return false;
-                            break;
+            case PUBLIC:
+                            return Boolean.TRUE;
+            case MODERATED:
+            case PRIVATE:
+                            if (ur == null)
+                                return Boolean.FALSE;
+                            return Boolean.TRUE;
         }
-        return true;
+        return Boolean.TRUE;
     }
 
-    // moze editovat properties?
+    // moze editovat properties 
     public boolean canEdit(ObjectId uid)
     {
-        // Logger.info("canEdit:: " + User.getNameForId(owner) + " acc type " + accessType + " owner:" + User.getNameForId(owner));
-        return owner.equals(uid) || (getMasters() != null && getMasters().contains(uid));
+        return owner.equals(uid) || ACL.MASTER == acl.get(uid);
     }
 
-    // if null inherit everything
-    public void inheritPermissions(String from, String type)
+    // moze presuvat objekty? tj menit parenta ersp. childy
+    public boolean canMove(ObjectId uid)
     {
-        
+        ACL ur = acl.get(uid);
+        return owner.equals(uid) || ACL.MASTER == ur || ACL.HMASTER == ur;
     }
 
     public void fook(ObjectId uid)
@@ -808,7 +805,6 @@ public class NodeContent extends MongoEntity {
             return;
         else
             kgivers.add(user.getId());
-
         if (getK() == null)
             setK(1l);
         else 
@@ -872,5 +868,43 @@ public class NodeContent extends MongoEntity {
      */
     protected Map<ObjectId, Boolean> getFook() {
         return fook;
+    }
+
+    // Node o 1 vyssie nad nami uz urcite ma vsetko poriesene
+    public void loadRights()
+    {
+        // ImmutableMap.Builder allows duplicate keys but cannot handle them
+        // stupid cocks
+        Map<ObjectId,ACL> bu = Maps.newHashMap();
+        if (access != null)
+            for (ObjectId acc : access)
+                bu.put(acc, ACL.ACCESS);
+        if (silence != null)
+            for (ObjectId sil : silence)
+                bu.put(sil, ACL.SILENCE);        
+        if (masters != null)
+            for (ObjectId master : masters)
+                bu.put(master, ACL.MASTER);
+        if (bans != null)
+            for (ObjectId ban : bans)
+                bu.put(ban, ACL.BAN);
+        if (par != null) {
+            NodeContent parent = load(par);
+            if (parent.fook != null)
+                fook.putAll(parent.fook);
+            if (parent.acl != null) {
+                for (Map.Entry<ObjectId,ACL> e : parent.acl.entrySet()) {
+                    switch (e.getValue()) {
+                        case ACCESS:  bu.put(e.getKey(), ACL.ACCESS);  break;
+                        case SILENCE: bu.put(e.getKey(), ACL.SILENCE); break;
+                        case BAN:     bu.put(e.getKey(), ACL.BAN);     break;
+                        case MASTER:  bu.put(e.getKey(), ACL.HMASTER); break;
+                        case OWNER:   bu.put(e.getKey(), ACL.HMASTER); break;
+                    }
+                }
+            }
+        }
+        bu.put(owner, ACL.OWNER);
+        acl = ImmutableMap.copyOf(bu);
     }
 }

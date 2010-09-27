@@ -37,6 +37,8 @@ import plugins.MongoDB;
 
 public class UserNodeChildren extends Feed {
 
+    private static final BasicDBObject sort = new BasicDBObject("date", -1);
+
     @Override
     public void getData(   Map<String, String> params,
                     Request request,
@@ -51,12 +53,9 @@ public class UserNodeChildren extends Feed {
         start = count * pageNum;
         List<NodeContent> ll = new LinkedList<NodeContent>();
         try {
-            BasicDBObject query = new BasicDBObject().append("parid", 
-                    user.getId());
-            BasicDBObject sort = new BasicDBObject().append("date", -1);
-            DBCursor iobj = MongoDB.getDB()
-                .getCollection(MongoDB.CActivity).find(query).
-                sort(sort).skip(start).limit(count);
+            BasicDBObject query = new BasicDBObject("parid", user.getId());
+            DBCursor iobj = MongoDB.getDB().getCollection(MongoDB.CActivity).
+                    find(query).sort(sort).skip(start).limit(count);
             Morphia morphia = MongoDB.getMorphia();
             while(iobj.hasNext())
                ll.add(NodeContent.load((morphia.fromDBObject(Activity.class,
@@ -66,7 +65,7 @@ public class UserNodeChildren extends Feed {
             ex.printStackTrace();
             Logger.info(ex.toString());
         }
-        renderArgs.put("nodes",ll);
+        renderArgs.put(dataName,ll);
     }
 
     @Override

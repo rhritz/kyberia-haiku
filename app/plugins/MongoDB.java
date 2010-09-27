@@ -307,6 +307,7 @@ public class MongoDB {
         public NodeContent apply(DBObject arg) {
             NodeContent n = morphia.fromDBObject(NodeContent.class, arg);
             n.ownerName = User.getNameForId(n.getOwner());
+            n.loadRights();
             if (n.par != null )
                 n.parName  = NodeContent.load(n.par).name;
             else

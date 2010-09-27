@@ -79,7 +79,7 @@ public class Application extends Controller {
     
      public static void addNode(String id, String content) {
         Logger.info("about to add node:" + id + "," + content );
-        // checkAuthenticity();
+        checkAuthenticity();
         NodeContent parentNode = NodeContent.load(id);
         String newId = NodeContent.addNode(
                     parentNode == null ? null : parentNode.getId(),
