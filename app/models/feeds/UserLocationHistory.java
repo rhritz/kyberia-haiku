@@ -46,11 +46,9 @@ public class UserLocationHistory extends Feed{
         Integer count = 30;
         List<UserLocation> r = null;
         try {
-            BasicDBObject query = new BasicDBObject().append("userid", user.getId());
-            BasicDBObject sort = new BasicDBObject().append("time", -1); // TODO natural sort
-            DBCursor iobj = MongoDB.getDB().
-                    getCollection(MongoDB.CUserLocation).
-                    find(query).sort(sort).skip(start).limit(count);
+            BasicDBObject query = new BasicDBObject("userid", user.getId());
+            BasicDBObject sort = new BasicDBObject("time", -1); // TODO natural sort
+            DBCursor iobj = UserLocation.dbcol.find(query).sort(sort).skip(start).limit(count);
             if (iobj ==  null) 
                 r = new LinkedList<UserLocation>();
             else 

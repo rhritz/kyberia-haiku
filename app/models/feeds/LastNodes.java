@@ -48,12 +48,10 @@ public class LastNodes extends Feed {
         Integer count = 30;
         List<NodeContent> r = null;
         try {
-            BasicDBObject query = new BasicDBObject().
-                    append(NodeContent.CREATED, new BasicDBObject("$gt",
-                        System.currentTimeMillis() - t24h));
-            DBCursor iobj = MongoDB.getDB().
-                    getCollection(MongoDB.CNode).find(query).
-                        sort(lastSort).limit(count ==  null ? 30 : count);
+            BasicDBObject query = new BasicDBObject(NodeContent.CREATED,
+                    new BasicDBObject("$gt",System.currentTimeMillis() - t24h));
+            DBCursor iobj = NodeContent.dbcol.
+                    find(query).sort(lastSort).skip(start).limit(count);
             if (iobj !=  null)
                 r = Lists.transform(iobj.toArray(),
                         MongoDB.getSelf().toNodeContent());

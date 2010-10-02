@@ -20,7 +20,7 @@ package models.feeds;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
-import com.mongodb.ObjectId;
+import org.bson.types.ObjectId;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;

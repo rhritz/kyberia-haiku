@@ -19,7 +19,7 @@ package models;
 
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
-import com.mongodb.ObjectId;
+import org.bson.types.ObjectId;
 import java.util.LinkedList;
 import java.util.List;
 

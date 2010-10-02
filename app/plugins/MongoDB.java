@@ -25,7 +25,8 @@ import com.google.code.morphia.Morphia;
 
 // mapovane models
 import com.google.common.base.Function;
-import com.mongodb.ObjectId;
+import com.mongodb.DBCollection;
+import org.bson.types.ObjectId;
 import models.*;
 import play.Logger;
 import play.Play;
@@ -107,8 +108,9 @@ public class MongoDB {
             
             morphia = new Morphia();
 
-            morphia.map(Message.class);
-            morphia.map(User.class);
+            // morphia.mapPackage("models");
+            morphia.map(Message.class);            
+            morphia.map(User.class);            
             morphia.map(MessageThread.class);
             morphia.map(Bookmark.class);
             morphia.map(Activity.class);
@@ -122,6 +124,23 @@ public class MongoDB {
             morphia.map(Page.class);
             morphia.map(ViewTemplate.class);
             morphia.map(Feed.class);
+
+            User.dbcol = db.getCollection(CUser);
+            NodeContent.dbcol = db.getCollection(CNode);
+            MessageThread.dbcol = db.getCollection(CMessageThread);
+            Bookmark.dbcol = db.getCollection(CBookmark);
+            Activity.dbcol = db.getCollection(CActivity);
+            
+            UserLocation.dbcol = db.getCollection(CUserLocation);
+          //  Friend.dbcol = db.getCollection(CFriend);
+           // Ignore.dbcol = db.getCollection(CIgnore);
+            UserGroup.dbcol = db.getCollection(CUserGroup);
+            Tag.dbcol = db.getCollection(CTag);
+            Vote.dbcol = db.getCollection(CVote);
+            Page.dbcol = db.getCollection(CPage);
+            ViewTemplate.dbcol = db.getCollection(CViewTemplate);
+            Message.dbcol = db.getCollection(CMessage);
+            Feed.dbcol = db.getCollection(CFeed);
 
             db.getCollection(CNode).ensureIndex(new BasicDBObject("created","-1"));
             db.getCollection(CNode).ensureIndex(new BasicDBObject("owner","1"));
@@ -197,15 +216,17 @@ public class MongoDB {
         db.getCollection(col).remove(mDBObj);
     }
 
-    // TODO ak sa da generify ak nie tak je to tu asi zbytocne
-    public static Object load(String id, String col)
+    public static <T> T load(String id, String col, Class<T> entityClass)
             throws ClassNotFoundException
     {
-        BasicDBObject DBObj =
-                (BasicDBObject) db.getCollection(col).
+        DBObject DBObj = db.getCollection(col).
                 findOne(new BasicDBObject("_id", new ObjectId(id)));
+        return fromDBObject(entityClass, DBObj);
+    }
 
-        return morphia.fromDBObject(Class.forName(col), DBObj);
+    public static DBCollection getCollection(String name)
+    {
+        return db.getCollection(name);
     }
 
     public static MongoDB getSelf()
@@ -268,10 +289,15 @@ public class MongoDB {
         return page;
     }
 
+    public static <T> T fromDBObject(Class<T> entityClass, DBObject dbObject) {
+        return morphia.fromDBObject(entityClass, dbObject,
+                morphia.getMapper().createEntityCache());
+    }
+
     // transformacna funkcia pre Lists.transform
     public class ToMessage implements Function<DBObject, Message> {
         public Message apply(DBObject arg) {
-            Message m = morphia.fromDBObject(Message.class, arg);
+            Message m = fromDBObject(Message.class, arg);
             m.fromUser = User.getNameForId(m.from);
             m.toUser   = User.getNameForId(m.to);
             return m;
@@ -280,32 +306,32 @@ public class MongoDB {
 
     public class ToMessageThread implements Function<DBObject, MessageThread> {
         public MessageThread apply(DBObject arg) {
-            return morphia.fromDBObject(MessageThread.class, arg);
+            return fromDBObject(MessageThread.class, arg);
         }
     }
 
     public class ToUser implements Function<DBObject, User> {
         public User apply(DBObject arg) {
-            return morphia.fromDBObject(User.class, arg);
+            return fromDBObject(User.class, arg);
         }
     }
 
     public class ToUserGroup implements Function<DBObject, UserGroup> {
         public UserGroup apply(DBObject arg) {
-            return morphia.fromDBObject(UserGroup.class, arg);
+            return fromDBObject(UserGroup.class, arg);
         }
     }
 
     public class ToUserLocation implements Function<DBObject, UserLocation> {
         public UserLocation apply(DBObject arg) {
-            return morphia.fromDBObject(UserLocation.class, arg);
+            return fromDBObject(UserLocation.class, arg);
         }
     }
 
     // TODO: caching? to by asi bolo potrebne riesit pred tymto/?
     public class ToNodeContent implements Function<DBObject, NodeContent> {
         public NodeContent apply(DBObject arg) {
-            NodeContent n = morphia.fromDBObject(NodeContent.class, arg);
+            NodeContent n = fromDBObject(NodeContent.class, arg);
             n.ownerName = User.getNameForId(n.getOwner());
             n.loadRights();
             if (n.par != null )
@@ -318,25 +344,25 @@ public class MongoDB {
 
     public class ToTag implements Function<DBObject, Tag> {
         public Tag apply(DBObject arg) {
-            return morphia.fromDBObject(Tag.class, arg);
+            return fromDBObject(Tag.class, arg);
         }
     }
 
     public class ToBookmark implements Function<DBObject, Bookmark> {
         public Bookmark apply(DBObject arg) {
-            return morphia.fromDBObject(Bookmark.class, arg);
+            return fromDBObject(Bookmark.class, arg);
         }
     }
 
     public class ToActivity implements Function<DBObject, Activity> {
         public Activity apply(DBObject arg) {
-            return morphia.fromDBObject(Activity.class, arg);
+            return fromDBObject(Activity.class, arg);
         }
     }
 
     public class ToFeed implements Function<DBObject, Feed> {
         public Feed apply(DBObject arg) {
-            Feed applied = morphia.fromDBObject(Feed.class, arg);
+            Feed applied = fromDBObject(Feed.class, arg);
          //   applied.loadContent();
             return applied;
         }
@@ -344,7 +370,7 @@ public class MongoDB {
 
     public class ToPage implements Function<DBObject, Page> {
         public Page apply(DBObject arg) {
-            return morphia.fromDBObject(Page.class, arg);
+            return fromDBObject(Page.class, arg);
         }
     }
 }

@@ -37,12 +37,6 @@ import play.exceptions.UnexpectedException;
 public class TemplatePlugin extends PlayPlugin {
     @Override
     public void onApplicationStart() {
-        try {
-            Page.start();
-            ViewTemplate.start();
-        } catch (Exception e) {
-            throw new UnexpectedException (e);
-        }
 
         try {
             BufferedReader reader = new BufferedReader( new
@@ -53,9 +47,16 @@ public class TemplatePlugin extends PlayPlugin {
             while ((strLine = reader.readLine()) != null)   {
                 DBObject page = (DBObject) com.mongodb.util.JSON.parse(strLine);
                 if (page != null)
-                    MongoDB.getDB().getCollection(MongoDB.CPage).insert(page);
+                    Page.dbcol.insert(page);
             }
             reader.close();
+        } catch (Exception e) {
+            throw new UnexpectedException (e);
+        }
+
+        try {
+            Page.start();
+            ViewTemplate.start();
         } catch (Exception e) {
             throw new UnexpectedException (e);
         }

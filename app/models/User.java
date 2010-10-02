@@ -22,8 +22,10 @@ import com.google.code.morphia.annotations.Transient;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
-import com.mongodb.ObjectId;
+import com.mongodb.DBObject;
+import org.bson.types.ObjectId;
 import java.util.ArrayList;
 import java.util.List;
 import java.io.UnsupportedEncodingException;
@@ -38,6 +40,8 @@ import play.cache.Cache;
 
 @Entity("User")
 public class User extends MongoEntity {
+
+    public static DBCollection dbcol = null;
 
     private String             username;
     private String             password;
@@ -91,17 +95,16 @@ public class User extends MongoEntity {
                username = "";
                password = "";
            }
-            BasicDBObject query = new BasicDBObject().append(USERNAME, username).
+            BasicDBObject query = new BasicDBObject(USERNAME, username).
                     append(PASSWORD, pwdService.encrypt(password));
-            BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
-                    getCollection(MongoDB.CUser).findOne(query);
+            DBObject iobj = dbcol.findOne(query);
             if (iobj ==  null) {
                 Logger.info("login failed");
                 pwdOk = false;
             } else {
-                Logger.info("login successfull:" + iobj.getString("username"));
+                Logger.info("login successfull:" + iobj.get("username").toString());
                 pwdOk = true;
-                u = MongoDB.getMorphia().fromDBObject(User.class, iobj);
+                u = MongoDB.fromDBObject(User.class, iobj);
                 u.loadUserData(); // ak sa neprihlasuje z RESTu...
             }
         } catch (Exception ex) {
@@ -178,9 +181,7 @@ public class User extends MongoEntity {
     public static boolean usernameAvailable(String username)
     {
         try {
-            BasicDBObject query = new BasicDBObject().append(USERNAME, username);
-            BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
-                    getCollection(MongoDB.CUser).findOne(query);
+            DBObject iobj = dbcol.findOne(new BasicDBObject(USERNAME, username));
             if (iobj == null) {
                 return true;
             }
@@ -235,11 +236,9 @@ public class User extends MongoEntity {
         if (u != null )
             return u;
         try {
-            BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
-                    getCollection(MongoDB.CUser).
-                    findOne(new BasicDBObject().append("_id",id));
+            DBObject iobj = dbcol.findOne(new BasicDBObject("_id",id));
             if (iobj != null) {
-                u = MongoDB.getMorphia().fromDBObject(User.class, iobj);
+                u = MongoDB.fromDBObject(User.class, iobj);
                 Cache.set("user_" + id, u);
                 Cache.set(ID + u.username, id.toString());
                 Cache.set(USERNAME + id, u.username);
@@ -255,10 +254,8 @@ public class User extends MongoEntity {
 
     public static void refreshDailyK(Integer howMuch) {
         try {
-            MongoDB.getDB().getCollection(MongoDB.CUser).
-                update(new BasicDBObject(),
-                    new BasicDBObject("$set",new BasicDBObject("dailyK",howMuch)),
-                        false, true);
+            dbcol.update(new BasicDBObject(), new BasicDBObject("$set",
+                    new BasicDBObject("dailyK",howMuch)), false, true);
         } catch (Exception ex) {
             Logger.info("tag inc fail");
             ex.printStackTrace();
@@ -275,18 +272,16 @@ public class User extends MongoEntity {
         List<User> users = null;
         if (namePart != null) {
             // este treba upravit
-            BasicDBObject match = new BasicDBObject().append(USERNAME, namePart);
+            BasicDBObject match = new BasicDBObject(USERNAME, namePart);
         }
         try {
-            BasicDBObject query = new BasicDBObject().append(USERNAME, 1);
-            DBCursor iobj = (DBCursor) MongoDB.getDB().
-                    getCollection(MongoDB.CUser).find().sort(query).
+            BasicDBObject query = new BasicDBObject(USERNAME, 1);
+            DBCursor iobj = dbcol.find().sort(query).
                     skip(start == null ? 0 : start).
                     limit(count == null ? 0 : count);
-            if (iobj != null) {
+            if (iobj != null) 
                 users = Lists.transform(iobj.toArray(),
                             MongoDB.getSelf().toUser());
-            }
         } catch (Exception ex) {
             Logger.info("mongo fail @loadUsers");
             ex.printStackTrace();
@@ -303,12 +298,10 @@ public class User extends MongoEntity {
         if (id != null)
             return id;
         try {
-            BasicDBObject query = new BasicDBObject().append(USERNAME, username);
-            BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
-                    getCollection(MongoDB.CUser).findOne(query);
+            DBObject iobj = dbcol.findOne(new BasicDBObject(USERNAME, username));
             if (iobj != null)
             {
-                id = iobj.getString("_id");
+                id = iobj.get("_id").toString();
                 Cache.add(ID + username, id);
             }
         } catch (Exception ex) {
@@ -328,12 +321,10 @@ public class User extends MongoEntity {
         if (uname != null)
             return uname;
         try {
-            BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
-                    getCollection(MongoDB.CUser).
-                    findOne(new BasicDBObject("_id", id));
+            DBObject iobj = dbcol.findOne(new BasicDBObject("_id", id));
             if (iobj != null)
             {
-                uname = iobj.getString(USERNAME);
+                uname = iobj.get(USERNAME).toString();
                 Cache.add(USERNAME + id.toString(), uname);
             }
         } catch (Exception ex) {

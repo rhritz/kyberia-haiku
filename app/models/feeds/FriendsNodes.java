@@ -50,15 +50,13 @@ public class FriendsNodes extends Feed{
         Integer start = 0;
         Integer count = 30;
         List<NodeContent> ll = new LinkedList<NodeContent>();
-        BasicDBObject query = new BasicDBObject().append("uids", user.getId());
+        BasicDBObject query = new BasicDBObject("uids", user.getId());
         BasicDBObject sort = dateSort;
-        DBCursor iobj = MongoDB.getDB()
-            .getCollection(MongoDB.CActivity).find(query).
+        DBCursor iobj = Activity.dbcol.find(query).
             sort(sort).skip(start).limit(count);
-        Morphia morphia = MongoDB.getMorphia();
         while(iobj.hasNext())
-           ll.add(NodeContent.load((morphia.fromDBObject(Activity.class,
-                   (BasicDBObject) iobj.next())).getOid()));
+           ll.add(NodeContent.load((MongoDB.fromDBObject(Activity.class,
+                   iobj.next())).getOid()));
         renderArgs.put(dataName, ll);
     }
 

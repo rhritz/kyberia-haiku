@@ -17,7 +17,7 @@
 */
 package controllers;
 
-import com.mongodb.ObjectId;
+import org.bson.types.ObjectId;
 import java.io.File;
 import play.mvc.*;
 import play.Logger;

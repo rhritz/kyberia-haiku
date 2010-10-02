@@ -24,9 +24,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import com.mongodb.ObjectId;
+import org.bson.types.ObjectId;
 import play.Logger;
 import java.text.DateFormat;
 import java.util.Date;
@@ -40,6 +41,8 @@ import plugins.Validator;
 
 @Entity("Node")
 public class NodeContent extends MongoEntity {
+
+    public static DBCollection dbcol = null;
 
     private String        content     = "";
     public  ObjectId      owner       ; // mongoid ownera
@@ -69,7 +72,7 @@ public class NodeContent extends MongoEntity {
     private List<ObjectId>  silence;
     private List<ObjectId>  masters;
 
-    private Map<ObjectId,Boolean>  fook;
+   // private Map<ObjectId,Boolean>  fook;
 
     @Transient
     private List<ObjectId>  vector;
@@ -204,9 +207,8 @@ public class NodeContent extends MongoEntity {
             Logger.info("creating new node");
             MongoDB.save(this, MongoDB.CNode);
             // TODO generovat ID pred insertom
-            NodeContent koko = MongoDB.getMorphia().fromDBObject(NodeContent.class,
-               (BasicDBObject) MongoDB.getDB().getCollection(MongoDB.CNode).findOne(
-               (BasicDBObject) MongoDB.getMorphia().toDBObject(this)));
+            NodeContent koko = MongoDB.fromDBObject(NodeContent.class,
+                    dbcol.findOne(MongoDB.getMorphia().toDBObject(this)));
             Cache.set("node_" + koko.getId(), koko);
             Logger.info("new NodeContent now has ID::" + koko.getId());
             return koko;
@@ -261,11 +263,9 @@ public class NodeContent extends MongoEntity {
         if (n != null )
             return n;
         try {
-            DBObject iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
-                    findOne(new BasicDBObject("_id",id));
+            DBObject iobj = dbcol.findOne(new BasicDBObject("_id",id));
             if (iobj !=  null) {
-                n = MongoDB.getMorphia().fromDBObject(NodeContent.class,
-                           (BasicDBObject) iobj);
+                n = MongoDB.fromDBObject(NodeContent.class, iobj);
                 n.ownerName = User.getNameForId(n.owner);
                 if (n.par != null )
                     n.parName  = load(n.par).name;
@@ -286,11 +286,9 @@ public class NodeContent extends MongoEntity {
     {
         NodeContent n = null;
         try {
-            DBObject iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
-                    findOne(new BasicDBObject("dfs",id));
+            DBObject iobj = dbcol.findOne(new BasicDBObject("dfs",id));
             if (iobj !=  null)
-                n = MongoDB.getMorphia().fromDBObject(NodeContent.class,
-                           (BasicDBObject) iobj);
+                n = MongoDB.fromDBObject(NodeContent.class, iobj);
         } catch (Exception ex) {
             Logger.info("load node");
             ex.printStackTrace();
@@ -306,8 +304,7 @@ public class NodeContent extends MongoEntity {
             DBObject query = new BasicDBObject("_id", 
                     new BasicDBObject("$in",
                         nodeIds.toArray(new ObjectId[nodeIds.size()])));
-            DBCursor iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
-                    find(query);
+            DBCursor iobj = dbcol.find(query);
             if (iobj !=  null)
                 nodes = Lists.transform(iobj.toArray(),
                         MongoDB.getSelf().toNodeContent());
@@ -322,8 +319,7 @@ public class NodeContent extends MongoEntity {
     static Map<ObjectId,NodeContent> loadByPar(ObjectId parId) {
         Map<ObjectId,NodeContent> nodes = Maps.newHashMap();
         try {
-            DBCursor iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
-                    find(new BasicDBObject("par", parId));
+            DBCursor iobj = dbcol.find(new BasicDBObject("par", parId));
             if (iobj !=  null)
                 for (NodeContent node : Lists.transform(iobj.toArray(),
                         MongoDB.getSelf().toNodeContent()))
@@ -393,7 +389,7 @@ public class NodeContent extends MongoEntity {
     public void fook(ObjectId uid)
     {
         if (getFook() == null) {
-            fook = new HashMap<ObjectId,Boolean>();
+    //        fook = new HashMap<ObjectId,Boolean>();
         } else if (getFook().containsKey(uid)) {
             return;
         }
@@ -780,8 +776,7 @@ public class NodeContent extends MongoEntity {
         try {
             DBObject query = new BasicDBObject("_id", new BasicDBObject("$in",
                     vector.toArray(new ObjectId[vector.size()])));
-            DBCursor iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
-                    find(query);
+            DBCursor iobj = dbcol.find(query);
             if (iobj !=  null)
                 nodes = Lists.transform(iobj.toArray(),
                         MongoDB.getSelf().toNodeContent());
@@ -867,7 +862,7 @@ public class NodeContent extends MongoEntity {
      * @return the fook
      */
     protected Map<ObjectId, Boolean> getFook() {
-        return fook;
+        return null; // fook;
     }
 
     // Node o 1 vyssie nad nami uz urcite ma vsetko poriesene
@@ -890,9 +885,9 @@ public class NodeContent extends MongoEntity {
                 bu.put(ban, ACL.BAN);
         if (par != null) {
             NodeContent parent = load(par);
-            if (parent.fook != null)
-                fook.putAll(parent.fook);
-            if (parent.acl != null) {
+       //     if (parent.fook != null)
+       //         fook.putAll(parent.fook);
+            if (parent.acl != null) { // TODO !!! fatal, cannot happen !!!
                 for (Map.Entry<ObjectId,ACL> e : parent.acl.entrySet()) {
                     switch (e.getValue()) {
                         case ACCESS:  bu.put(e.getKey(), ACL.ACCESS);  break;

@@ -20,7 +20,7 @@ package models.feeds;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
-import com.mongodb.ObjectId;
+import org.bson.types.ObjectId;
 import java.util.List;
 import java.util.Map;
 import models.Activity;
@@ -58,15 +58,13 @@ public class BookmarkUpdates extends Feed{
         Bookmark.updateVisit(uid, nodeId.toString());
         // 2. load notifications
         try {
-            BasicDBObject query = new BasicDBObject().
-                    append(b.getTyp() == null ? "ids" : b.getTyp(), nodeId).
+            BasicDBObject query = new BasicDBObject(
+                    b.getTyp() == null ? "ids" : b.getTyp(), nodeId).
                     append("date", new BasicDBObject("$gt",lastVisit));
             // Logger.info("getUpdatesForBookmark::"  + query.toString());
             // BasicDBObject sort = new BasicDBObject().append("date", -1);
             // vlastne chceme natural sort a iba idcka nodes ktore mame zobrazit
-            DBCursor iobj = MongoDB.getDB().
-                    getCollection(MongoDB.CActivity).find(query).
-                    sort(sort);
+            DBCursor iobj = Activity.dbcol.find(query).sort(sort);
             if (iobj !=  null) {
                 // Logger.info("getUpdatesForBookmark found");
                 List<Activity> lll = Lists.transform(iobj.toArray(),

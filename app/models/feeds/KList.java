@@ -51,8 +51,7 @@ public class KList extends Feed{
         List<NodeContent> r = null;
         try {
             // kQuery.append(NodeContent.CREATED, new BasicDBObject("$gt", t24hAgo)).
-            DBCursor iobj = MongoDB.getDB().
-                    getCollection(MongoDB.CNode).find(kQuery).sort(kSort).
+            DBCursor iobj = NodeContent.dbcol.find(kQuery).sort(kSort).
                         limit(count ==  null ? 100 : count);
             // query.append(fooks, new BasicDBObject("$notin", 1)); ?
             if (iobj !=  null)

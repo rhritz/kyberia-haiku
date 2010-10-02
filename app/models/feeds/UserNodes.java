@@ -47,11 +47,10 @@ public class UserNodes extends Feed {
         Integer count = 30;
         List<NodeContent> r = null;
         try {
-            BasicDBObject query = new BasicDBObject().
-                    append(NodeContent.OWNER, user.getId()); 
-            DBCursor iobj = MongoDB.getDB().
-                    getCollection(MongoDB.CNode).find(query).
-                        sort(lastSort).skip(start).limit(count);
+            BasicDBObject query =
+                    new BasicDBObject(NodeContent.OWNER, user.getId());
+            DBCursor iobj = NodeContent.dbcol.find(query).sort(lastSort).
+                    skip(start).limit(count);
             if (iobj !=  null)
                 r = Lists.transform(iobj.toArray(),
                         MongoDB.getSelf().toNodeContent());

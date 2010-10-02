@@ -22,7 +22,8 @@ package models;
 import java.util.HashMap;
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
-import com.mongodb.ObjectId;
+import com.mongodb.DBCollection;
+import org.bson.types.ObjectId;
 import java.util.Map;
 import play.mvc.Http.Request;
 import play.mvc.Scope.RenderArgs;
@@ -31,6 +32,8 @@ import play.mvc.Scope.Session;
 // - zavisi od usera a sposobu pristupu
 @Entity("ViewTemplate")
 public class ViewTemplate extends MongoEntity{
+
+    public static DBCollection dbcol = null;
 
         // hlavne templaty - nazvy
         public static final String VIEW_USER = "view_user";

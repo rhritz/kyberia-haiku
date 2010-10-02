@@ -19,7 +19,8 @@ package models;
 
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
-import com.mongodb.ObjectId;
+import com.mongodb.DBCollection;
+import org.bson.types.ObjectId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -31,6 +32,8 @@ import plugins.MongoDB;
 
 @Entity("UserLocation")
 public class UserLocation extends MongoEntity {
+
+    public static DBCollection dbcol = null;
 
     @Transient
     private String         username; // for sorting

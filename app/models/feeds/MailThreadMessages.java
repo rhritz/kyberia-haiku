@@ -20,7 +20,7 @@ package models.feeds;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
-import com.mongodb.ObjectId;
+import org.bson.types.ObjectId;
 import java.util.List;
 import java.util.Map;
 import play.Logger;
@@ -58,9 +58,7 @@ public class MailThreadMessages extends Feed{
         List<Message> ll = null;
         if (start == null) start = 0;
         if (count == null) count = 30;
-        DBCursor iobj = MongoDB.getDB()
-            .getCollection(MongoDB.CMessage).find(query).sort(sort).skip(start).
-            limit(count);
+        DBCursor iobj = Message.dbcol.find(query).sort(sort).skip(start).limit(count);
         if (iobj != null) {
             if (doUpdate)
                 MessageThread.setAsRead(threadId, uid);

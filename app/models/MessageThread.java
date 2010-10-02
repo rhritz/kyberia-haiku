@@ -22,9 +22,10 @@ import com.google.code.morphia.annotations.Transient;
 import com.google.code.morphia.Morphia;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import com.mongodb.ObjectId;
+import org.bson.types.ObjectId;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -35,6 +36,8 @@ import play.cache.Cache;
 
 @Entity("MessageThread")
 public class MessageThread extends MongoEntity {
+
+    public static DBCollection dbcol = null;
 
     // { _id: '...', users: [user1, user2...]}
     private List<ObjectId> users;
@@ -84,11 +87,9 @@ public class MessageThread extends MongoEntity {
         // TODO limitneme to na 30, treba potom pridat moznost zobrazit vsetko
         List<MessageThread> r = null;
         try {
-            BasicDBObject query = new BasicDBObject().append(USERS, uid);
-            BasicDBObject sort = new BasicDBObject().append(LAST, 1);
-            DBCursor iobj = MongoDB.getDB().
-                    getCollection(MongoDB.CMessageThread).
-                    find(query).sort(sort).limit(30);
+            BasicDBObject query = new BasicDBObject(USERS, uid);
+            BasicDBObject sort = new BasicDBObject(LAST, 1);
+            DBCursor iobj = dbcol.find(query).sort(sort).limit(30);
             if (iobj ==  null) {
                 r = new ArrayList<MessageThread>();
             } else {
@@ -115,13 +116,10 @@ public class MessageThread extends MongoEntity {
     {
         Logger.info("Trying to find thread for " + forUser + " & " + otherUser);
         try {
-            BasicDBObject query = new BasicDBObject().append(USERS,
-                    new BasicDBObject("$all",new ObjectId[]{forUser,otherUser}) );
-            BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
-                    getCollection(MongoDB.CMessageThread).findOne(query);
+            DBObject iobj = dbcol.findOne(new BasicDBObject(USERS,
+                new BasicDBObject("$all",new ObjectId[]{forUser,otherUser})));
             if (iobj !=  null) {
-                MessageThread m = MongoDB.getMorphia().
-                        fromDBObject(MessageThread.class, iobj);
+                MessageThread m = MongoDB.fromDBObject(MessageThread.class, iobj);
                 Logger.info("thread found: " + m.getId());
                 if (doRead) {
                     // oznacime posty za precitane pre forUser
@@ -174,13 +172,9 @@ public class MessageThread extends MongoEntity {
     // oznac thread ako precitany danym userom
     public static void setAsRead(ObjectId threadId, ObjectId forUser) {
         try {
-            BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
-                    getCollection(MongoDB.CMessageThread).
-                    findOne(new BasicDBObject().
-                    append("_id", threadId));
+            DBObject iobj = dbcol.findOne(new BasicDBObject("_id", threadId));
             if (iobj !=  null) {
-                MessageThread m = MongoDB.getMorphia().
-                        fromDBObject(MessageThread.class, iobj);
+                MessageThread m = MongoDB.fromDBObject(MessageThread.class, iobj);
                 if (m.unreads != null && m.unreads.size() > 0) {
                     LinkedList<ObjectId> lr = new LinkedList<ObjectId>();
                     for (ObjectId s : m.unreads)
@@ -213,15 +207,12 @@ public class MessageThread extends MongoEntity {
         List<String> ll = new LinkedList<String>();
         try {
             // uniq alebo nam toto nebude davat viacnasobne viackrat?
-            BasicDBObject query = new BasicDBObject().append(UNREAD, uid) ;
-            DBCursor iobj = MongoDB.getDB().
-                    getCollection(MongoDB.CMessageThread).find(query);
+            DBCursor iobj = dbcol.find(new BasicDBObject(UNREAD, uid));
             if (iobj !=  null) {
                 while(iobj.hasNext())
                 {
-                    MessageThread mt = MongoDB.getMorphia().
-                           fromDBObject(MessageThread.class,
-                           (BasicDBObject) iobj.next());
+                    MessageThread mt = MongoDB.fromDBObject(MessageThread.class,
+                            iobj.next());
                     ll.add("New mail from " + getOtherUser(mt.users,uid));
         // TODO - pre linkovanie daneho threadu zo zahlavia
         // toto si pyta reverznu route na Application.showMail(threadId),

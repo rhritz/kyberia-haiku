@@ -21,8 +21,10 @@ import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
-import com.mongodb.ObjectId;
+import com.mongodb.DBObject;
+import org.bson.types.ObjectId;
 import java.util.LinkedList;
 import java.util.List;
 import plugins.*;
@@ -35,6 +37,8 @@ import play.cache.Cache;
 
 @Entity("Bookmark")
 public class Bookmark extends MongoEntity {
+
+    public static DBCollection dbcol = null;
 
     private ObjectId  dest;
     private String    alt;             // alt link to diplay next to dest url
@@ -53,7 +57,7 @@ public class Bookmark extends MongoEntity {
     private static final String NAME   = "name";
     private static final String DEST   = "dest";
 
-    private static final BasicDBObject sort = new BasicDBObject().append(NAME, 1);
+    private static final BasicDBObject sort = new BasicDBObject(NAME, 1);
 
     public Bookmark() {}
 
@@ -82,19 +86,15 @@ public class Bookmark extends MongoEntity {
             return b;
         }
         try {
-            BasicDBObject query = new BasicDBObject().append(USERID,
-                    new ObjectId(uid));
-            DBCursor iobj = MongoDB.getDB().
-                    getCollection(MongoDB.CBookmark).find(query).
-                    sort(sort);
+            BasicDBObject query = new BasicDBObject(USERID, new ObjectId(uid));
+            DBCursor iobj = dbcol.find(query).sort(sort);
             if (iobj !=  null) {
                 Logger.info("user bookmarks found");
                 int i = 0;
                 bkeys = new LinkedList<String>();
-                while(iobj. hasNext())
+                while(iobj.hasNext())
                 {
-                    Bookmark boo = MongoDB.getMorphia().fromDBObject(
-                            Bookmark.class,(BasicDBObject) iobj.next());
+                    Bookmark boo = MongoDB.fromDBObject(Bookmark.class, iobj.next());
                     boo.numNew = boo.loadNotifsForBookmark();
                     // TODO toto by malo byt nutne len docasne
                     b.add(boo);
@@ -116,12 +116,11 @@ public class Bookmark extends MongoEntity {
         Bookmark b = null;
         Logger.info("Bookmark.loadAndStore :: " + key(uid,dest));
         try {
-            BasicDBObject query = new BasicDBObject().append(USERID, new ObjectId(uid)).
-                    append(DEST, new ObjectId(dest)) ;
-            BasicDBObject iobj = (BasicDBObject)
-                MongoDB.getDB().getCollection(MongoDB.CBookmark).findOne(query);
+            BasicDBObject query = new BasicDBObject(USERID, new ObjectId(uid)).
+                    append(DEST, new ObjectId(dest));
+            DBObject iobj = dbcol.findOne(query);
             if (iobj !=  null) {
-                b = MongoDB.getMorphia().fromDBObject(Bookmark.class,iobj);
+                b = MongoDB.fromDBObject(Bookmark.class,iobj);
                 b.numNew = b.loadNotifsForBookmark();
                 Cache.add(key(uid,dest), b);
             }
@@ -155,13 +154,11 @@ public class Bookmark extends MongoEntity {
         int len = 0;
         // Integer clen = Cache.get(ID + username, String.class);
         try {
-            BasicDBObject query = new BasicDBObject().
-                    append(typ == null ? "ids" : typ, dest).
+            BasicDBObject query = new BasicDBObject(typ == null ? "ids" : typ, dest).
                     append("date",  new BasicDBObject("$gt",
                     lastVisit == null ? 0 : lastVisit ));
             // Logger.info("loadNotifsForBookmark::"  + query.toString());
-            len = MongoDB.getDB().
-                    getCollection(MongoDB.CActivity).find(query).count();
+            len = Activity.dbcol.find(query).count();
         } catch (Exception ex) {
             Logger.info("loadNotifsForBookmark");
             ex.printStackTrace();
@@ -175,13 +172,11 @@ public class Bookmark extends MongoEntity {
     {
         List<Bookmark> b = null;
         try {
-            DBCursor iobj = MongoDB.getDB().
-                    getCollection(MongoDB.CBookmark).
-                    find(new BasicDBObject().append(DEST, dest));
+            DBCursor iobj = dbcol.find(new BasicDBObject(DEST, dest));
             // Logger.info("getByDest::" + iobj);
             if (iobj !=  null)
                 b = Lists.transform(iobj.toArray(),
-                            MongoDB.getSelf().toBookmark());
+                        MongoDB.getSelf().toBookmark());
             else
                 b =  new LinkedList<Bookmark>();
         } catch (Exception ex) {
@@ -207,10 +202,7 @@ public class Bookmark extends MongoEntity {
         Cache.delete("bookmark_" + uid);
         Cache.delete(key(uid,dest));
         try {
-            BasicDBObject query = new BasicDBObject().append(USERID, uid)
-                    .append(DEST, dest);
-            Logger.info(query.toString());
-            MongoDB.getDB().getCollection(MongoDB.CBookmark).remove(query);
+            dbcol.remove(new BasicDBObject(USERID, uid).append(DEST, dest));
         } catch (Exception ex) {
             Logger.info("Bookmark.delete");
             ex.printStackTrace();

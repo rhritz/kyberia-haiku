@@ -42,12 +42,9 @@ public class Tags extends Feed{
                     RenderArgs renderArgs) {
         List<Tag> tags = null;
         try {
-            DBCursor iobj = (DBCursor) MongoDB.getDB().
-                    getCollection(MongoDB.CTag).
-                    find();
+            DBCursor iobj = Tag.dbcol.find();
             if (iobj != null)
-                tags = Lists.transform(iobj.toArray(),
-                            MongoDB.getSelf().toTag());
+                tags = Lists.transform(iobj.toArray(), MongoDB.getSelf().toTag());
         } catch (Exception ex) {
             Logger.info("Tag list load fail");
             ex.printStackTrace();

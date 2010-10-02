@@ -17,7 +17,7 @@
 */
 package models.feeds;
 
-import com.mongodb.ObjectId;
+import org.bson.types.ObjectId;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;

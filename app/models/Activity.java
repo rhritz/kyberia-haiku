@@ -18,7 +18,8 @@
 package models;
 
 import com.google.code.morphia.annotations.Entity;
-import com.mongodb.ObjectId;
+import com.mongodb.DBCollection;
+import org.bson.types.ObjectId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.SortedSet;
@@ -30,6 +31,8 @@ import play.Logger;
 
 @Entity("Activity")
 public class Activity extends MongoEntity {
+
+    public static DBCollection dbcol = null;
     
     private ObjectId         oid;  // o ktorom objekte je tato notifikacia
     private Integer        type; // enum? new, delete...? zatial neviem

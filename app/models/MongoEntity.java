@@ -19,7 +19,8 @@ package models;
 
 import java.io.Serializable;
 import com.google.code.morphia.annotations.Id;
-import com.mongodb.ObjectId;
+import com.mongodb.DBCollection;
+import org.bson.types.ObjectId;
 
 public abstract class MongoEntity implements Serializable {
     @Id protected ObjectId id;

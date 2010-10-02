@@ -21,14 +21,11 @@ import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
-import com.mongodb.DB.WriteConcern;
+import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import play.cache.Cache;
 import play.Logger;
 import plugins.MongoDB;
 import plugins.Validator;
@@ -37,6 +34,8 @@ import plugins.Validator;
 // TODO caching
 @Entity("Tag")
 public class Tag extends MongoEntity {
+
+    public static DBCollection dbcol = null;
 
     String  tag;
     Integer count;
@@ -75,10 +74,8 @@ public class Tag extends MongoEntity {
     private void inc()
     {
         try {
-            MongoDB.getDB().getCollection(MongoDB.CTag).
-                update(new BasicDBObject("tag",tag),
-                    new BasicDBObject("$inc",new BasicDBObject("count",1)),
-                        false, false);
+            dbcol.update(new BasicDBObject("tag",tag), new BasicDBObject("$inc",
+                    new BasicDBObject("count",1)),false, false);
         } catch (Exception ex) {
             Logger.info("tag inc fail");
             ex.printStackTrace();
@@ -90,13 +87,9 @@ public class Tag extends MongoEntity {
     {
         Tag tag = null;
         try {
-            BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
-                    getCollection(MongoDB.CTag).
-                    findOne(new BasicDBObject().
-                    append("tag",name));
+            DBObject iobj = dbcol.findOne(new BasicDBObject("tag",name));
             if (iobj != null)
-                tag = (Tag) MongoDB.getMorphia().
-                        fromDBObject(Tag.class, (BasicDBObject) iobj);
+                tag = MongoDB.fromDBObject(Tag.class, iobj);
         } catch (Exception ex) {
             Logger.info("tag load fail");
             ex.printStackTrace();
@@ -122,8 +115,7 @@ public class Tag extends MongoEntity {
     {
         List<NodeContent> nodes = null;
         try {
-            DBCursor iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
-                    find(new BasicDBObject("tags", tag));
+            DBCursor iobj = NodeContent.dbcol.find(new BasicDBObject("tags", tag));
             if (iobj !=  null)
                 nodes = Lists.transform(iobj.toArray(),
                         MongoDB.getSelf().toNodeContent());
@@ -139,11 +131,9 @@ public class Tag extends MongoEntity {
     {
         List<Tag> r = null;
         try {
-            BasicDBObject query = new BasicDBObject().append("tag", tag);
-            BasicDBObject sort = new BasicDBObject().append("tag", 1);
-            DBCursor iobj = MongoDB.getDB().
-                    getCollection(MongoDB.CTag).
-                    find(query).sort(sort).limit(30);
+            BasicDBObject query = new BasicDBObject("tag", tag);
+            BasicDBObject sort = new BasicDBObject("tag", 1);
+            DBCursor iobj = dbcol.find(query).sort(sort).limit(30);
             if (iobj ==  null) {
                 r = new ArrayList<Tag>();
             } else {

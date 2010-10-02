@@ -19,13 +19,17 @@ package models;
 
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
-import com.mongodb.ObjectId;
+import com.mongodb.DBCollection;
+import org.bson.types.ObjectId;
 import java.util.List;
 import plugins.*;
 import play.Logger;
 
 @Entity
 public class Message extends MongoEntity {
+
+    public static DBCollection dbcol = null;
+    
     private String content;
     private Long sent;
     public ObjectId from;
@@ -57,7 +61,7 @@ public class Message extends MongoEntity {
     {
         Message m = null;
         try {
-            m = (Message) MongoDB.load(id, MongoDB.CMessage);
+            m = MongoDB.load(id, MongoDB.CMessage, Message.class);
         } catch (Exception e) {
             Logger.info(e.toString());
         }

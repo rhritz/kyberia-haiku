@@ -17,8 +17,6 @@
 */
 package models.feeds;
 
-import com.google.code.morphia.Morphia;
-import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import java.util.LinkedList;
@@ -54,12 +52,10 @@ public class UserNodeChildren extends Feed {
         List<NodeContent> ll = new LinkedList<NodeContent>();
         try {
             BasicDBObject query = new BasicDBObject("parid", user.getId());
-            DBCursor iobj = MongoDB.getDB().getCollection(MongoDB.CActivity).
-                    find(query).sort(sort).skip(start).limit(count);
-            Morphia morphia = MongoDB.getMorphia();
+            DBCursor iobj = Activity.dbcol.find(query).sort(sort).skip(start).limit(count);
             while(iobj.hasNext())
-               ll.add(NodeContent.load((morphia.fromDBObject(Activity.class,
-                       (BasicDBObject) iobj.next())).getOid()));
+               ll.add(NodeContent.load((MongoDB.fromDBObject(Activity.class,
+                        iobj.next())).getOid()));
         } catch (Exception ex) {
             Logger.info("load nodes::");
             ex.printStackTrace();

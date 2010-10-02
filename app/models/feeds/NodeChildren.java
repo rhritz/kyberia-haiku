@@ -20,7 +20,7 @@ package models.feeds;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
-import com.mongodb.ObjectId;
+import org.bson.types.ObjectId;
 import java.util.List;
 import java.util.Map;
 import play.Logger;
@@ -51,8 +51,7 @@ public class NodeChildren extends Feed{
 
         List<NodeContent> l = null;
         try {
-            DBCursor iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
-                    find(new BasicDBObject("par", id)).
+            DBCursor iobj = NodeContent.dbcol.find(new BasicDBObject("par", id)).
                     sort(sort).skip(start).limit(count);
             if (iobj !=  null)
                 l = Lists.transform(iobj.toArray(),

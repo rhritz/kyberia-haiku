@@ -22,8 +22,10 @@ import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
-import com.mongodb.ObjectId;
+import com.mongodb.DBObject;
+import org.bson.types.ObjectId;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -38,6 +40,8 @@ import play.mvc.Scope.RenderArgs;
 
 @Entity("Page")
 public class Page extends MongoEntity {
+
+    public static DBCollection dbcol = null;
 
     private String              name;
     private String              title;
@@ -75,11 +79,9 @@ public class Page extends MongoEntity {
         if (p != null)
             return p;
         try {
-            BasicDBObject query = new BasicDBObject().append(NAME, name );
-            BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
-                    getCollection(MongoDB.CPage).findOne(query);
+            DBObject iobj = dbcol.findOne(new BasicDBObject(NAME, name ));
             if (iobj != null) {
-                p = MongoDB.getMorphia().fromDBObject(Page.class, iobj);
+                p = MongoDB.fromDBObject(Page.class, iobj);
                 Cache.set("page_" + p.name, p);
             }
         } catch (Exception ex) {
@@ -113,9 +115,7 @@ public class Page extends MongoEntity {
     public static List<Page> loadPages() {
         List<Page> pages = null;
         try {
-            DBCursor iobj = (DBCursor) MongoDB.getDB().
-                    getCollection(MongoDB.CPage).
-                    find();
+            DBCursor iobj = dbcol.find();
             if (iobj != null) 
                 pages = Lists.transform(iobj.toArray(),
                             MongoDB.getSelf().toPage());
@@ -132,14 +132,10 @@ public class Page extends MongoEntity {
         Page page = templateStore.get(name);
         if (page == null) {
             try {
-                BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
-                        getCollection(MongoDB.CPage).
-                        findOne(new BasicDBObject().
-                        append("name",name));
+                DBObject iobj = dbcol.findOne(new BasicDBObject("name",name));
                 Logger.info("Page.loadByName Found:" + iobj);
                 if (iobj != null) {
-                    page = (Page) MongoDB.getMorphia().
-                            fromDBObject(Page.class, (BasicDBObject) iobj);
+                    page = MongoDB.fromDBObject(Page.class, iobj);
                     page.prepareBlocks();
                 }
             } catch (Exception ex) {
@@ -160,13 +156,9 @@ public class Page extends MongoEntity {
     public static Page load(ObjectId oid) {
         Page page = null;
         try {
-            BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
-                    getCollection(MongoDB.CPage).
-                    findOne(new BasicDBObject().
-                    append("_id",oid));
+            DBObject iobj = dbcol.findOne(new BasicDBObject("_id",oid));
             if (iobj != null) {
-                page = (Page) MongoDB.getMorphia().
-                        fromDBObject(Page.class, (BasicDBObject) iobj);
+                page = MongoDB.fromDBObject(Page.class, iobj);
                 page.prepareBlocks();
             }
         } catch (Exception ex) {

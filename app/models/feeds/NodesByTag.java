@@ -44,8 +44,7 @@ public class NodesByTag extends Feed{
 
         List<NodeContent> l = null;
         try {
-            DBCursor iobj = MongoDB.getDB().getCollection(MongoDB.CNode).
-                    find(new BasicDBObject("tags", tag));
+            DBCursor iobj = NodeContent.dbcol.find(new BasicDBObject("tags", tag));
             if (iobj !=  null)
                 l = Lists.transform(iobj.toArray(),
                         MongoDB.getSelf().toNodeContent());

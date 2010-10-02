@@ -22,9 +22,10 @@ import com.google.code.morphia.annotations.Transient;
 import com.google.code.morphia.Morphia;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import com.mongodb.ObjectId;
+import org.bson.types.ObjectId;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,6 +36,9 @@ import play.cache.Cache;
 
 @Entity("UserGroup")
 public class UserGroup extends MongoEntity {
+
+    public static DBCollection dbcol = null;
+    
     String         name;
     ObjectId       owner;
     List<ObjectId> masters;
@@ -70,13 +74,9 @@ public class UserGroup extends MongoEntity {
     public static UserGroup load(ObjectId groupid) {
         UserGroup u = null;
         try {
-            BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
-                    getCollection(MongoDB.CUserGroup).
-                    findOne(new BasicDBObject().
-                    append("_id",groupid));
+            DBObject iobj = dbcol.findOne(new BasicDBObject("_id",groupid));
             if (iobj != null)
-                u = (UserGroup) MongoDB.getMorphia().
-                        fromDBObject(UserGroup.class, (BasicDBObject) iobj);
+                u = MongoDB.fromDBObject(UserGroup.class, iobj);
         } catch (Exception ex) {
             Logger.info("user load fail");
             ex.printStackTrace();
@@ -107,12 +107,9 @@ public class UserGroup extends MongoEntity {
     public static List<UserGroup> listGroupsOfUser(ObjectId uid) {
         List<UserGroup> u = null;
         try {
-            DBCursor iobj = (DBCursor) MongoDB.getDB().
-                    getCollection(MongoDB.CUserGroup).
-                    find();
+            DBCursor iobj = dbcol.find();
             if (iobj != null)
-                u = Lists.transform(iobj.toArray(),
-                            MongoDB.getSelf().toUserGroup());
+                u = Lists.transform(iobj.toArray(), MongoDB.getSelf().toUserGroup());
         } catch (Exception ex) {
             Logger.info("user load fail");
             ex.printStackTrace();
@@ -131,9 +128,7 @@ public class UserGroup extends MongoEntity {
     public static List<UserGroup> loadGroups() {
         List<UserGroup> u = null;
         try {
-            DBCursor iobj = (DBCursor) MongoDB.getDB().
-                    getCollection(MongoDB.CUserGroup).
-                    find();
+            DBCursor iobj = dbcol.find();
             if (iobj != null) 
                 u = Lists.transform(iobj.toArray(),
                             MongoDB.getSelf().toUserGroup());

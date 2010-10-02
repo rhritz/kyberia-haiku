@@ -21,11 +21,11 @@ import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import com.mongodb.ObjectId;
+import org.bson.types.ObjectId;
 import java.io.File;
-import java.lang.Class;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +38,8 @@ import plugins.MongoDB;
 
 @Entity("Feed")
 public class Feed extends MongoEntity{
+
+    public static DBCollection dbcol = null;
 
     protected        String         name;
     protected        ObjectId       owner;
@@ -77,11 +79,9 @@ public class Feed extends MongoEntity{
         if (n != null )
             return n;
         try {
-            DBObject iobj = MongoDB.getDB().getCollection(MongoDB.CFeed).
-                    findOne(new BasicDBObject().append("_id",id));
+            DBObject iobj = dbcol.findOne(new BasicDBObject("_id",id));
             if (iobj !=  null) {
-                n = MongoDB.getMorphia().fromDBObject(Feed.class,
-                           (BasicDBObject) iobj);
+                n = MongoDB.fromDBObject(Feed.class, iobj);
                 Cache.add("feed_" + id, n);
             }
         } catch (Exception ex) {
@@ -98,11 +98,11 @@ public class Feed extends MongoEntity{
             DBCursor iobj = null;
             if (!loadAll) {
                 DBObject query = new BasicDBObject("_id",
-                    new BasicDBObject().append("$in",
+                    new BasicDBObject("$in",
                     feedIds.toArray(new ObjectId[feedIds.size()])));
-                iobj = MongoDB.getDB().getCollection(MongoDB.CFeed).find(query);
+                iobj = dbcol.find(query);
             } else {
-                iobj = MongoDB.getDB().getCollection(MongoDB.CFeed).find();
+                iobj = dbcol.find();
             }
             Logger.info("load feeds::" + iobj);
             if (iobj !=  null)

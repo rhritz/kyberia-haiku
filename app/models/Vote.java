@@ -23,9 +23,10 @@ import com.google.code.morphia.Morphia;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import com.mongodb.ObjectId;
+import org.bson.types.ObjectId;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -35,6 +36,8 @@ import play.cache.Cache;
 
 @Entity("Vote")
 public class Vote extends MongoEntity {
+
+    public static DBCollection dbcol = null;
 
     private List<Option> options; // TODO v pohode embedded?
     private List<String> votes;
@@ -84,12 +87,10 @@ public class Vote extends MongoEntity {
     public static Vote load(String id) {
         Vote v = null;
         try {
-            BasicDBObject iobj = (BasicDBObject) MongoDB.getDB().
-                    getCollection(MongoDB.CVote).
-                    findOne(new BasicDBObject().append("_id",new ObjectId(id)));
+            DBObject iobj = 
+                    dbcol.findOne(new BasicDBObject("_id",new ObjectId(id)));
             if (iobj != null)
-                v = (Vote) MongoDB.getMorphia().
-                        fromDBObject(Vote.class, (BasicDBObject) iobj);
+                v = MongoDB.fromDBObject(Vote.class, iobj);
         } catch (Exception ex) {
             Logger.info("user load fail");
             ex.printStackTrace();
