@@ -17,9 +17,7 @@
 */
 package models.feeds;
 
-import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
-import com.mongodb.DBCursor;
 import java.util.List;
 import java.util.Map;
 import play.Logger;
@@ -34,8 +32,7 @@ import plugins.MongoDB;
 
 public class LastNodes extends Feed {
 
-    private static final BasicDBObject lastSort = new BasicDBObject().
-            append(NodeContent.CREATED, -1);
+    private static final BasicDBObject lastSort = new BasicDBObject(NodeContent.CREATED, -1);
     private static final Long t24h = 86400000l;
 
     @Override
@@ -47,19 +44,17 @@ public class LastNodes extends Feed {
         Integer start = 0;
         Integer count = 30;
         List<NodeContent> r = null;
+        renderArgs.put("reqstart2", System.currentTimeMillis());
         try {
             BasicDBObject query = new BasicDBObject(NodeContent.CREATED,
                     new BasicDBObject("$gt",System.currentTimeMillis() - t24h));
-            DBCursor iobj = NodeContent.dbcol.
-                    find(query).sort(lastSort).skip(start).limit(count);
-            if (iobj !=  null)
-                r = Lists.transform(iobj.toArray(),
+            r = MongoDB.transform( NodeContent.dbcol.find(query).
+                    sort(lastSort).skip(start).limit(count),
                         MongoDB.getSelf().toNodeContent());
         } catch (Exception ex) {
-            Logger.info("getLastNodes");
-            ex.printStackTrace();
-            Logger.info(ex.toString());
+            Logger.error(ex, ex.toString());
         }
+        renderArgs.put("reqstart3", System.currentTimeMillis());
         renderArgs.put(dataName, r);
     }
 

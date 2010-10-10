@@ -17,7 +17,6 @@
 */
 package models.feeds;
 
-import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import java.util.List;
@@ -51,9 +50,7 @@ public class UserNodes extends Feed {
                     new BasicDBObject(NodeContent.OWNER, user.getId());
             DBCursor iobj = NodeContent.dbcol.find(query).sort(lastSort).
                     skip(start).limit(count);
-            if (iobj !=  null)
-                r = Lists.transform(iobj.toArray(),
-                        MongoDB.getSelf().toNodeContent());
+            r = MongoDB.transform(iobj, MongoDB.getSelf().toNodeContent());
         } catch (Exception ex) {
             Logger.info("UserNode");
             ex.printStackTrace();

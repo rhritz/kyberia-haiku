@@ -19,7 +19,6 @@ package models;
 
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
-import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
@@ -174,11 +173,7 @@ public class Bookmark extends MongoEntity {
         try {
             DBCursor iobj = dbcol.find(new BasicDBObject(DEST, dest));
             // Logger.info("getByDest::" + iobj);
-            if (iobj !=  null)
-                b = Lists.transform(iobj.toArray(),
-                        MongoDB.getSelf().toBookmark());
-            else
-                b =  new LinkedList<Bookmark>();
+            b = MongoDB.transform(iobj, MongoDB.getSelf().toBookmark());
         } catch (Exception ex) {
             Logger.info("getByDest::" + dest);
             ex.printStackTrace();
@@ -265,5 +260,10 @@ public class Bookmark extends MongoEntity {
      */
     public void setTyp(String typ) {
         this.typ = typ;
+    }
+
+    @Override
+    public Bookmark enhance() {
+        return this;
     }
 }

@@ -17,7 +17,6 @@
 */
 package models.feeds;
 
-import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import org.bson.types.ObjectId;
@@ -62,8 +61,7 @@ public class MailThreadMessages extends Feed{
         if (iobj != null) {
             if (doUpdate)
                 MessageThread.setAsRead(threadId, uid);
-            ll = Lists.transform(iobj.toArray(),
-                    MongoDB.getSelf().toMessage());
+            ll = MongoDB.transform(iobj, MongoDB.getSelf().toMessage());
         }
         renderArgs.put(dataName, ll);
     }

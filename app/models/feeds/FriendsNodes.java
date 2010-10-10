@@ -33,6 +33,7 @@ import models.Feed;
 import models.NodeContent;
 import models.Page;
 import models.User;
+import org.bson.types.ObjectId;
 import plugins.MongoDB;
 
  // TODO - check permissions
@@ -49,15 +50,14 @@ public class FriendsNodes extends Feed{
                     RenderArgs renderArgs) {
         Integer start = 0;
         Integer count = 30;
-        List<NodeContent> ll = new LinkedList<NodeContent>();
         BasicDBObject query = new BasicDBObject("uids", user.getId());
         BasicDBObject sort = dateSort;
-        DBCursor iobj = Activity.dbcol.find(query).
-            sort(sort).skip(start).limit(count);
+        DBCursor iobj = Activity.dbcol.find(query).sort(sort).skip(start).limit(count);
+        // TODO tuto tu Activity transformujeme uplne zbytocne, staci _id
+        List<ObjectId> nodeIds = Lists.newLinkedList();
         while(iobj.hasNext())
-           ll.add(NodeContent.load((MongoDB.fromDBObject(Activity.class,
-                   iobj.next())).getOid()));
-        renderArgs.put(dataName, ll);
+            nodeIds.add(MongoDB.fromDBObject(Activity.class, iobj.next()).getOid());
+        renderArgs.put(dataName, NodeContent.load(nodeIds));
     }
 
     @Override

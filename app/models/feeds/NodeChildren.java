@@ -17,7 +17,6 @@
 */
 package models.feeds;
 
-import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import org.bson.types.ObjectId;
@@ -45,17 +44,15 @@ public class NodeChildren extends Feed{
                     Session session,
                     User    user,
                     RenderArgs renderArgs) {
-        ObjectId id   = MongoEntity.toId(params.get("id"));
+        ObjectId oid   = MongoEntity.toId(params.get("id"));
         Integer start = 0;
         Integer count = 30;
 
         List<NodeContent> l = null;
         try {
-            DBCursor iobj = NodeContent.dbcol.find(new BasicDBObject("par", id)).
+            DBCursor iobj = NodeContent.dbcol.find(new BasicDBObject("par", oid)).
                     sort(sort).skip(start).limit(count);
-            if (iobj !=  null)
-                l = Lists.transform(iobj.toArray(),
-                        MongoDB.getSelf().toNodeContent());
+            l = MongoDB.transform(iobj, MongoDB.getSelf().toNodeContent());
         } catch (Exception ex) {
             Logger.info("NodeChildren::");
             ex.printStackTrace();

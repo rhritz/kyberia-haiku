@@ -19,7 +19,6 @@ package models;
 
 import java.io.Serializable;
 import com.google.code.morphia.annotations.Id;
-import com.mongodb.DBCollection;
 import org.bson.types.ObjectId;
 
 public abstract class MongoEntity implements Serializable {
@@ -43,6 +42,9 @@ public abstract class MongoEntity implements Serializable {
         this.id = new ObjectId(id);
     }
 
+    public abstract <T extends MongoEntity> T enhance();
+
+    // TODO error handling + validation
     public static ObjectId toId(String x) {
         ObjectId bubu = null;
         try { bubu = new ObjectId(x);} catch (Exception e ) {};

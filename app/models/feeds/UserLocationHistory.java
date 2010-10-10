@@ -18,10 +18,8 @@
 
 package models.feeds;
 
-import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import play.Logger;
@@ -36,6 +34,8 @@ import plugins.MongoDB;
 
 public class UserLocationHistory extends Feed{
 
+    private static final BasicDBObject sort = new BasicDBObject("time", -1); // TODO natural sort
+
     @Override
     public void getData(   Map<String, String> params,
                     Request request,
@@ -47,13 +47,8 @@ public class UserLocationHistory extends Feed{
         List<UserLocation> r = null;
         try {
             BasicDBObject query = new BasicDBObject("userid", user.getId());
-            BasicDBObject sort = new BasicDBObject("time", -1); // TODO natural sort
             DBCursor iobj = UserLocation.dbcol.find(query).sort(sort).skip(start).limit(count);
-            if (iobj ==  null) 
-                r = new LinkedList<UserLocation>();
-            else 
-                r = Lists.transform(iobj.toArray(),
-                        MongoDB.getSelf().toUserLocation());
+            r = MongoDB.transform(iobj, MongoDB.getSelf().toUserLocation());
         } catch (Exception ex) {
             Logger.info("getUserThreads");
             ex.printStackTrace();

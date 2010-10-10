@@ -17,7 +17,6 @@
 */
 package models.feeds;
 
-import com.google.common.collect.Lists;
 import com.mongodb.DBCursor;
 import java.util.List;
 import java.util.Map;
@@ -43,15 +42,13 @@ public class Tags extends Feed{
         List<Tag> tags = null;
         try {
             DBCursor iobj = Tag.dbcol.find();
-            if (iobj != null)
-                tags = Lists.transform(iobj.toArray(), MongoDB.getSelf().toTag());
+            tags = MongoDB.transform(iobj, MongoDB.getSelf().toTag());
         } catch (Exception ex) {
             Logger.info("Tag list load fail");
             ex.printStackTrace();
             Logger.info(ex.toString());
         }
         renderArgs.put(dataName, tags);
-
     }
 
     @Override

@@ -148,6 +148,11 @@ public class Vote extends MongoEntity {
         return this;
     }
 
+    @Override
+    public Vote enhance() {
+        return this;
+    }
+
     public class Option {
         private String name;
         

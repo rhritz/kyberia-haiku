@@ -17,7 +17,6 @@
 */
 package models.feeds;
 
-import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import java.util.List;
@@ -35,10 +34,8 @@ import plugins.MongoDB;
 public class KList extends Feed{
 
     private static final String K = "k";
-    private static final BasicDBObject kQuery   = new BasicDBObject().
-            append(K, new BasicDBObject("$gt", 1));
-    private static final BasicDBObject kSort    = new BasicDBObject().
-            append(K, -1);
+    private static final BasicDBObject kQuery   = new BasicDBObject(K, new BasicDBObject("$gt", 1));
+    private static final BasicDBObject kSort    = new BasicDBObject(K, -1);
 
     @Override
     public void getData(   Map<String, String> params,
@@ -52,11 +49,9 @@ public class KList extends Feed{
         try {
             // kQuery.append(NodeContent.CREATED, new BasicDBObject("$gt", t24hAgo)).
             DBCursor iobj = NodeContent.dbcol.find(kQuery).sort(kSort).
-                        limit(count ==  null ? 100 : count);
+                    skip(start).limit(count ==  null ? 100 : count);
             // query.append(fooks, new BasicDBObject("$notin", 1)); ?
-            if (iobj !=  null)
-                r = Lists.transform(iobj.toArray(),
-                        MongoDB.getSelf().toNodeContent());
+            r = MongoDB.transform(iobj, MongoDB.getSelf().toNodeContent());
         } catch (Exception ex) {
             Logger.info("getKlist");
             ex.printStackTrace();

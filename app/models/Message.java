@@ -62,6 +62,8 @@ public class Message extends MongoEntity {
         Message m = null;
         try {
             m = MongoDB.load(id, MongoDB.CMessage, Message.class);
+            if ( m != null)
+                m.enhance();
         } catch (Exception e) {
             Logger.info(e.toString());
         }
@@ -71,7 +73,7 @@ public class Message extends MongoEntity {
     // TODO nezobrazovat spravu tym ktori si spravu deletli
     public void delete(String uid)
     {
-        deleted.add(new ObjectId(uid));
+        deleted.add(toId(uid));
         MongoDB.save(this, MongoDB.CMessage);
     }
 
@@ -97,6 +99,13 @@ public class Message extends MongoEntity {
                 fromId, toId, mt.getId());
         MongoDB.save(m, MongoDB.CMessage);
         mt.notify(fromId,toId);
+    }
+
+    @Override
+    public Message enhance() {
+        fromUser = User.getNameForId(from);
+        toUser   = User.getNameForId(to);
+        return this;
     }
 
 }

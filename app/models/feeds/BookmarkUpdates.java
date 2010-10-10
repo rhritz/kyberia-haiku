@@ -65,11 +65,9 @@ public class BookmarkUpdates extends Feed{
             // BasicDBObject sort = new BasicDBObject().append("date", -1);
             // vlastne chceme natural sort a iba idcka nodes ktore mame zobrazit
             DBCursor iobj = Activity.dbcol.find(query).sort(sort);
-            if (iobj !=  null) {
-                // Logger.info("getUpdatesForBookmark found");
-                List<Activity> lll = Lists.transform(iobj.toArray(),
+            List<Activity> lll = MongoDB.transform(iobj,
                         MongoDB.getSelf().toActivity());
-                // 3. load nodes we want to show
+            if (! lll.isEmpty()) {
                 List<ObjectId> nodeIds = Lists.newLinkedList();
                 for (Activity ac : lll)
                     nodeIds.add(ac.getOid());

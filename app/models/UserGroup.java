@@ -19,8 +19,6 @@ package models;
 
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
-import com.google.code.morphia.Morphia;
-import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
@@ -108,8 +106,7 @@ public class UserGroup extends MongoEntity {
         List<UserGroup> u = null;
         try {
             DBCursor iobj = dbcol.find();
-            if (iobj != null)
-                u = Lists.transform(iobj.toArray(), MongoDB.getSelf().toUserGroup());
+            u = MongoDB.transform(iobj, MongoDB.getSelf().toUserGroup());
         } catch (Exception ex) {
             Logger.info("user load fail");
             ex.printStackTrace();
@@ -129,9 +126,7 @@ public class UserGroup extends MongoEntity {
         List<UserGroup> u = null;
         try {
             DBCursor iobj = dbcol.find();
-            if (iobj != null) 
-                u = Lists.transform(iobj.toArray(),
-                            MongoDB.getSelf().toUserGroup());
+            u = MongoDB.transform(iobj, MongoDB.getSelf().toUserGroup());
         } catch (Exception ex) {
             Logger.info("user load fail");
             ex.printStackTrace();
@@ -148,6 +143,11 @@ public class UserGroup extends MongoEntity {
     // + cache
     public void save() {
         MongoDB.save(this, MongoDB.CUserGroup);
+    }
+
+    @Override
+    public UserGroup enhance() {
+        return this;
     }
 
 }

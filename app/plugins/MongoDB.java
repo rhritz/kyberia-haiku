@@ -25,7 +25,11 @@ import com.google.code.morphia.Morphia;
 
 // mapovane models
 import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import java.util.LinkedList;
+import java.util.List;
 import org.bson.types.ObjectId;
 import models.*;
 import play.Logger;
@@ -116,8 +120,6 @@ public class MongoDB {
             morphia.map(Activity.class);
             morphia.map(NodeContent.class);
             morphia.map(UserLocation.class);
-            morphia.map(Friend.class);
-            morphia.map(Ignore.class);
             morphia.map(UserGroup.class);
             morphia.map(Tag.class);
             morphia.map(Vote.class);
@@ -217,11 +219,50 @@ public class MongoDB {
     }
 
     public static <T> T load(String id, String col, Class<T> entityClass)
-            throws ClassNotFoundException
     {
-        DBObject DBObj = db.getCollection(col).
-                findOne(new BasicDBObject("_id", new ObjectId(id)));
+        return load(new ObjectId(id), col, entityClass);
+    }
+
+    public static <T> T load(ObjectId id, String col, Class<T> entityClass)
+    {
+        DBObject DBObj = db.getCollection(col).findOne(new BasicDBObject("_id", id));
         return fromDBObject(entityClass, DBObj);
+    }
+    
+    public static <T> List<T> loadIds(List<ObjectId> fromList, String col,
+            Function<DBObject, ? extends T> function)
+    {
+        DBObject query = new BasicDBObject("_id", new BasicDBObject("$in",
+                        fromList.toArray(new ObjectId[fromList.size()])));
+        DBCursor iobj = db.getCollection(col).find(query);
+        List<T> l = Lists.newArrayListWithCapacity(iobj == null ? 0 : iobj.size());
+        if (iobj != null)
+            for (DBObject f : iobj) 
+                l.add(function.apply(f));
+        return l;
+    }
+
+    public static <T> List<T> transform( DBCursor fromList,
+            Function<DBObject, ? extends T> function) {
+        List<T> l = new LinkedList<T>();
+        if (fromList != null)
+            for (DBObject f : fromList)
+                l.add(function.apply(f));
+        return l;
+    }
+
+    public static <T extends MongoEntity> List<T> transformIds(
+                                  List<ObjectId> fromList,
+                                  String col,
+                                  Class<T> entityClass ) {
+        List<T> l = Lists.newArrayListWithCapacity(fromList.size());
+        if (fromList != null)
+            for (ObjectId f : fromList) {
+                T t = load(f, col, entityClass);
+                t.enhance();
+                l.add(t);
+            }
+        return l;
     }
 
     public static DBCollection getCollection(String name)
@@ -294,83 +335,70 @@ public class MongoDB {
                 morphia.getMapper().createEntityCache());
     }
 
-    // transformacna funkcia pre Lists.transform
     public class ToMessage implements Function<DBObject, Message> {
         public Message apply(DBObject arg) {
-            Message m = fromDBObject(Message.class, arg);
-            m.fromUser = User.getNameForId(m.from);
-            m.toUser   = User.getNameForId(m.to);
-            return m;
+            return fromDBObject(Message.class, arg).enhance();
         }
     }
 
     public class ToMessageThread implements Function<DBObject, MessageThread> {
         public MessageThread apply(DBObject arg) {
-            return fromDBObject(MessageThread.class, arg);
+            return fromDBObject(MessageThread.class, arg).enhance();
         }
     }
 
     public class ToUser implements Function<DBObject, User> {
         public User apply(DBObject arg) {
-            return fromDBObject(User.class, arg);
+            return fromDBObject(User.class, arg).enhance();
         }
     }
 
     public class ToUserGroup implements Function<DBObject, UserGroup> {
         public UserGroup apply(DBObject arg) {
-            return fromDBObject(UserGroup.class, arg);
+            return fromDBObject(UserGroup.class, arg).enhance();
         }
     }
 
     public class ToUserLocation implements Function<DBObject, UserLocation> {
         public UserLocation apply(DBObject arg) {
-            return fromDBObject(UserLocation.class, arg);
+            return fromDBObject(UserLocation.class, arg).enhance();
         }
     }
 
     // TODO: caching? to by asi bolo potrebne riesit pred tymto/?
     public class ToNodeContent implements Function<DBObject, NodeContent> {
         public NodeContent apply(DBObject arg) {
-            NodeContent n = fromDBObject(NodeContent.class, arg);
-            n.ownerName = User.getNameForId(n.getOwner());
-            n.loadRights();
-            if (n.par != null )
-                n.parName  = NodeContent.load(n.par).name;
-            else
-                n.parName  = "";
-            return n;
+            return fromDBObject(NodeContent.class, arg).enhance();
         }
     }
 
     public class ToTag implements Function<DBObject, Tag> {
         public Tag apply(DBObject arg) {
-            return fromDBObject(Tag.class, arg);
+            return fromDBObject(Tag.class, arg).enhance();
         }
     }
 
     public class ToBookmark implements Function<DBObject, Bookmark> {
         public Bookmark apply(DBObject arg) {
-            return fromDBObject(Bookmark.class, arg);
+            return fromDBObject(Bookmark.class, arg).enhance();
         }
     }
 
     public class ToActivity implements Function<DBObject, Activity> {
         public Activity apply(DBObject arg) {
-            return fromDBObject(Activity.class, arg);
+            return fromDBObject(Activity.class, arg).enhance();
         }
     }
 
     public class ToFeed implements Function<DBObject, Feed> {
         public Feed apply(DBObject arg) {
-            Feed applied = fromDBObject(Feed.class, arg);
-         //   applied.loadContent();
-            return applied;
+            return fromDBObject(Feed.class, arg).enhance();
         }
     }
 
     public class ToPage implements Function<DBObject, Page> {
         public Page apply(DBObject arg) {
-            return fromDBObject(Page.class, arg);
+            return fromDBObject(Page.class, arg).enhance();
         }
     }
 }

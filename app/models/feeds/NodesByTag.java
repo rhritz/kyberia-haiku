@@ -17,7 +17,6 @@
 */
 package models.feeds;
 
-import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import java.util.List;
@@ -40,14 +39,12 @@ public class NodesByTag extends Feed{
                     Session session,
                     User    user,
                     RenderArgs renderArgs) {
-        String tag = params.get("tag");
 
+        String tag = params.get("tag");
         List<NodeContent> l = null;
         try {
             DBCursor iobj = NodeContent.dbcol.find(new BasicDBObject("tags", tag));
-            if (iobj !=  null)
-                l = Lists.transform(iobj.toArray(),
-                        MongoDB.getSelf().toNodeContent());
+            l = MongoDB.transform(iobj, MongoDB.getSelf().toNodeContent());
         } catch (Exception ex) {
             Logger.info("NodesByTag::");
             ex.printStackTrace();

@@ -138,4 +138,9 @@ public class ViewTemplate extends MongoEntity{
                 t.process(params, r, s , u, renderArgs);
 	}
 
+    @Override
+    public ViewTemplate enhance() {
+        return this;
+    }
+
 }

@@ -19,15 +19,11 @@ package models;
 
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
-import com.google.code.morphia.Morphia;
-import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import org.bson.types.ObjectId;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import plugins.*;
@@ -63,22 +59,18 @@ public class MessageThread extends MongoEntity {
     {
         ObjectId c = getThreadId(from, to);
         if (c != null)
-        {
             return null;
-        }
+        MessageThread m = null;
         try {
-            Logger.info("creating new thread");
-            MessageThread m = new MessageThread(from,to);
+            m = new MessageThread(from,to);
+            m.setId(new ObjectId());
             MongoDB.save(m, MongoDB.CMessageThread);
-            // TODO teraz chceme vratit jeho id - snad sa to da aj krajsie,
-            // bohuzial java driver nepozna last_insert_id, zatial teda takto
-            return getThread(from, to, false);
         } catch (Exception ex) {
             Logger.info("create failed:");
             ex.printStackTrace();
             Logger.info(ex.toString());
         }
-        return null;
+        return m;
     }
 
     // loadne vsetky thready usera, zoradi podla poctu neprecitanych sprav
@@ -90,15 +82,9 @@ public class MessageThread extends MongoEntity {
             BasicDBObject query = new BasicDBObject(USERS, uid);
             BasicDBObject sort = new BasicDBObject(LAST, 1);
             DBCursor iobj = dbcol.find(query).sort(sort).limit(30);
-            if (iobj ==  null) {
-                r = new ArrayList<MessageThread>();
-            } else {
-                Logger.info("user threads found");
-                r = Lists.transform(iobj.toArray(),
-                        MongoDB.getSelf().toMessageThread());
-                if (! r.isEmpty())
-                    Cache.set(uid + "_lastThreadId", r.get(0).id);
-            }
+            r = MongoDB.transform(iobj, MongoDB.getSelf().toMessageThread());
+            if (! r.isEmpty())
+                Cache.set(uid + "_lastThreadId", r.get(0).id);
         } catch (Exception ex) {
             Logger.info("getUserThreads");
             ex.printStackTrace();
@@ -257,6 +243,11 @@ public class MessageThread extends MongoEntity {
      */
     public List<ObjectId> getUnreads() {
         return unreads;
+    }
+
+    @Override
+    public MessageThread enhance() {
+        return this;
     }
 
 }

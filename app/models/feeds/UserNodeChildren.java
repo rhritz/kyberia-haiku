@@ -17,6 +17,7 @@
 */
 package models.feeds;
 
+import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import java.util.LinkedList;
@@ -31,6 +32,7 @@ import models.Feed;
 import models.NodeContent;
 import models.Page;
 import models.User;
+import org.bson.types.ObjectId;
 import plugins.MongoDB;
 
 public class UserNodeChildren extends Feed {
@@ -50,18 +52,12 @@ public class UserNodeChildren extends Feed {
         } catch(Exception e) {}
         start = count * pageNum;
         List<NodeContent> ll = new LinkedList<NodeContent>();
-        try {
-            BasicDBObject query = new BasicDBObject("parid", user.getId());
-            DBCursor iobj = Activity.dbcol.find(query).sort(sort).skip(start).limit(count);
-            while(iobj.hasNext())
-               ll.add(NodeContent.load((MongoDB.fromDBObject(Activity.class,
-                        iobj.next())).getOid()));
-        } catch (Exception ex) {
-            Logger.info("load nodes::");
-            ex.printStackTrace();
-            Logger.info(ex.toString());
-        }
-        renderArgs.put(dataName,ll);
+        BasicDBObject query = new BasicDBObject("parid", user.getId());
+        DBCursor iobj = Activity.dbcol.find(query).sort(sort).skip(start).limit(count);
+        List<ObjectId> nodeIds = Lists.newLinkedList();
+        while(iobj.hasNext())
+            nodeIds.add(MongoDB.fromDBObject(Activity.class, iobj.next()).getOid());
+        renderArgs.put(dataName, NodeContent.load(nodeIds));
     }
 
     @Override

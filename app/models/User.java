@@ -279,9 +279,7 @@ public class User extends MongoEntity {
             DBCursor iobj = dbcol.find().sort(query).
                     skip(start == null ? 0 : start).
                     limit(count == null ? 0 : count);
-            if (iobj != null) 
-                users = Lists.transform(iobj.toArray(),
-                            MongoDB.getSelf().toUser());
+            users = MongoDB.transform(iobj, MongoDB.getSelf().toUser());
         } catch (Exception ex) {
             Logger.info("mongo fail @loadUsers");
             ex.printStackTrace();
@@ -477,6 +475,11 @@ public class User extends MongoEntity {
            Logger.info("addUser failed " + e.toString() );
         }
         return id == null ? "" : id.toString();
+    }
+
+    @Override
+    public User enhance() {
+        return this;
     }
 
 }

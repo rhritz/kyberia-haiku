@@ -20,7 +20,6 @@ package models;
 
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
-import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
@@ -48,6 +47,7 @@ public class Page extends MongoEntity {
     private String              template;
     private ObjectId            owner;
     private Map<String,String>  blocks;
+    // private boolean checkOwner, checkEdit, checkRead..?
 
     @Transient
     private List<Feed> preparedBlocks;
@@ -67,30 +67,6 @@ public class Page extends MongoEntity {
         this.name     = name;
         this.template = template;
         this.owner    = owner;
-    }
-
-    public static Page getByName(   String name,
-                                    Params params,
-                                    RenderArgs renderArgs,
-                                    Request request,
-                                    Session session) {
-        Page p = null;
-        p = Cache.get("page_" + name, Page.class);
-        if (p != null)
-            return p;
-        try {
-            DBObject iobj = dbcol.findOne(new BasicDBObject(NAME, name ));
-            if (iobj != null) {
-                p = MongoDB.fromDBObject(Page.class, iobj);
-                Cache.set("page_" + p.name, p);
-            }
-        } catch (Exception ex) {
-            Logger.info("mongo fail @getIdForName");
-            ex.printStackTrace();
-            Logger.info(ex.toString());
-            return null;
-        }
-        return p;
     }
 
     /**
@@ -116,9 +92,7 @@ public class Page extends MongoEntity {
         List<Page> pages = null;
         try {
             DBCursor iobj = dbcol.find();
-            if (iobj != null) 
-                pages = Lists.transform(iobj.toArray(),
-                            MongoDB.getSelf().toPage());
+            pages = MongoDB.transform(iobj, MongoDB.getSelf().toPage());
         } catch (Exception ex) {
             Logger.info("Page list load fail");
             ex.printStackTrace();
@@ -134,10 +108,8 @@ public class Page extends MongoEntity {
             try {
                 DBObject iobj = dbcol.findOne(new BasicDBObject("name",name));
                 Logger.info("Page.loadByName Found:" + iobj);
-                if (iobj != null) {
-                    page = MongoDB.fromDBObject(Page.class, iobj);
-                    page.prepareBlocks();
-                }
+                if (iobj != null) 
+                    page = MongoDB.fromDBObject(Page.class, iobj).enhance();
             } catch (Exception ex) {
                 Logger.info("page load fail");
                 ex.printStackTrace();
@@ -149,18 +121,15 @@ public class Page extends MongoEntity {
     }
 
     public static Page load(String pageId) {
-        ObjectId oid = new ObjectId(pageId);
-        return load(oid);
+        return load(toId(pageId));
     }
 
     public static Page load(ObjectId oid) {
         Page page = null;
         try {
             DBObject iobj = dbcol.findOne(new BasicDBObject("_id",oid));
-            if (iobj != null) {
-                page = MongoDB.fromDBObject(Page.class, iobj);
-                page.prepareBlocks();
-            }
+            if (iobj != null) 
+                page = MongoDB.fromDBObject(Page.class, iobj).enhance();
         } catch (Exception ex) {
             Logger.info("page load fail");
             ex.printStackTrace();
@@ -212,10 +181,8 @@ public class Page extends MongoEntity {
         List<Page> allPages = loadPages();
         if (allPages == null)
             return;
-        for (Page page : allPages) {
-            page.prepareBlocks();
+        for (Page page : allPages) 
             templateStore.put(page.getName(), page);
-        }
         Logger.info("Pages loaded");
     }
 
@@ -245,6 +212,12 @@ public class Page extends MongoEntity {
      */
     public Map<String, String> getBlocks() {
         return blocks;
+    }
+
+    @Override
+    public Page enhance() {
+        prepareBlocks();
+        return this;
     }
 
 }

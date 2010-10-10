@@ -19,7 +19,6 @@ package models;
 
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
-import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
@@ -90,30 +89,6 @@ public class Feed extends MongoEntity{
             Logger.info(ex.toString());
         }
         return n;
-    }
-
-    public static List<Feed> load(boolean loadAll, List<ObjectId> feedIds) {
-        List<Feed> feeds = null;
-        try {
-            DBCursor iobj = null;
-            if (!loadAll) {
-                DBObject query = new BasicDBObject("_id",
-                    new BasicDBObject("$in",
-                    feedIds.toArray(new ObjectId[feedIds.size()])));
-                iobj = dbcol.find(query);
-            } else {
-                iobj = dbcol.find();
-            }
-            Logger.info("load feeds::" + iobj);
-            if (iobj !=  null)
-                feeds = Lists.transform(iobj.toArray(),
-                        MongoDB.getSelf().toFeed());
-        } catch (Exception ex) {
-            Logger.info("load feeds::");
-            ex.printStackTrace();
-            Logger.info(ex.toString());
-        }
-        return feeds;
     }
 
     String getName() {
@@ -204,5 +179,11 @@ public class Feed extends MongoEntity{
     }
     return classes;
   }
+
+    @Override
+    public Feed enhance() {
+                 //   .loadContent();
+        return this;
+    }
 
 }

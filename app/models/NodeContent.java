@@ -17,6 +17,7 @@
 */
 package models;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
 import com.google.common.collect.ImmutableMap;
@@ -72,7 +73,7 @@ public class NodeContent extends MongoEntity {
     private List<ObjectId>  silence;
     private List<ObjectId>  masters;
 
-   // private Map<ObjectId,Boolean>  fook;
+    private Map<String,Boolean>  fook;
 
     @Transient
     private List<ObjectId>  vector;
@@ -204,14 +205,11 @@ public class NodeContent extends MongoEntity {
     public NodeContent save()
     {
         try {
-            Logger.info("creating new node");
+            setId(new ObjectId());
             MongoDB.save(this, MongoDB.CNode);
-            // TODO generovat ID pred insertom
-            NodeContent koko = MongoDB.fromDBObject(NodeContent.class,
-                    dbcol.findOne(MongoDB.getMorphia().toDBObject(this)));
-            Cache.set("node_" + koko.getId(), koko);
-            Logger.info("new NodeContent now has ID::" + koko.getId());
-            return koko;
+            enhance();
+            Cache.set("node_" + getId(), this);
+            return this;
         } catch (Exception ex) {
             Logger.info("create failed:");
             ex.printStackTrace();
@@ -225,7 +223,7 @@ public class NodeContent extends MongoEntity {
         try {
             Logger.info("updating node");
             MongoDB.update(this, MongoDB.CNode);
-            Cache.set("node_" + this.getId(), this);
+            Cache.set("node_" + getId(), this);
         } catch (Exception ex) {
             Logger.info("update failed:");
             ex.printStackTrace();
@@ -237,7 +235,7 @@ public class NodeContent extends MongoEntity {
     {
         try {
             Logger.info("deleting node");
-            Cache.delete("node_" + this.getId());
+            Cache.delete("node_" + getId());
             MongoDB.delete(this, MongoDB.CNode);
         } catch (Exception ex) {
             Logger.info("delete failed:");
@@ -266,12 +264,7 @@ public class NodeContent extends MongoEntity {
             DBObject iobj = dbcol.findOne(new BasicDBObject("_id",id));
             if (iobj !=  null) {
                 n = MongoDB.fromDBObject(NodeContent.class, iobj);
-                n.ownerName = User.getNameForId(n.owner);
-                if (n.par != null )
-                    n.parName  = load(n.par).name;
-                else
-                    n.parName  = "";
-                n.loadRights();
+                n.enhance();
                 Cache.add("node_" + id, n);
             }
         } catch (Exception ex) {
@@ -299,29 +292,14 @@ public class NodeContent extends MongoEntity {
 
     // some form of smart caching?
     public static List<NodeContent> load(List<ObjectId> nodeIds) {
-        List<NodeContent> nodes = null;
-        try {
-            DBObject query = new BasicDBObject("_id", 
-                    new BasicDBObject("$in",
-                        nodeIds.toArray(new ObjectId[nodeIds.size()])));
-            DBCursor iobj = dbcol.find(query);
-            if (iobj !=  null)
-                nodes = Lists.transform(iobj.toArray(),
-                        MongoDB.getSelf().toNodeContent());
-        } catch (Exception ex) {
-            Logger.info("load nodes::");
-            ex.printStackTrace();
-            Logger.info(ex.toString());
-        }
-        return nodes;
+        return MongoDB.loadIds(nodeIds, MongoDB.CNode, MongoDB.getSelf().toNodeContent());
     }
 
     static Map<ObjectId,NodeContent> loadByPar(ObjectId parId) {
         Map<ObjectId,NodeContent> nodes = Maps.newHashMap();
         try {
             DBCursor iobj = dbcol.find(new BasicDBObject("par", parId));
-            if (iobj !=  null)
-                for (NodeContent node : Lists.transform(iobj.toArray(),
+            for (NodeContent node : MongoDB.transform(iobj,
                         MongoDB.getSelf().toNodeContent()))
                     nodes.put(node.getId(), node);
         } catch (Exception ex) {
@@ -389,20 +367,20 @@ public class NodeContent extends MongoEntity {
     public void fook(ObjectId uid)
     {
         if (getFook() == null) {
-    //        fook = new HashMap<ObjectId,Boolean>();
-        } else if (getFook().containsKey(uid)) {
+            fook = new HashMap<String,Boolean>();
+        } else if (fook.containsKey(uid.toString())) {
             return;
         }
-        getFook().put(uid,Boolean.TRUE);
+        fook.put(uid.toString(),Boolean.TRUE);
         update();
     }
 
     public void unfook(ObjectId uid)
     {
-        if (getFook() == null) {
+        if (fook == null) {
             return;
-        } else if (getFook().containsKey(uid)) {
-            getFook().remove(uid);
+        } else if (fook.containsKey(uid.toString())) {
+            fook.remove(uid.toString());
         }
         update();
     }
@@ -777,9 +755,7 @@ public class NodeContent extends MongoEntity {
             DBObject query = new BasicDBObject("_id", new BasicDBObject("$in",
                     vector.toArray(new ObjectId[vector.size()])));
             DBCursor iobj = dbcol.find(query);
-            if (iobj !=  null)
-                nodes = Lists.transform(iobj.toArray(),
-                        MongoDB.getSelf().toNodeContent());
+            nodes = MongoDB.transform(iobj, MongoDB.getSelf().toNodeContent());
         } catch (Exception ex) {
             Logger.info("load nodes::");
             ex.printStackTrace();
@@ -861,8 +837,8 @@ public class NodeContent extends MongoEntity {
     /**
      * @return the fook
      */
-    protected Map<ObjectId, Boolean> getFook() {
-        return null; // fook;
+    protected Map<String, Boolean> getFook() {
+        return fook;
     }
 
     // Node o 1 vyssie nad nami uz urcite ma vsetko poriesene
@@ -884,22 +860,35 @@ public class NodeContent extends MongoEntity {
             for (ObjectId ban : bans)
                 bu.put(ban, ACL.BAN);
         if (par != null) {
-            NodeContent parent = load(par);
-       //     if (parent.fook != null)
-       //         fook.putAll(parent.fook);
-            if (parent.acl != null) { // TODO !!! fatal, cannot happen !!!
-                for (Map.Entry<ObjectId,ACL> e : parent.acl.entrySet()) {
-                    switch (e.getValue()) {
-                        case ACCESS:  bu.put(e.getKey(), ACL.ACCESS);  break;
-                        case SILENCE: bu.put(e.getKey(), ACL.SILENCE); break;
-                        case BAN:     bu.put(e.getKey(), ACL.BAN);     break;
-                        case MASTER:  bu.put(e.getKey(), ACL.HMASTER); break;
-                        case OWNER:   bu.put(e.getKey(), ACL.HMASTER); break;
-                    }
+            NodeContent parent = checkNotNull(load(par));
+            if (parent.fook != null)
+                fook.putAll(parent.fook);
+            if (parent.acl == null) {
+                parent.loadRights();
+            } 
+            for (Map.Entry<ObjectId,ACL> e : checkNotNull(parent.acl).entrySet()) {
+                switch (e.getValue()) {
+                    case ACCESS:  bu.put(e.getKey(), ACL.ACCESS);  break;
+                    case SILENCE: bu.put(e.getKey(), ACL.SILENCE); break;
+                    case BAN:     bu.put(e.getKey(), ACL.BAN);     break;
+                    case MASTER:  bu.put(e.getKey(), ACL.HMASTER); break;
+                    case OWNER:   bu.put(e.getKey(), ACL.HMASTER); break;
                 }
             }
         }
         bu.put(owner, ACL.OWNER);
         acl = ImmutableMap.copyOf(bu);
     }
+
+    @Override
+    public NodeContent enhance() {
+        ownerName = User.getNameForId(owner);
+        if (par != null )
+            parName  = load(par).name; // checkNotNull?
+        else
+            parName  = "";
+        loadRights();
+        return this;
+    }
+
 }

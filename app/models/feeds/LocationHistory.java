@@ -17,10 +17,8 @@
 */
 package models.feeds;
 
-import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import play.Logger;
@@ -28,7 +26,6 @@ import play.mvc.Http.Request;
 import play.mvc.Scope.RenderArgs;
 import play.mvc.Scope.Session;
 import models.Feed;
-import models.NodeContent;
 import models.Page;
 import models.User;
 import models.UserLocation;
@@ -53,11 +50,7 @@ public class LocationHistory extends Feed{
             DBCursor iobj = UserLocation.dbcol.
                     find(new BasicDBObject("location", user.getId())).
                     sort(sort).skip(start).limit(count);
-            if (iobj ==  null) 
-                r = new LinkedList<UserLocation>();
-            else 
-                r = Lists.transform(iobj.toArray(),
-                        MongoDB.getSelf().toUserLocation());
+            r = MongoDB.transform(iobj, MongoDB.getSelf().toUserLocation());
         } catch (Exception ex) {
             Logger.info("getUserThreads");
             ex.printStackTrace();

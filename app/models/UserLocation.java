@@ -159,4 +159,9 @@ public class UserLocation extends MongoEntity {
             return u1.getUsername().compareToIgnoreCase(u2.getUsername());
         }
     }
+
+    @Override
+    public UserLocation enhance() {
+        return this;
+    }
 }

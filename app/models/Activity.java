@@ -122,5 +122,10 @@ public class Activity extends MongoEntity {
         return oid;
     }
 
+    @Override
+    public Activity enhance() {
+        return this;
+    }
+
 }
 

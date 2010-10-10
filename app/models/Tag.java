@@ -18,13 +18,10 @@
 package models;
 
 import com.google.code.morphia.annotations.Entity;
-import com.google.code.morphia.annotations.Transient;
-import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import java.util.ArrayList;
 import java.util.List;
 import play.Logger;
 import plugins.MongoDB;
@@ -116,9 +113,7 @@ public class Tag extends MongoEntity {
         List<NodeContent> nodes = null;
         try {
             DBCursor iobj = NodeContent.dbcol.find(new BasicDBObject("tags", tag));
-            if (iobj !=  null)
-                nodes = Lists.transform(iobj.toArray(),
-                        MongoDB.getSelf().toNodeContent());
+            nodes = MongoDB.transform(iobj, MongoDB.getSelf().toNodeContent());
         } catch (Exception ex) {
             Logger.info("getTaggedNodes::");
             ex.printStackTrace();
@@ -134,13 +129,7 @@ public class Tag extends MongoEntity {
             BasicDBObject query = new BasicDBObject("tag", tag);
             BasicDBObject sort = new BasicDBObject("tag", 1);
             DBCursor iobj = dbcol.find(query).sort(sort).limit(30);
-            if (iobj ==  null) {
-                r = new ArrayList<Tag>();
-            } else {
-                Logger.info("tags found");
-                r = Lists.transform(iobj.toArray(),
-                        MongoDB.getSelf().toTag());
-            }
+            r = MongoDB.transform(iobj, MongoDB.getSelf().toTag());
         } catch (Exception ex) {
             Logger.info("getTagCloud");
             ex.printStackTrace();
@@ -153,5 +142,10 @@ public class Tag extends MongoEntity {
     {
         List<User> r = null;
         return r;
+    }
+
+    @Override
+    public Tag enhance() {
+        return this;
     }
 }
