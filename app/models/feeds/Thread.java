@@ -47,11 +47,15 @@ public class Thread extends Feed{
 
         Integer start = 0;
         Integer count = 30;
+        int pageNum = 0;
+        try{ pageNum = Integer.parseInt(params.get("pageNum"));
+        } catch(Exception e) {}
+        start = count * pageNum;
+
         List<NodeContent> thread = new LinkedList<NodeContent>();
         HashMap<ObjectId,Integer> roots = new HashMap<ObjectId,Integer>();
         int local_depth = 0;
-        String nodeId = (String) request.args.get("id");
-        NodeContent nextnode = NodeContent.load(nodeId);
+        NodeContent nextnode = (NodeContent) request.args.get("app-node");
         NodeContent lastnode;
         ObjectId parent;
         for (int i = 0; i < start + count; i++) {
@@ -82,6 +86,7 @@ public class Thread extends Feed{
             }
         }
         renderArgs.put(dataName, thread);
+        renderArgs.put("currentPage",pageNum); // ?
     }
 
     @Override

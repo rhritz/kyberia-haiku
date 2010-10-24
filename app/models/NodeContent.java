@@ -100,8 +100,7 @@ public class NodeContent extends MongoEntity {
     public NodeContent() {}
 
     public NodeContent (ObjectId ownerid,
-                        Map<String,String> params)
-    {
+                        Map<String,String> params) {
         content = Validator.validate(params.get(CONTENT));
         created = System.currentTimeMillis();
         cr_date = DateFormat.getDateTimeInstance(DateFormat.LONG,
@@ -114,8 +113,7 @@ public class NodeContent extends MongoEntity {
         Logger.info("Adding node with content:: " + content);
     }
 
-    public void edit(Map<String,String> params)
-    {
+    public void edit(Map<String,String> params) {
         String accType = params.get("access_type");
         if (accType != null) {
             accessType = Integer.parseInt(accType);
@@ -177,8 +175,7 @@ public class NodeContent extends MongoEntity {
         this.update(); // TODO udpate cache
     }
 
-    public String getContent()
-    {
+    public String getContent() {
         return content;
     }
 
@@ -189,8 +186,7 @@ public class NodeContent extends MongoEntity {
         return k;
     }
 
-    public void addTag(String tag)
-    {
+    public void addTag(String tag) {
         if (tag == null)
             return;
         if (tags == null)
@@ -202,8 +198,7 @@ public class NodeContent extends MongoEntity {
     }
 
     // save to mongodb
-    public NodeContent save()
-    {
+    public NodeContent save() {
         try {
             setId(new ObjectId());
             MongoDB.save(this, MongoDB.CNode);
@@ -218,8 +213,7 @@ public class NodeContent extends MongoEntity {
         return null;
     }
 
-    public void update()
-    {
+    public void update() {
         try {
             Logger.info("updating node");
             MongoDB.update(this, MongoDB.CNode);
@@ -231,8 +225,7 @@ public class NodeContent extends MongoEntity {
         }
     }
 
-    private void delete()
-    {
+    private void delete() {
         try {
             Logger.info("deleting node");
             Cache.delete("node_" + getId());
@@ -245,8 +238,7 @@ public class NodeContent extends MongoEntity {
     }
 
     // load from mongodb
-    public static NodeContent load(String id)
-    {
+    public static NodeContent load(String id) {
         ObjectId oid = toId(id);
         if (oid == null)
            return null;
@@ -254,8 +246,7 @@ public class NodeContent extends MongoEntity {
     }
 
     // TODO parametrize parent loading
-    public static NodeContent load(ObjectId id)
-    {
+    public static NodeContent load(ObjectId id) {
         // Logger.info("About to load node " + id);
         NodeContent n = Cache.get("node_" + id, NodeContent.class);
         if (n != null )
@@ -275,8 +266,7 @@ public class NodeContent extends MongoEntity {
         return n;
     }
 
-    private static NodeContent loadByDfs(ObjectId id)
-    {
+    private static NodeContent loadByDfs(ObjectId id) {
         NodeContent n = null;
         try {
             DBObject iobj = dbcol.findOne(new BasicDBObject("dfs",id));
@@ -310,8 +300,7 @@ public class NodeContent extends MongoEntity {
         return nodes;
     }
 
-    public boolean canRead(ObjectId uid)
-    {
+    public boolean canRead(ObjectId uid) {
         Logger.info("canRead:: uid " + uid.toString() + " acc type " + accessType);
         if (accessType == null) // ale to by sa nemalo stat -> load
             return Boolean.TRUE;
@@ -331,8 +320,7 @@ public class NodeContent extends MongoEntity {
     }
 
     // moze pridavat reakcie, tagy etc?
-    public boolean canWrite(ObjectId uid)
-    {
+    public boolean canWrite(ObjectId uid) {
         Logger.info("canWrite:: uid " + uid.toString() + " acc type " + accessType);
         if (accessType == null) // TODO remove this
             return Boolean.FALSE;
@@ -352,20 +340,22 @@ public class NodeContent extends MongoEntity {
     }
 
     // moze editovat properties 
-    public boolean canEdit(ObjectId uid)
-    {
+    public boolean canEdit(ObjectId uid) {
         return owner.equals(uid) || ACL.MASTER == acl.get(uid);
     }
 
+    public boolean canEdit(String uid) {
+        return canEdit(toId(uid));
+    }
+
     // moze presuvat objekty? tj menit parenta ersp. childy
-    public boolean canMove(ObjectId uid)
-    {
+    // TODO is this right?
+    public boolean canMove(ObjectId uid) {
         ACL ur = acl.get(uid);
         return owner.equals(uid) || ACL.MASTER == ur || ACL.HMASTER == ur;
     }
 
-    public void fook(ObjectId uid)
-    {
+    public void fook(ObjectId uid) {
         if (getFook() == null) {
             fook = new HashMap<String,Boolean>();
         } else if (fook.containsKey(uid.toString())) {
@@ -375,8 +365,7 @@ public class NodeContent extends MongoEntity {
         update();
     }
 
-    public void unfook(ObjectId uid)
-    {
+    public void unfook(ObjectId uid) {
         if (fook == null) {
             return;
         } else if (fook.containsKey(uid.toString())) {

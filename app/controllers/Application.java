@@ -24,6 +24,7 @@ import play.Logger;
 import models.*;
 import play.cache.Cache;
 import play.mvc.Controller;
+import static models.MongoEntity.toId;
 
 @With(Secure.class)
 public class Application extends Controller {
@@ -37,8 +38,6 @@ public class Application extends Controller {
             renderArgs.put("user",   session.get(User.USERNAME));
             renderArgs.put("userid", uid);
             renderArgs.put("uid", uid);
-            // UserLocation.saveVisit(uid, "some location");
-            // - toto enjak doriesit s bookmark visits a tak
             renderArgs.put("newMail", 
                     MessageThread.getUnreadMailNotif(new ObjectId(uid)));
         } else {
@@ -46,14 +45,25 @@ public class Application extends Controller {
             // mozeme vytvorit nejaku fake session pre neprihlasenych?
             uid = "nobody";
         }
-        // pozor aby sme si nieco neprepisali
         User user = User.load(uid);
-        // private static User getUser() { return (User) Application.request.args.get("app-user");}
-        // - bude to fungovat alebo musi byt thread-local?
-        Application.request.args.put("app-view", 
-                ViewTemplate.get(params.allSimple(),
+        request.args.put("app-user", user);
+        
+        request.args.put("app-view", ViewTemplate.get(params.allSimple(),
                 request, session, user, renderArgs));
-        Application.request.args.put("app-user", user);
+        // params.flash();
+    }
+
+    /* If there is a param "id" in the req, load the corresponding node
+     * for later use
+     */
+    @Before
+    static void setNode() {
+        String id = params.get("id");
+        NodeContent node = NodeContent.load(id);
+        if (node != null) {
+            renderArgs.put("node", node);
+            request.args.put("app-node", node);
+        }
     }
 
     @After
@@ -80,12 +90,11 @@ public class Application extends Controller {
      public static void addNode(String id, String content) {
         Logger.info("about to add node:" + id + "," + content );
         checkAuthenticity();
-        NodeContent parentNode = NodeContent.load(id);
+        NodeContent parentNode = getNode();
         String newId = NodeContent.addNode(
                     parentNode == null ? null : parentNode.getId(),
                     Controller.params.allSimple(),
-                    new ObjectId(session.get(User.ID))
-                    // ((User) request.args.get("app-user")).getId() alebo rovno celeho usera
+                    getUser().getId()
                 );
         String nid = null;
         Logger.info("newid::" + newId);
@@ -99,7 +108,7 @@ public class Application extends Controller {
 
      public static void putNode(String id) {
          checkAuthenticity();
-         NodeContent node = NodeContent.load(id);
+         NodeContent node = getNode();
          NodeContent toNode = NodeContent.load(params.get("to"));
          if (node != null && toNode != null)
             node.putNode(toNode.getId());
@@ -108,7 +117,7 @@ public class Application extends Controller {
 
      public static void unputNode(String id) {
          checkAuthenticity();
-         NodeContent node = NodeContent.load(id);
+         NodeContent node = getNode();
          if (node != null)
             node.unputNode();
          index();
@@ -116,7 +125,7 @@ public class Application extends Controller {
 
      public static void deleteNode(String id) {
          checkAuthenticity();
-         NodeContent node = NodeContent.load(id);
+         NodeContent node = getNode();
          if (node != null)
             node.deleteNode();
          index();
@@ -124,7 +133,7 @@ public class Application extends Controller {
 
      public static void moveNode(String id) {
          checkAuthenticity();
-         NodeContent node = NodeContent.load(id);
+         NodeContent node = getNode();
          NodeContent toNode = NodeContent.load(params.get("to"));
          if (node != null && toNode != null)
             node.moveNode(toNode.getId());
@@ -138,8 +147,7 @@ public class Application extends Controller {
     {
         checkAuthenticity();
         Logger.info("Add friend :: " + uid);
-        User u = User.load(session.get(User.ID));
-        u.addFriend(new ObjectId(uid));
+        getUser().addFriend(toId(uid));
         showUser(uid);
     }
 
@@ -147,8 +155,7 @@ public class Application extends Controller {
     {
         checkAuthenticity();
         Logger.info("Add ignore :: " + uid);
-        User u = User.load(session.get(User.ID));
-        u.addIgnore(new ObjectId(uid));
+        getUser().addIgnore(toId(uid));
         showUser(uid);
     }
 
@@ -156,8 +163,7 @@ public class Application extends Controller {
     {
         checkAuthenticity();
         Logger.info("Add ignoreMail :: " + uid);
-        User u = User.load(session.get(User.ID));
-        u.addIgnoreMail(new ObjectId(uid));
+        getUser().addIgnoreMail(toId(uid));
         showUser(uid);
     }
 
@@ -165,8 +171,8 @@ public class Application extends Controller {
     {
         checkAuthenticity();
         Logger.info("Show edit node:: " + id);
-        NodeContent node = NodeContent.load(id);
-        if (node.canEdit(new ObjectId(session.get(User.ID)))) {
+        NodeContent node = getNode();
+        if (node.canEdit(getUser().getId())) {
             node.edit(Controller.params.allSimple());
         }
         displayNode(id);
@@ -178,7 +184,7 @@ public class Application extends Controller {
         checkAuthenticity();
         Logger.info("Bookmark action:: " + id);
         String type = "ids";
-        Bookmark.add(id, session.get(User.ID), type);
+        Bookmark.add(id, getUser().getIdString(), type);
         displayNode(id);
     }
 
@@ -186,16 +192,16 @@ public class Application extends Controller {
     {
         checkAuthenticity();
         Logger.info("UnBook:: " + id);
-        Bookmark.delete(id, session.get(User.ID));
-        displayNode(id); // mh, toto nemusi byt volane z id/...
+        Bookmark.delete(id, getUser().getIdString());
+        displayNode(id);
     }
 
     public static void fook(String id)
     {
         checkAuthenticity();
         Logger.info("Fook ::" + id);
-        NodeContent n = NodeContent.load(id);
-        n.fook(new ObjectId(session.get(User.ID)));
+        NodeContent n = getNode();
+        n.fook(getUser().getId());
         displayNode(id);
     }
 
@@ -203,10 +209,9 @@ public class Application extends Controller {
     {
         checkAuthenticity();
         Logger.info("K ::" + id);
-        NodeContent nc = NodeContent.load(id);
-        User user = User.load(session.get(User.ID));
+        NodeContent nc = getNode();
         if (nc != null)
-            nc.giveK(user);
+            nc.giveK(getUser());
         displayNode(id);
     }
 
@@ -214,10 +219,9 @@ public class Application extends Controller {
     {
         checkAuthenticity();
         Logger.info("K ::" + id);
-        NodeContent nc = NodeContent.load(id);
-        User user = User.load(session.get(User.ID));
+        NodeContent nc = getNode();
         if (nc != null)
-            nc.giveMK(user);
+            nc.giveMK(getUser());
         displayNode(id);
     }
 
@@ -225,55 +229,38 @@ public class Application extends Controller {
     {
         checkAuthenticity();
         Logger.info("Tag id ::" + id + " with tag ::" + tag);
-        NodeContent nc = NodeContent.load(id);
+        NodeContent nc = getNode();
         if (nc != null)
-            Tag.tagNode(nc,tag,session.get(User.ID));
+            Tag.tagNode(nc,tag,getUser().getIdString());
         displayNode(id);
     }
 
-    // interne, po akcii
+    // TODO -> displayNodeWithTemplate() -> viewPage(?tmpl?)
     private static void displayNode(String id)
     {
-        int start = 0;
-        int count = 30;
-        int pageNum = 0;
-        try{ pageNum = Integer.parseInt(params.get("pageNum"));
-        } catch(Exception e) {}
-        ObjectId oid = new ObjectId(id);
-        NodeContent node = NodeContent.load(oid);
-        String uid  = session.get(User.ID);
-        String page = params.get("template");
-        if (node != null && node.canRead(new ObjectId(uid))) {
-            // logicky UserVisit save patri sem, lebo tu vieme co ideme zobrazit
-            UserLocation.saveVisit(User.load(uid), id);
-            renderArgs.put("node", node);
-            renderArgs.put("thread",
-                    node.getThreadIntern(count * pageNum, count));
-            renderArgs.put("id", id);
-            renderArgs.put("currentPage",pageNum);
+        renderArgs.put("id", id);
+        NodeContent node = getNode();
+        if (node != null) {
+            if (node.canRead(getUser().getId())) {
+                UserLocation.saveVisit(getUser(), id); // getNode().id
+                viewPage("Node");
+            } else {
+                viewPage("NodeNoAccess");
+            }
         } else {
-            renderArgs.put("id", id);
-            renderArgs.put("content", "Sorry pal, no see for you");
+            viewPage("NodeError");
         }
-        render(ViewTemplate.VIEW_NODE_HTML);
-        // podl anode nastavit template
-        // String template = .getTemplate(node,user,session.viewtemplate)
-        // render(template,id);
-        // alebo skor render
     }
 
     public static void showEditNode(String id) {
-        String uid = session.get(User.ID);
-        NodeContent node = NodeContent.load(id);
+        renderArgs.put("id", id);
+        NodeContent node = getNode();
         if (node != null) {
-            if (node.canEdit(new ObjectId(uid))) {
-                renderArgs.put("id", id);
+            if (node.canEdit(getUser().getId())) {
                 renderArgs.put("node", node);
-                renderArgs.put("users", User.loadUsers(null, 0 , 30, null));
-                render(ViewTemplate.EDIT_NODE_HTML);
+                viewPage("EditNode");
             } else {
-                renderArgs.put("error", "Sorry pal, no edit for you");
-                displayNode(id);
+                viewPage("NodeNoAccess");
             }
         }
     }
@@ -292,10 +279,10 @@ public class Application extends Controller {
 
     public static void sendMail(String to, String content) {
         checkAuthenticity();
-        String fromId = session.get(User.ID);
-        Message.send(fromId, to, content);
+        Message.send(getUser().getIdString(), to, content);
         params.put("thread",
-                Cache.get(fromId + "_lastThreadId", ObjectId.class).toString());
+                Cache.get(getUser().getIdString() + "_lastThreadId",
+                ObjectId.class).toString());
         viewPage("Mail");
     }
 
@@ -356,8 +343,7 @@ public class Application extends Controller {
 
     public static void changePwd(String uid) {
         checkAuthenticity();
-        User me = User.load(session.get(User.ID));
-        me.changePwd(Controller.params.allSimple());
+        getUser().changePwd(Controller.params.allSimple());
         showMe();
     }
 
@@ -408,7 +394,7 @@ public class Application extends Controller {
     // Pages
     public static void addPage() {
         Page p = Page.create(params.get("name"), params.get("template"),
-                new ObjectId(session.get(User.ID)));
+                getUser().getId());
         renderArgs.put("page",  p);
         render(ViewTemplate.SHOW_PAGE_HTML);
     }
@@ -440,10 +426,10 @@ public class Application extends Controller {
 
     // view page by its name
     private static void viewPage(String page) {
+        renderArgs.put("pageBuildStart",  System.currentTimeMillis());
         Page  p = Page.loadByName(page);
-        User u = User.load(session.get(User.ID));
         if (p != null ) {
-            p.process(params.allSimple(), request, session, u, renderArgs);
+            p.process(params.allSimple(), request, session, getUser(), renderArgs);
             render(p.getTemplate());
         }
     }
@@ -455,6 +441,15 @@ public class Application extends Controller {
 
     public static void showNodesByTag(String tag) {
         viewPage("NodesByTag");
+    }
+
+    // helpers...
+    private static User getUser() {
+        return (User) Application.request.args.get("app-user");
+    }
+
+    private static NodeContent getNode() {
+        return (NodeContent) Application.request.args.get("app-node");
     }
 
 }

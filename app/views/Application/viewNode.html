@@ -83,8 +83,7 @@
             <input type="submit" value="-K" onClick="javascript:this.form.action='@{Application.mk(id)}';submit();" />
             <input type="text" size="10" name="tag" />
             <input type="submit" value="Tag" onClick="javascript:this.form.action='@{Application.tag(id)}';submit();" />
-            <!-- TODO temporary fix - should be removeed ASAP -->
-            #{if node.canEdit(new org.bson.types.ObjectId(uid))}
+            #{if node.canEdit(uid)}
                 <input type="submit" value="Delete" onClick="javascript:this.form.action='@{Application.deleteNode(id)}';submit();" />
                 <input type="submit" value="Move" onClick="javascript:this.form.action='@{Application.moveNode(id)}';submit();"/>
                 <input type="submit" value="Unput" onClick="javascript:this.form.action='@{Application.unputNode(id)}';submit();"/>
@@ -92,7 +91,7 @@
             <input type="submit" value="Put" onClick="javascript:this.form.action='@{Application.putNode(id)}';submit();"/>
             <input type="text" size="10" name="to" />
        </form>
-   #{if node.canEdit(new org.bson.types.ObjectId(uid))} <a href="@{Application.showEditNode(id)}">Edit</a>#{/if}
+   #{if node.canEdit(uid)} <a href="@{Application.showEditNode(id)}">Edit</a>#{/if}
    <!--
    <form action="@{Application.viewNode(id)}" method="GET">
         <input type="text" size="10" name="id" />
