@@ -22,12 +22,15 @@ package models;
 import java.util.HashMap;
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
+import com.google.common.collect.Lists;
 import com.mongodb.DBCollection;
+import java.util.List;
 import org.bson.types.ObjectId;
 import java.util.Map;
 import play.mvc.Http.Request;
 import play.mvc.Scope.RenderArgs;
 import play.mvc.Scope.Session;
+import plugins.MongoDB;
 
 // - zavisi od usera a sposobu pristupu
 @Entity("ViewTemplate")
@@ -35,47 +38,61 @@ public class ViewTemplate extends MongoEntity{
 
     public static DBCollection dbcol = null;
 
-        // hlavne templaty - nazvy
-        public static final String VIEW_USER = "view_user";
-        
-        // default templaty
-        public static final String VIEW_NODE_HTML      = "app/views/Application/viewNode.html";
-        public static final String EDIT_NODE_HTML      = "app/views/Application/editNode.html";
-        public static final String SHOW_NODES_HTML     = "app/views/Application/showNodes.html";
-        public static final String SHOW_BOOKMARKS_HTML = "app/views/Application/showBookmarks.html";
-        public static final String MAIL_HTML           = "app/views/Application/mail.html";
-        public static final String SHOW_LAST_HTML      = "app/views/Application/showLast.html";
-        public static final String SHOW_GROUPS_HTML    = "app/views/Application/showGroups.html";
-        public static final String SHOW_GROUP_HTML     = "app/views/Application/showGroup.html";
-        public static final String EDIT_GROUP_HTML     = "app/views/Application/editGroup.html";
-        public static final String ADD_GROUP_HTML      = "app/views/Application/editGroup.html";
-        public static final String SHOW_ME_HTML        =  "app/views/Application/showMe.html";
-        public static final String SHOW_FRIENDS_HTML   =  "app/views/Application/showFriends.html";
-        public static final String SHOW_USER_HTML      = "app/views/Application/viewUser.html";
-        public static final String ADD_USER_HTML       = "app/views/Application/addUser.html";
-        public static final String ADD_PAGE_HTML       = "app/views/Application/addPage.html";
-        public static final String EDIT_PAGE_HTML      = "app/views/Application/editPage.html";
-        public static final String SHOW_PAGE_HTML      = "app/views/Application/showPage.html";
-        public static final String SHOW_PAGES_HTML     = "app/views/Application/showPages.html";
+    public boolean  isDefault; // if true - this is the root/default view
+    public ObjectId superView; // view inheritance
+    public String   defaultMenu;  // '/menu/html'
+    public String   defaultCss;
+    public String   template;
+    public ObjectId owner;
+    public String   name;
 
-        public static final String ADMIN_PAGE_HTML     = "app/views/Admin/admin.html";
+    @Transient
+    public String superViewName;
 
-        public static final String TOP_LEVEL_TEMPLATE = "topLevelTemplate";
+    private static HashMap<String,ViewTemplate> views; // TODO every View will have its own templateStore
 
-	public boolean isDefault; // true - this is the root/default view
-	// public String superViewId;  // view inheritance
-	public ObjectId superView; // view inheritance
-	public String defaultMenu;  // '/menu/html'
-	public String defaultCss;
-        public String template;
-        
-	private static HashMap<String,ViewTemplate> views;
+    // hlavne templaty - nazvy
+    public static final String VIEW_USER = "view_user";
+
+    // default templaty
+    public static final String VIEW_NODE_HTML      = "app/views/Application/viewNode.html";
+    public static final String EDIT_NODE_HTML      = "app/views/Application/editNode.html";
+    public static final String SHOW_NODES_HTML     = "app/views/Application/showNodes.html";
+    public static final String SHOW_BOOKMARKS_HTML = "app/views/Application/showBookmarks.html";
+    public static final String MAIL_HTML           = "app/views/Application/mail.html";
+    public static final String SHOW_LAST_HTML      = "app/views/Application/showLast.html";
+
+    public static final String SHOW_GROUPS_HTML    = "app/views/Application/showGroups.html";
+    public static final String SHOW_GROUP_HTML     = "app/views/Application/showGroup.html";
+    public static final String EDIT_GROUP_HTML     = "app/views/Application/editGroup.html";
+    public static final String ADD_GROUP_HTML      = "app/views/Application/editGroup.html";
+
+    public static final String SHOW_ME_HTML        =  "app/views/Application/showMe.html";
+    public static final String SHOW_FRIENDS_HTML   =  "app/views/Application/showFriends.html";
+    public static final String SHOW_USER_HTML      = "app/views/Application/viewUser.html";
+    public static final String ADD_USER_HTML       = "app/views/Application/addUser.html";
+
+    public static final String ADD_PAGE_HTML       = "app/views/Application/addPage.html";
+    public static final String EDIT_PAGE_HTML      = "app/views/Application/editPage.html";
+    public static final String SHOW_PAGE_HTML      = "app/views/Application/showPage.html";
+    public static final String SHOW_PAGES_HTML     = "app/views/Application/showPages.html";
+
+    public static final String ADD_VIEW_HTML       = "app/views/Application/addView.html";
+    public static final String EDIT_VIEW_HTML      = "app/views/Application/editView.html";
+    public static final String SHOW_VIEW_HTML      = "app/views/Application/showView.html";
+    public static final String SHOW_VIEWS_HTML     = "app/views/Application/showViews.html";
+
+    public static final String ADMIN_PAGE_HTML     = "app/views/Admin/admin.html";
+
+    public static final String TOP_LEVEL_TEMPLATE = "topLevelTemplate";
 
         public static void start() {
             ViewTemplate def = new ViewTemplate(true,null,"main.html");
             views = new HashMap<String,ViewTemplate>();
             views.put("default", def);
         }
+
+        public ViewTemplate() {}
 
 	public ViewTemplate(boolean isDefault, 
                             ViewTemplate superView,
@@ -138,9 +155,37 @@ public class ViewTemplate extends MongoEntity{
                 t.process(params, r, s , u, renderArgs);
 	}
 
+        public static ViewTemplate create(String name, String inherit, ObjectId owner) {
+            ViewTemplate vt = new ViewTemplate();
+            vt.name = name;
+            vt.superViewName = inherit;
+            vt.owner = owner;
+            vt.save();
+            vt.enhance();
+            return vt;
+        }
+
+        public void save() {
+            MongoDB.save(id, MongoDB.CViewTemplate);
+        }
+
     @Override
     public ViewTemplate enhance() {
         return this;
+    }
+
+    public void edit(Map<String, String> allSimple) {
+        
+    }
+
+    public static List<ViewTemplate> loadViews() {
+        List<ViewTemplate> lv = Lists.newLinkedList();
+        return lv;
+    }
+
+    public static ViewTemplate load(String viewId) {
+        ViewTemplate v = null;
+        return v;
     }
 
 }

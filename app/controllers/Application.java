@@ -458,12 +458,10 @@ public class Application extends Controller {
         render(ViewTemplate.EDIT_PAGE_HTML);
     }
 
-    // view page by its name
     private static void viewPage(String page) {
         viewPage(Page.loadByName(page));
     }
 
-    // view page
     private static void viewPage(Page page) {
         renderArgs.put("pageBuildStart",  System.currentTimeMillis());
         if (page != null ) {
@@ -483,6 +481,42 @@ public class Application extends Controller {
         viewPage("NodesByTag");
     }
 
+    // Views
+    public static void addView() {
+        ViewTemplate v = ViewTemplate.create(params.get("name"), params.get("inherit"),
+                getUser().getId());
+        renderArgs.put("view", v);
+        // + pages
+        render(ViewTemplate.EDIT_VIEW_HTML);
+    }
+
+    public static void showAddView() {
+        render(ViewTemplate.ADD_VIEW_HTML);
+    }
+
+    public static void showViews() {
+        renderArgs.put("views",  ViewTemplate.loadViews());
+        render(ViewTemplate.SHOW_VIEWS_HTML);
+    }
+
+    public static void showView(String viewId) {
+        renderArgs.put("view",  ViewTemplate.load(viewId));
+        // renderArgs.put("pages", Feed.getClasses("models.feeds"));
+        render(ViewTemplate.EDIT_VIEW_HTML);
+    }
+
+    public static void editView(String viewId) {
+        ViewTemplate v = ViewTemplate.load(viewId);
+        v.edit(params.allSimple());
+        renderArgs.put("view",  v);
+        // renderArgs.put("pages", Feed.getClasses("models.feeds"));
+        render(ViewTemplate.EDIT_VIEW_HTML);
+    }
+
+    private static void viewView(String viewId) { // lol
+        // viewPage(Page.loadByName(page));
+    }
+
     // Helpers
     private static User getUser() {
         return (User) Application.request.args.get("app-user");
@@ -494,6 +528,10 @@ public class Application extends Controller {
 
     private static Page getPage() {
         return (Page) Application.request.args.get("app-page");
+    }
+
+    private static ViewTemplate getView() {
+        return (ViewTemplate) Application.request.args.get("app-view");
     }
 
 }
