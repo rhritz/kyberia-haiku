@@ -66,6 +66,28 @@ public class Application extends Controller {
         }
     }
 
+    /* If there is a param "page" in the req, set the corresponding page
+     * - do this after loading the user, setting the view and loading the node
+     */
+    @Before
+    static void setPage() {
+        String p = params.get("page");
+        if (p == null || Page.loadByName(p) == null) {
+            NodeContent node = getNode();
+            if (node != null) {
+                p = node.getTemplate();
+                if (p == null)
+                    p = "Node";
+            }
+            // .. somehow somewhere throw an error
+        }
+        // TODO apply ViewTemplate too
+        Page page = Page.loadByName(p);
+        if (page != null) {
+            request.args.put("app-page", page);
+        }
+    }
+
     @After
     static void measureTime()
     {
@@ -86,14 +108,13 @@ public class Application extends Controller {
         displayNode(id);
     }
 
-    
-     public static void addNode(String id, String content) {
+    public static void addNode(String id, String content) {
         Logger.info("about to add node:" + id + "," + content );
         checkAuthenticity();
         NodeContent parentNode = getNode();
         String newId = NodeContent.addNode(
                     parentNode == null ? null : parentNode.getId(),
-                    Controller.params.allSimple(),
+                    params.allSimple(),
                     getUser().getId()
                 );
         String nid = null;
@@ -141,7 +162,7 @@ public class Application extends Controller {
      }
 
     //
-    // akcie
+    // Actions
     //
     public static void friend(String uid)
     {
@@ -235,7 +256,6 @@ public class Application extends Controller {
         displayNode(id);
     }
 
-    // TODO -> displayNodeWithTemplate() -> viewPage(?tmpl?)
     private static void displayNode(String id)
     {
         renderArgs.put("id", id);
@@ -244,6 +264,22 @@ public class Application extends Controller {
             if (node.canRead(getUser().getId())) {
                 UserLocation.saveVisit(getUser(), id); // getNode().id
                 viewPage("Node");
+            } else {
+                viewPage("NodeNoAccess");
+            }
+        } else {
+            viewPage("NodeError");
+        }
+    }
+
+    private static void displayNodeWithTemplate()
+    {
+        NodeContent node = getNode();
+        Page page = getPage();
+        if (node != null) {
+            if (node.canRead(getUser().getId())) {
+                UserLocation.saveVisit(getUser(), node.getIdString());
+                viewPage(page);
             } else {
                 viewPage("NodeNoAccess");
             }
@@ -329,21 +365,20 @@ public class Application extends Controller {
         viewPage("Live");
     }
 
-    // TODO cesta k obrazkom do konfigu + kontrolovat co sa upladuje
+    // TODO kontrolovat co sa upladuje
     // play.libs.Images.resize(icon, icon, Integer.SIZE, Integer.SIZE);
     // TemplateLoader.load(String key, String templateContent)
     public static void uploadIcon(String uid, File icon) {
         checkAuthenticity();
-        
-        String fname = "/code/haiku/public/images/upload/" +
-                session.get(User.ID);
+        String fname = play.Play.applicationPath.getAbsolutePath() +
+                "/public/images/upload/" + getUser().getIdString();
         icon.renameTo(new File(fname));
         showMe();
     }
 
     public static void changePwd(String uid) {
         checkAuthenticity();
-        getUser().changePwd(Controller.params.allSimple());
+        getUser().changePwd(params.allSimple());
         showMe();
     }
 
@@ -353,9 +388,9 @@ public class Application extends Controller {
 
     // Group management
     public static void addGroup() {
-        UserGroup g = UserGroup.create(session.get(User.ID), params.get("name"),
+        UserGroup g = UserGroup.create(getUser().getIdString(), params.get("name"),
                 null);
-        renderArgs.put("group",  g);
+        renderArgs.put("group", g);
         render(ViewTemplate.SHOW_GROUP_HTML);
     }
 
@@ -390,13 +425,14 @@ public class Application extends Controller {
         render(ViewTemplate.EDIT_GROUP_HTML);
     }
 
-
     // Pages
+    // TODO pimp up SHOW_PAGE_HTML for readonly access to pages
     public static void addPage() {
         Page p = Page.create(params.get("name"), params.get("template"),
                 getUser().getId());
         renderArgs.put("page",  p);
-        render(ViewTemplate.SHOW_PAGE_HTML);
+        renderArgs.put("classes", Feed.getClasses("models.feeds"));
+        render(ViewTemplate.EDIT_PAGE_HTML);
     }
 
     public static void showAddPage() {
@@ -410,8 +446,7 @@ public class Application extends Controller {
 
     public static void showPage(String pageId) {
         renderArgs.put("page",  Page.load(pageId));
-        renderArgs.put("classes",
-                Feed.getClasses("models.feeds"));
+        renderArgs.put("classes", Feed.getClasses("models.feeds"));
         render(ViewTemplate.EDIT_PAGE_HTML);
     }
 
@@ -419,18 +454,23 @@ public class Application extends Controller {
         Page  p = Page.load(pageId);
         p.edit(Controller.params.allSimple());
         renderArgs.put("page",  p);
-        renderArgs.put("classes",
-                Feed.getClasses("models.feeds"));
+        renderArgs.put("classes", Feed.getClasses("models.feeds"));
         render(ViewTemplate.EDIT_PAGE_HTML);
     }
 
     // view page by its name
     private static void viewPage(String page) {
+        viewPage(Page.loadByName(page));
+    }
+
+    // view page
+    private static void viewPage(Page page) {
         renderArgs.put("pageBuildStart",  System.currentTimeMillis());
-        Page  p = Page.loadByName(page);
-        if (p != null ) {
-            p.process(params.allSimple(), request, session, getUser(), renderArgs);
-            render(p.getTemplate());
+        if (page != null ) {
+            page.process(params.allSimple(), request, session, getUser(), renderArgs);
+            render(page.getTemplate());
+        } else {
+            // error
         }
     }
 
@@ -443,13 +483,17 @@ public class Application extends Controller {
         viewPage("NodesByTag");
     }
 
-    // helpers...
+    // Helpers
     private static User getUser() {
         return (User) Application.request.args.get("app-user");
     }
 
     private static NodeContent getNode() {
         return (NodeContent) Application.request.args.get("app-node");
+    }
+
+    private static Page getPage() {
+        return (Page) Application.request.args.get("app-page");
     }
 
 }

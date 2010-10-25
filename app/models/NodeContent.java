@@ -23,7 +23,6 @@ import com.google.code.morphia.annotations.Transient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
@@ -480,9 +479,20 @@ public class NodeContent extends MongoEntity {
         return pid;
     }
 
-    // TODO - should be simple reverse of the above, if caled on the putNode
     public void unputNode() {
-        
+        if (putId != null) {
+            // a putNode has no children - just remove from dfs
+            if (dfs != null) {
+                NodeContent dfsNode = load(dfs);
+                // if we have dfs-out, we have a dfs-in too -
+                NodeContent dfsSource = loadByDfs(id);
+                if (dfsNode != null && dfsSource != null) {
+                    dfsSource.dfs = dfs;
+                    dfsSource.update();
+                }
+            }
+            delete();
+        }
     }
 
     public static String addNode(ObjectId parent,
@@ -503,7 +513,7 @@ public class NodeContent extends MongoEntity {
         if (parent != null) {
             NodeContent root = NodeContent.load(parent);
             ObjectId dfs;
-            if (root != null) {
+            if (root != null && root.putId == null ) {
                 newnode.par = parent;
                 Logger.info("parent loaded :: " + root.dfs);
                 dfs = root.dfs;
@@ -539,6 +549,7 @@ public class NodeContent extends MongoEntity {
     }
 
     // unles it's a putNode...
+    // TODO remove all putNodes that reference this Node
     public void deleteNode() {
         NodeContent dfsNode = null;
         NodeContent dfsSource = null;
@@ -591,9 +602,12 @@ public class NodeContent extends MongoEntity {
 
     // + add activity to new place, remove from old one
     // + updates in one place
+    // + check permissions
     public void moveNode(ObjectId to) {
         NodeContent toNode = load(to);
         if (toNode == null) // + permissions
+            return;
+        if (toNode.putId != null)
             return;
         // fix old dfs, if dfs goes out of the subtree;
         // set new dfs, -||-
@@ -631,76 +645,6 @@ public class NodeContent extends MongoEntity {
         toNode.update();
         par = to;
         update();
-    }
-
-    private static List<NodeContent> getThreadedChildren(ObjectId id,
-            Integer start, Integer count)
-    {
-        List<NodeContent> thread = null;
-        try {
-            String evalQuery = "return getThreadedChildren(ObjectId(\"" +
-                    id.toString() + "\"), " + start + "," + count + ");";
-            DBObject iobj = MongoDB.getDB().doEval(evalQuery, "");
-            if (iobj !=  null) {
-                // Logger.info("getThreadedChildren:: " + iobj.toString());
-                BasicDBList oo = (BasicDBList) iobj.get("retval");
-                // Logger.info(oo.getClass().getCanonicalName());
-                if (oo != null) {
-                    thread = new LinkedList<NodeContent>();
-                    for (Object ooo : oo ) {
-                        BasicDBList nodef = (BasicDBList) ooo;
-                        ObjectId nodeId = (ObjectId) nodef.get(0);
-                        Double depth = (Double)  nodef.get(1);
-                        NodeContent nc = NodeContent.load(nodeId);
-                        nc.depth = depth.intValue();
-                        thread.add(nc);
-                    }
-                }
-            }
-        } catch (Exception ex) {
-            Logger.info("getThreadedChildren");
-            ex.printStackTrace();
-            Logger.info(ex.toString());
-        }
-        return thread;
-    }
-
-    public List<NodeContent> getThreadIntern(Integer start, Integer count)
-    {
-        List<NodeContent> thread = new LinkedList<NodeContent>();
-        HashMap<ObjectId,Integer> roots = new HashMap<ObjectId,Integer>();
-        int local_depth = 0;
-        NodeContent nextnode = this;
-        NodeContent lastnode;
-        ObjectId parent;
-        for (int i = 0; i < start + count; i++) {
-            lastnode = nextnode;
-            if (lastnode.dfs == null) 
-              return thread;
-            nextnode = NodeContent.load(lastnode.dfs);
-            if (nextnode == null || nextnode.par == null)
-              return thread;
-            parent = nextnode.par;
-            if (parent.equals(lastnode.id)) {
-                roots.put(parent,local_depth);
-                local_depth++;
-            } else {
-                // ak v tomto bode nema parenta v roots,
-                // znamena to ze siahame vyssie ako root - koncime
-                if (roots.get(parent) == null) 
-                    return thread;
-                // nasli sme parenta, sme o jedno hlbsie ako on
-                local_depth = roots.get(parent) + 1;
-            }
-            if ( i>= start) {
-                // tento node chceme zobrazit
-                // tu je vhodne miesto na kontrolu per-node permissions,
-                // ignore a fook zalezitosti
-                nextnode.depth = local_depth;
-                thread.add(nextnode);
-            }
-        }
-        return thread;
     }
 
     // returns the whole subtree of a node, optionally stop on stopNodes.
@@ -878,6 +822,13 @@ public class NodeContent extends MongoEntity {
             parName  = "";
         loadRights();
         return this;
+    }
+
+    /**
+     * @param template the template to set
+     */
+    public void setTemplate(String template) {
+        this.template = template;
     }
 
 }

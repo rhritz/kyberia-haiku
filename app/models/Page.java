@@ -30,7 +30,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import play.mvc.Http.Request;
-import play.mvc.Scope.Params;
 import play.mvc.Scope.Session;
 import plugins.*;
 import play.Logger;
@@ -83,10 +82,11 @@ public class Page extends MongoEntity {
         this.template = template;
     }
 
-    /* TODO
     public void removeBlock(String blockName) {
+        blocks.remove(blockName);
+        save();
+        enhance();
     }
-     */
 
     public static List<Page> loadPages() {
         List<Page> pages = null;
@@ -165,8 +165,10 @@ public class Page extends MongoEntity {
 
     public static Page create(String name, String template, ObjectId owner) {
         Page p = new Page(name, template, owner);
-        if (p != null)
+        if (p != null) {
+            p.setId(new ObjectId());
             p.save();
+        }
         return p;
     }
 
