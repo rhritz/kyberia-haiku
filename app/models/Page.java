@@ -155,12 +155,12 @@ public class Page extends MongoEntity {
             doUpdate = true;
         }
         if (doUpdate)
-            MongoDB.update(this, MongoDB.CPage);
+            MongoDB.update(this);
     }
 
     // + cache
     public void save() {
-        MongoDB.save(this, MongoDB.CPage);
+        MongoDB.save(this);
     }
 
     public static Page create(String name, String template, ObjectId owner) {
@@ -220,6 +220,11 @@ public class Page extends MongoEntity {
     public Page enhance() {
         prepareBlocks();
         return this;
+    }
+
+    @Override
+    public DBCollection getCollection() {
+        return dbcol;
     }
 
 }

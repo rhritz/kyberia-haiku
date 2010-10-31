@@ -34,65 +34,62 @@ import plugins.MongoDB;
 public class UserLocation extends MongoEntity {
 
     public static DBCollection dbcol = null;
+    private static final String uls = "user_locations";
+    private static final String ulk = "user_location_";
+    private static final String userCacheExpiry = "1h";
+
+    private ObjectId       uid;
+    private ObjectId       loc;
+    private Long           time;
 
     @Transient
-    private String         username; // for sorting
-    private String         userid;
-    private String         location;
+    private String         username;
+    
     @Transient
-    private String         locname; // <- nazov lokacie
-    private Long           time;
+    private String         locname;
 
     public UserLocation () {}
 
-    public UserLocation(String userid,
-                        String username,
-                        String location,
+    public UserLocation(User user,
+                        ObjectId location,
                         Long time)
     {
-        this.userid   = userid;
-        this.username = username;
-        this.location = location;
+        uid      = user.getId();
+        username = user.getUsername();
+        loc      = location;
         this.time     = time;
     }
 
-    // !!! synchronized aby sme nemali problem s insertom do TreeSetu
-    // - mozno aj tak budeme, potom to treba zmenit
-    // TODO vymazat pri logoute
-    // TODO not-node lokacie nejak vyriesit (pridat loc-name a nastavit len to,
-    // potom nezapisovat do db? might work.
-    // invisible - bude ukazovat ze clovek je online ale inak nic?
-    public static synchronized void saveVisit(User user, String location)
+    // TODO vymazat pri logoute + nebude lepsia capped collection?
+    public static synchronized void saveVisit(User user, ObjectId location)
     {
-        // if location == null nezapisuj do db...
-        ObjectId userid = user.getId();
-        UserLocation ul = new UserLocation(userid.toString(), user.getUsername(),
-                location, System.currentTimeMillis());
-        Cache.set("user_location_" + user.getIdString(), ul); // + expiry
+        if (location == null || user.isInvisible())
+            return;
+        UserLocation ul = new UserLocation(user, location, System.currentTimeMillis());
+        Cache.set(ulk + user.getIdString(), ul, userCacheExpiry);
         ul.save();
-        Bookmark.updateVisit(userid, location);
-        // TODO z tohto asi perzistentny plugin, stale to de/serializovat z cache
-        // je blbost
-        SortedSet<UserLocation> ll = Cache.get("user_locations",
-                SortedSet.class);
-        if ( ll==null )
+        Bookmark.updateVisit(user.getId(), location.toString());
+        SortedSet<UserLocation> ll = Cache.get(uls, SortedSet.class);
+        if ( ll == null )
             ll = new TreeSet<UserLocation>(new LocationComparator());
-        if ( ll.contains(ul)) // vyhodime staru lokaciu
+        else if(ll.contains(ul)) // remove old location
             ll.remove(ul);
         ll.add(ul);
-        Cache.set("user_locations", ll);
+        Cache.set( uls, ll);
+        // +:
+        // - pozri do zoznamu starych lokacii ci niekde nie je, ak je vymaz
+        // - pridaj pre aktualnu lokaciu
     }
 
     private void save()
     {
-        MongoDB.save(this, MongoDB.CUserLocation);
+        MongoDB.save(this);
     }
 
     // vsetci useri kdekolvek, teraz
     public static SortedSet<UserLocation> getAll()
     {
-        SortedSet<UserLocation> ll = 
-                Cache.get("user_locations", SortedSet.class);
+        SortedSet<UserLocation> ll = Cache.get(uls, SortedSet.class);
         return ll;
     }
 
@@ -106,13 +103,12 @@ public class UserLocation extends MongoEntity {
     // sucasna location daneho suera
     public static UserLocation getUserLocation(String uid)
     {
-        return (UserLocation) Cache.get("user_location" + uid);
+        return Cache.get(ulk + uid, UserLocation.class);
     }
 
     @Override
     public boolean equals(Object obj)
     {
-        // ClassCastException ?
         if (obj == null || obj.getClass() != UserLocation.class)
             return false;
         if (((UserLocation) obj).getUsername().equals(this.getUsername()))
@@ -129,17 +125,17 @@ public class UserLocation extends MongoEntity {
     }
 
     /**
-     * @return the userid
+     * @return the uid
      */
-    public String getUserid() {
-        return userid;
+    public ObjectId getUid() {
+        return uid;
     }
 
     /**
-     * @return the location
+     * @return the loc
      */
-    public String getLocation() {
-        return location;
+    public ObjectId getLoc() {
+        return loc;
     }
 
     /**
@@ -164,4 +160,10 @@ public class UserLocation extends MongoEntity {
     public UserLocation enhance() {
         return this;
     }
+
+    @Override
+    public DBCollection getCollection() {
+        return dbcol;
+    }
+
 }

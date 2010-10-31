@@ -182,13 +182,13 @@ public class Bookmark extends MongoEntity {
         return b;
     }
 
-    public static void add(String dest, String uid, String type)
+    public static void add(ObjectId dest, ObjectId uid, String type)
     {
-        Bookmark b = Cache.get(key(uid,dest), Bookmark.class);
-        if (b != null )
+        Bookmark b = Cache.get(key(uid.toString(),dest.toString()), Bookmark.class);
+        if (b != null)
             return;
-        b = new Bookmark(new ObjectId(dest), new ObjectId(uid), type);
-        MongoDB.save(b, MongoDB.CBookmark);
+        b = new Bookmark(dest, uid, type);
+        MongoDB.save(b);
         Cache.delete("bookmark_" + uid);
     }
 
@@ -214,12 +214,11 @@ public class Bookmark extends MongoEntity {
             b.lastVisit = System.currentTimeMillis();
             b.numNew    = 0;
             Cache.replace(key, b);
-            MongoDB.update(b, MongoDB.CBookmark);
+            MongoDB.update(b);
         }
     }
 
     static void invalidate(ObjectId uid, String dest) {
-        Logger.info("Invalidate visit::" + key(uid.toString(),dest));
         Cache.delete(key(uid.toString(),dest));
     }
 
@@ -265,5 +264,10 @@ public class Bookmark extends MongoEntity {
     @Override
     public Bookmark enhance() {
         return this;
+    }
+
+    @Override
+    public DBCollection getCollection() {
+        return dbcol;
     }
 }

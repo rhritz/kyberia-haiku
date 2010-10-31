@@ -91,7 +91,7 @@ public class Activity extends MongoEntity {
                 return;
             HashMap<String,Integer> usersOnline = new HashMap<String,Integer>();
             for (UserLocation u : uso)
-                usersOnline.put(u.getUserid(), 1);
+                usersOnline.put(u.getUid().toString(), 1);
             // update bookmarks for users online
             for (ObjectId par : parents)
                 for (Bookmark b : Bookmark.getByDest(par)) 
@@ -107,7 +107,7 @@ public class Activity extends MongoEntity {
     public void save()
     {
         try {
-            MongoDB.save(this, MongoDB.CActivity);
+            MongoDB.save(this);
         } catch (Exception ex) {
             Logger.info("activity save failed:");
             ex.printStackTrace();
@@ -125,6 +125,11 @@ public class Activity extends MongoEntity {
     @Override
     public Activity enhance() {
         return this;
+    }
+
+    @Override
+    public DBCollection getCollection() {
+        return dbcol;
     }
 
 }

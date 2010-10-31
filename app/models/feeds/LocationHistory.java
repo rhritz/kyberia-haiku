@@ -34,7 +34,7 @@ import plugins.MongoDB;
 public class LocationHistory extends Feed{
 
     // TODO natural sort
-    private static final BasicDBObject sort = new BasicDBObject().append("time", -1);
+    private static final BasicDBObject sort = new BasicDBObject("time", -1);
 
     @Override
     public void getData(   Map<String, String> params,

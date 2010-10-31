@@ -23,7 +23,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.google.code.morphia.Morphia;
 
-// mapovane models
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.mongodb.DBCollection;
@@ -48,6 +47,7 @@ public class MongoDB {
     private ToBookmark      bookmark;
     private ToActivity      activity;
     private ToFeed          feed;
+    private ToViewTemplate  viewTemplate;
 
     private static DB       db;
     private static Mongo    mongo;
@@ -101,6 +101,7 @@ public class MongoDB {
           activity      = new ToActivity();
           page          = new ToPage();
           feed          = new ToFeed();
+          viewTemplate  = new ToViewTemplate();
     }
 
     public static void start() {
@@ -172,6 +173,7 @@ public class MongoDB {
 
             db.getCollection(CFeed).ensureIndex(new BasicDBObject("name","1"),"name_1",true);
             db.getCollection(CPage).ensureIndex(new BasicDBObject("name","1"),"name_1",true);
+            db.getCollection(CViewTemplate).ensureIndex(new BasicDBObject("name","1"),"name_1",true);
 
             // db.getCollection(CActivity).ensureIndex(new BasicDBObject("username","1"),"username_1",true);
             // db.getCollection(CBookmark).ensureIndex({destination: 1, uid:1}, {unique: true});
@@ -200,22 +202,19 @@ public class MongoDB {
         return morphia;
     }
 
-    public static void save(Object m, String col)
+    public static void save(MongoEntity m)
     {
-         DBObject mDBObj = morphia.toDBObject(m);
-         db.getCollection(col).insert(mDBObj);
+         m.getCollection().insert(morphia.toDBObject(m));
     }
 
-    public static void update(Object m, String col)
+    public static void update(MongoEntity m)
     {
-        DBObject mDBObj = morphia.toDBObject(m);
-        db.getCollection(col).save(mDBObj);
+         m.getCollection().save(morphia.toDBObject(m));
     }
 
-    public static void delete(Object m, String col)
+    public static void delete(MongoEntity m)
     {
-        DBObject mDBObj = morphia.toDBObject(m);
-        db.getCollection(col).remove(mDBObj);
+         m.getCollection().remove(morphia.toDBObject(m));
     }
 
     public static <T> T load(String id, String col, Class<T> entityClass)
@@ -228,7 +227,8 @@ public class MongoDB {
         DBObject DBObj = db.getCollection(col).findOne(new BasicDBObject("_id", id));
         return fromDBObject(entityClass, DBObj);
     }
-    
+
+    // TODO variable ordering via BasicDBObject sort as a parameter?
     public static <T> List<T> loadIds(List<ObjectId> fromList, String col,
             Function<DBObject, ? extends T> function)
     {
@@ -330,6 +330,11 @@ public class MongoDB {
         return page;
     }
 
+    public Function<DBObject, ViewTemplate> toViewTemplate()
+    {
+        return viewTemplate;
+    }
+
     public static <T> T fromDBObject(Class<T> entityClass, DBObject dbObject) {
         return morphia.fromDBObject(entityClass, dbObject,
                 morphia.getMapper().createEntityCache());
@@ -399,6 +404,12 @@ public class MongoDB {
     public class ToPage implements Function<DBObject, Page> {
         public Page apply(DBObject arg) {
             return fromDBObject(Page.class, arg).enhance();
+        }
+    }
+
+    public class ToViewTemplate implements Function<DBObject, ViewTemplate> {
+        public ViewTemplate apply(DBObject arg) {
+            return fromDBObject(ViewTemplate.class, arg).enhance();
         }
     }
 }

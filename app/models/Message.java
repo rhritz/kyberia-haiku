@@ -74,7 +74,7 @@ public class Message extends MongoEntity {
     public void delete(String uid)
     {
         deleted.add(toId(uid));
-        MongoDB.save(this, MongoDB.CMessage);
+        MongoDB.save(this);
     }
 
     public static void send(
@@ -97,7 +97,7 @@ public class Message extends MongoEntity {
         }
         Message m = new Message(Validator.validateTextonly(content),
                 fromId, toId, mt.getId());
-        MongoDB.save(m, MongoDB.CMessage);
+        MongoDB.save(m);
         mt.notify(fromId,toId);
     }
 
@@ -106,6 +106,11 @@ public class Message extends MongoEntity {
         fromUser = User.getNameForId(from);
         toUser   = User.getNameForId(to);
         return this;
+    }
+
+    @Override
+    public DBCollection getCollection() {
+        return dbcol;
     }
 
 }

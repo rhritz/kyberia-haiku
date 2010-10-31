@@ -59,8 +59,8 @@ public class UserGroup extends MongoEntity {
             String name,
             List<ObjectId> members)
     {
-            UserGroup u = new UserGroup(new ObjectId(uid), name, members);
-            MongoDB.save(u, MongoDB.CUserGroup);
+            UserGroup u = new UserGroup(toId(uid), name, members);
+            MongoDB.save(u);
             return u;
     }
 
@@ -119,7 +119,7 @@ public class UserGroup extends MongoEntity {
     // + cache
     public void changeOwner(ObjectId newOwner) {
         owner = newOwner;
-        MongoDB.save(this, MongoDB.CUserGroup);
+        MongoDB.save(this);
     }
 
     public static List<UserGroup> loadGroups() {
@@ -142,12 +142,18 @@ public class UserGroup extends MongoEntity {
 
     // + cache
     public void save() {
-        MongoDB.save(this, MongoDB.CUserGroup);
+        MongoDB.save(this);
     }
 
     @Override
     public UserGroup enhance() {
         return this;
     }
+
+    @Override
+    public DBCollection getCollection() {
+        return dbcol;
+    }
+
 
 }

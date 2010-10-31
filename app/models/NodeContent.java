@@ -56,11 +56,11 @@ public class NodeContent extends MongoEntity {
     private ObjectId      putId;
 
     private Integer       accessType  = 0;
-    private Integer       contentType = 0; // zatial nic
+    private Integer       typ         = 0; // <-- NodeContent.Type.ordinal()
 
     private Long          k           = 0l;
     private Long          mk          = 0l;
-    private Long          numVisits   = 0l;
+    private Long          numVisits   = 0l; // TODO move this elsewhere
     private Boolean       kAllowed    = true;
 
     private List<String>    tags;
@@ -200,7 +200,7 @@ public class NodeContent extends MongoEntity {
     public NodeContent save() {
         try {
             setId(new ObjectId());
-            MongoDB.save(this, MongoDB.CNode);
+            MongoDB.save(this);
             enhance();
             Cache.set("node_" + getId(), this);
             return this;
@@ -215,7 +215,7 @@ public class NodeContent extends MongoEntity {
     public void update() {
         try {
             Logger.info("updating node");
-            MongoDB.update(this, MongoDB.CNode);
+            MongoDB.update(this);
             Cache.set("node_" + getId(), this);
         } catch (Exception ex) {
             Logger.info("update failed:");
@@ -228,7 +228,7 @@ public class NodeContent extends MongoEntity {
         try {
             Logger.info("deleting node");
             Cache.delete("node_" + getId());
-            MongoDB.delete(this, MongoDB.CNode);
+            MongoDB.delete(this);
         } catch (Exception ex) {
             Logger.info("delete failed:");
             ex.printStackTrace();
@@ -824,11 +824,25 @@ public class NodeContent extends MongoEntity {
         return this;
     }
 
+    @Override
+    public DBCollection getCollection() {
+        return dbcol;
+    }
+
+
     /**
      * @param template the template to set
      */
     public void setTemplate(String template) {
         this.template = template;
     }
+
+    public enum Type {
+        NODE,
+        FORUM,
+        CATEGORY,
+        USER,
+        FRIEND // ?
+    };
 
 }

@@ -186,4 +186,9 @@ public class Feed extends MongoEntity{
         return this;
     }
 
+    @Override
+    public DBCollection getCollection() {
+        return dbcol;
+    }
+
 }

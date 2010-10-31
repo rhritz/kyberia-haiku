@@ -201,12 +201,18 @@ public class Application extends Controller {
 
     public static void book(String id)
     {
-        // TODO set bookmark type - "ids" for nodes, "owner" for user etc
         checkAuthenticity();
         Logger.info("Bookmark action:: " + id);
         String type = "ids";
-        Bookmark.add(id, getUser().getIdString(), type);
+        Bookmark.add(toId(id), getUser().getId(), type);
         displayNode(id);
+    }
+
+    public static void book(String id, String type)
+    {
+        checkAuthenticity();
+        Bookmark.add(toId(id), getUser().getId(), type);
+        displayNode(id); // could be a user though...
     }
 
     public static void unbook(String id)
@@ -262,7 +268,7 @@ public class Application extends Controller {
         NodeContent node = getNode();
         if (node != null) {
             if (node.canRead(getUser().getId())) {
-                UserLocation.saveVisit(getUser(), id); // getNode().id
+                UserLocation.saveVisit(getUser(), node.getId());
                 viewPage("Node");
             } else {
                 viewPage("NodeNoAccess");
@@ -272,13 +278,13 @@ public class Application extends Controller {
         }
     }
 
-    private static void displayNodeWithTemplate()
+    public static void displayNodeWithTemplate()
     {
         NodeContent node = getNode();
         Page page = getPage();
-        if (node != null) {
+        if (node != null && page != null) {
             if (node.canRead(getUser().getId())) {
-                UserLocation.saveVisit(getUser(), node.getIdString());
+                UserLocation.saveVisit(getUser(), node.getId());
                 viewPage(page);
             } else {
                 viewPage("NodeNoAccess");

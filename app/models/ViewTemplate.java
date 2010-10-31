@@ -166,13 +166,19 @@ public class ViewTemplate extends MongoEntity{
         }
 
         public void save() {
-            MongoDB.save(id, MongoDB.CViewTemplate);
+            MongoDB.save(this);
         }
 
     @Override
     public ViewTemplate enhance() {
         return this;
     }
+
+    @Override
+    public DBCollection getCollection() {
+        return dbcol;
+    }
+
 
     public void edit(Map<String, String> allSimple) {
         

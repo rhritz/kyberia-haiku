@@ -99,13 +99,13 @@ public class Tag extends MongoEntity {
     // TODO + cache
     public void save()
     {
-        MongoDB.save(this, MongoDB.CTag);
+        MongoDB.save(this);
     }
 
     // TODO + cache
     public void update()
     {
-        MongoDB.update(this, MongoDB.CTag);
+        MongoDB.update(this);
     }
 
     public static List<NodeContent> getTaggedNodes(String tag)
@@ -148,4 +148,10 @@ public class Tag extends MongoEntity {
     public Tag enhance() {
         return this;
     }
+
+    @Override
+    public DBCollection getCollection() {
+        return dbcol;
+    }
+
 }

@@ -17,6 +17,7 @@
 */
 package plugins;
 
+import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -25,6 +26,7 @@ import models.ViewTemplate;
 import play.Play;
 import play.PlayPlugin;
 import play.exceptions.UnexpectedException;
+import static com.mongodb.util.JSON.parse;
 
 /*
  load Pages & Views
@@ -38,21 +40,8 @@ public class TemplatePlugin extends PlayPlugin {
     @Override
     public void onApplicationStart() {
 
-        try {
-            BufferedReader reader = new BufferedReader( new
-                    FileReader(Play.applicationPath.getAbsolutePath()
-                    + "/mongojs/Page.js"));
-            String strLine;
-        
-            while ((strLine = reader.readLine()) != null)   {
-                DBObject page = (DBObject) com.mongodb.util.JSON.parse(strLine);
-                if (page != null)
-                    Page.dbcol.insert(page);
-            }
-            reader.close();
-        } catch (Exception e) {
-            throw new UnexpectedException (e);
-        }
+        importFile("/mongojs/Page.js", Page.dbcol);
+        importFile("/mongojs/ViewTemplate.js", ViewTemplate.dbcol);
 
         try {
             Page.start();
@@ -65,6 +54,25 @@ public class TemplatePlugin extends PlayPlugin {
     @Override
     public void onApplicationStop() {
         
+    }
+
+    private void importFile(String fname, DBCollection col)
+            throws UnexpectedException {
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader( new FileReader(
+                    Play.applicationPath.getAbsolutePath() + fname ));
+            String strLine;
+
+            while ((strLine = reader.readLine()) != null)   {
+                DBObject obj = (DBObject) parse(strLine);
+                if (obj != null)
+                    col.insert(obj);
+            }
+            reader.close();
+        } catch (Exception e) {
+            throw new UnexpectedException (e);
+        } 
     }
     
 }

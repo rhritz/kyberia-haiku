@@ -18,6 +18,7 @@
 package models.feeds;
 
 import com.google.common.collect.Lists;
+import static com.google.common.collect.Iterables.reverse;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import org.bson.types.ObjectId;
@@ -40,7 +41,7 @@ import plugins.MongoDB;
 public class NodeUpdates extends Feed{
 
     // TODO natural sort
-    private static final BasicDBObject sort = new BasicDBObject("date", 1);
+    private static final BasicDBObject sort = new BasicDBObject("date", -1);
 
     @Override
     public void getData(   Map<String, String> params,
@@ -51,18 +52,17 @@ public class NodeUpdates extends Feed{
         Integer start = 0;
         Integer count = 30;
         ObjectId nodeId = MongoEntity.toId(params.get("id"));
-        ObjectId uid = user.getId();
 
         List<NodeContent> newNodes = null;
         try {
-            BasicDBObject query = new BasicDBObject( "oid", nodeId);
+            BasicDBObject query = new BasicDBObject( "ids", nodeId);
             DBCursor iobj = Activity.dbcol.find(query).sort(sort).
                     skip(start).limit(count);
             List<Activity> lll = MongoDB.transform(iobj,
                         MongoDB.getSelf().toActivity());
             if (! lll.isEmpty()) {
                 List<ObjectId> nodeIds = Lists.newLinkedList();
-                for (Activity ac : lll)
+                for (Activity ac : reverse(lll))
                     nodeIds.add(ac.getOid());
                 newNodes = NodeContent.load(nodeIds);
             }

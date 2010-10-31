@@ -103,7 +103,7 @@ public class Vote extends MongoEntity {
     public void save()
     {
         try {
-             MongoDB.save(this,MongoDB.CVote);
+             MongoDB.save(this);
         } catch (Exception ex) {
             Logger.info(ex.toString());
         }
@@ -112,7 +112,7 @@ public class Vote extends MongoEntity {
     public void update()
     {
         try {
-             MongoDB.update(this,MongoDB.CVote);
+             MongoDB.update(this);
         } catch (Exception ex) {
             Logger.info(ex.toString());
         }
@@ -152,6 +152,12 @@ public class Vote extends MongoEntity {
     public Vote enhance() {
         return this;
     }
+
+    @Override
+    public DBCollection getCollection() {
+        return dbcol;
+    }
+
 
     public class Option {
         private String name;

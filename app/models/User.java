@@ -45,12 +45,11 @@ public class User extends MongoEntity {
 
     private String             username;
     private String             password;
-    private String             userinfo; // co sa ma zobrazit v userinfe
-    private Integer            userinfoAccessType;
+    private ObjectId           userinfo; // -> userinfo Node
     private String             template; // a ako sa to ma zobrazit
 
-    private String             view; // userov view
-    private Map<String,String> menu; // userovo menu
+    private String             view;     // userov view
+    private Map<String,String> menu;     // userovo menu
     
     private List<String>       tags;     // given tags
     private List<ObjectId>     friends;  // friends and stuff
@@ -60,6 +59,8 @@ public class User extends MongoEntity {
 
     private Integer            dailyK;
     private Integer            k;
+
+    private Boolean            invisible = Boolean.FALSE;
 
     public static final String USERNAME = "username";
     public static final String BOOKMARKS = "bookmarks";
@@ -150,7 +151,7 @@ public class User extends MongoEntity {
             changed = true;
         }
         if (userinfo != null) {
-            this.userinfo = userinfo;
+            this.userinfo = toId(userinfo);
             changed = true;
         }
         if (changed) {
@@ -198,7 +199,7 @@ public class User extends MongoEntity {
     {
         try {
              Cache.set("user_" + this.getId(), this);
-             MongoDB.save(this,MongoDB.CUser);
+             MongoDB.save(this);
         } catch (Exception ex) {
             Logger.info(ex.toString());
         } 
@@ -208,7 +209,7 @@ public class User extends MongoEntity {
     {
         try {
              Cache.set("user_" + this.getId(), this);
-             MongoDB.update(this,MongoDB.CUser);
+             MongoDB.update(this);
         } catch (Exception ex) {
             Logger.info(ex.toString());
         }
@@ -224,9 +225,7 @@ public class User extends MongoEntity {
     public static User load(String id)
     {
         if (id == null || id.length() < 10) return null;
-        return load(new ObjectId(id));
-//        ObjectId bubu = null;
-  //      try { bubu = new ObjectId(x);} catch (Exception e ) {};
+        return load(toId(id));
     }
 
     // load user by id
@@ -424,6 +423,10 @@ public class User extends MongoEntity {
         return dailyK;
     }
 
+    public Boolean isInvisible() {
+        return invisible;
+    }
+
     // transform ObjectId to User
     class ToUser implements Function<ObjectId, User> {
         public User apply(ObjectId arg) {
@@ -481,5 +484,11 @@ public class User extends MongoEntity {
     public User enhance() {
         return this;
     }
+
+    @Override
+    public DBCollection getCollection() {
+        return dbcol;
+    }
+
 
 }
