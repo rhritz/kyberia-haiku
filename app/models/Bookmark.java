@@ -38,6 +38,7 @@ import play.cache.Cache;
 public class Bookmark extends MongoEntity {
 
     public static DBCollection dbcol = null;
+    private static final String key = "bookmark_";
 
     private ObjectId  dest;
     private String    alt;             // alt link to diplay next to dest url
@@ -85,7 +86,7 @@ public class Bookmark extends MongoEntity {
             return b;
         }
         try {
-            BasicDBObject query = new BasicDBObject(USERID, new ObjectId(uid));
+            BasicDBObject query = new BasicDBObject(USERID, toId(uid));
             DBCursor iobj = dbcol.find(query).sort(sort);
             if (iobj !=  null) {
                 Logger.info("user bookmarks found");
@@ -115,8 +116,8 @@ public class Bookmark extends MongoEntity {
         Bookmark b = null;
         Logger.info("Bookmark.loadAndStore :: " + key(uid,dest));
         try {
-            BasicDBObject query = new BasicDBObject(USERID, new ObjectId(uid)).
-                    append(DEST, new ObjectId(dest));
+            BasicDBObject query = new BasicDBObject(USERID, toId(uid)).
+                    append(DEST, toId(dest));
             DBObject iobj = dbcol.findOne(query);
             if (iobj !=  null) {
                 b = MongoDB.fromDBObject(Bookmark.class,iobj);
@@ -188,13 +189,13 @@ public class Bookmark extends MongoEntity {
         if (b != null)
             return;
         b = new Bookmark(dest, uid, type);
-        MongoDB.save(b);
-        Cache.delete("bookmark_" + uid);
+        b.save();
+        Cache.delete(key + uid);
     }
 
     public static void delete(String dest, String uid) // -> ObjectId
     {
-        Cache.delete("bookmark_" + uid);
+        Cache.delete(key + uid);
         Cache.delete(key(uid,dest));
         try {
             dbcol.remove(new BasicDBObject(USERID, uid).append(DEST, dest));
@@ -214,7 +215,7 @@ public class Bookmark extends MongoEntity {
             b.lastVisit = System.currentTimeMillis();
             b.numNew    = 0;
             Cache.replace(key, b);
-            MongoDB.update(b);
+            b.update();
         }
     }
 
@@ -230,7 +231,7 @@ public class Bookmark extends MongoEntity {
     }
 
     private static String key(String uid, String dest) {
-        return "bookmark_" + uid + "_" + dest;
+        return key + uid + "_" + dest;
     }
 
     /**
@@ -269,5 +270,10 @@ public class Bookmark extends MongoEntity {
     @Override
     public DBCollection getCollection() {
         return dbcol;
+    }
+
+    @Override
+    public String key() {
+        return key;
     }
 }

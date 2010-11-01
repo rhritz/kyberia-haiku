@@ -40,6 +40,7 @@ import play.mvc.Scope.RenderArgs;
 public class Page extends MongoEntity {
 
     public static DBCollection dbcol = null;
+    private static final String key  = "page_";
 
     private String              name;
     private String              title;
@@ -84,7 +85,7 @@ public class Page extends MongoEntity {
 
     public void removeBlock(String blockName) {
         blocks.remove(blockName);
-        save();
+        save(true);
         enhance();
     }
 
@@ -155,19 +156,14 @@ public class Page extends MongoEntity {
             doUpdate = true;
         }
         if (doUpdate)
-            MongoDB.update(this);
-    }
-
-    // + cache
-    public void save() {
-        MongoDB.save(this);
+            update(true);
     }
 
     public static Page create(String name, String template, ObjectId owner) {
         Page p = new Page(name, template, owner);
         if (p != null) {
             p.setId(new ObjectId());
-            p.save();
+            p.save(true);
         }
         return p;
     }
@@ -225,6 +221,11 @@ public class Page extends MongoEntity {
     @Override
     public DBCollection getCollection() {
         return dbcol;
+    }
+
+    @Override
+    public String key() {
+        return key;
     }
 
 }

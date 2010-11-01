@@ -33,6 +33,7 @@ import org.bson.types.ObjectId;
 import models.*;
 import play.Logger;
 import play.Play;
+import static models.MongoEntity.toId;
 
 public class MongoDB {
     private static MongoDB  self;
@@ -202,24 +203,20 @@ public class MongoDB {
         return morphia;
     }
 
-    public static void save(MongoEntity m)
-    {
+    public static void save(MongoEntity m) {
          m.getCollection().insert(morphia.toDBObject(m));
     }
 
-    public static void update(MongoEntity m)
-    {
+    public static void update(MongoEntity m) {
          m.getCollection().save(morphia.toDBObject(m));
     }
 
-    public static void delete(MongoEntity m)
-    {
+    public static void delete(MongoEntity m) {
          m.getCollection().remove(morphia.toDBObject(m));
     }
 
-    public static <T> T load(String id, String col, Class<T> entityClass)
-    {
-        return load(new ObjectId(id), col, entityClass);
+    public static <T> T load(String id, String col, Class<T> entityClass) {
+        return load(toId(id), col, entityClass);
     }
 
     public static <T> T load(ObjectId id, String col, Class<T> entityClass)

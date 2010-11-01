@@ -29,12 +29,12 @@ import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import org.bson.types.ObjectId;
 import play.Logger;
-import java.text.DateFormat;
-import java.util.Date;
+import org.joda.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import org.joda.time.format.DateTimeFormat;
 import play.cache.Cache;
 import plugins.MongoDB;
 import plugins.Validator;
@@ -43,11 +43,12 @@ import plugins.Validator;
 public class NodeContent extends MongoEntity {
 
     public static DBCollection dbcol = null;
-
+    private static final String key  = "node_";
+    
     private String        content     = "";
     public  ObjectId      owner       ; // mongoid ownera
     private Long          created     = 0l;
-    private String        cr_date     = "";
+    private String        cr_date     = ""; // transient?
     public  String        name        = "";
     public  ObjectId      par             ;
     public  ObjectId      dfs;
@@ -56,7 +57,7 @@ public class NodeContent extends MongoEntity {
     private ObjectId      putId;
 
     private Integer       accessType  = 0;
-    private Integer       typ         = 0; // <-- NodeContent.Type.ordinal()
+    private Integer       typ         = 0;
 
     private Long          k           = 0l;
     private Long          mk          = 0l;
@@ -90,23 +91,31 @@ public class NodeContent extends MongoEntity {
     public static final String CONTENT  = "content";
     public static final String CREATED  = "created";
     public static final String NAME     = "name";
-    public static final String OWNER   = "owner";
+    public static final String OWNER    = "owner";
 
     public static final int PUBLIC    = 0;
     public static final int PRIVATE   = 1;
     public static final int MODERATED = 2;
 
+    // -> plugin?
+    private static DateTimeFormatter dateFormatter =
+            DateTimeFormat.forPattern("dd.MM.YYYY - HH:mm:ss");
+
     public NodeContent() {}
 
     public NodeContent (ObjectId ownerid,
                         Map<String,String> params) {
-        content = Validator.validate(params.get(CONTENT));
-        created = System.currentTimeMillis();
-        cr_date = DateFormat.getDateTimeInstance(DateFormat.LONG,
-                    DateFormat.LONG).format(new Date(getCreated()));
-        // template =  NodeTemplate.BASIC_NODE;
-        name    = params.containsKey(NAME) ?
-                    params.get(NAME) : cr_date; // zatial
+        content  = Validator.validate(params.get(CONTENT));
+        created  = System.currentTimeMillis();
+        cr_date  = dateFormatter.print(created);
+        typ      = Type.NODE.ordinal();
+        template = "Node";
+        String pname = Validator.validateTextonly(params.get(NAME));
+        if (pname == null || pname.length() < 1) {
+            name = cr_date;
+        } else {
+            name = pname;
+        }
         owner   = ownerid;
 
         Logger.info("Adding node with content:: " + content);
@@ -150,8 +159,9 @@ public class NodeContent extends MongoEntity {
                 getBans().add(banId);
         }
         String chOwner = params.get("change_owner");
-        if (chOwner != null && User.load(chOwner) != null) {
-            owner = new ObjectId(chOwner);
+        ObjectId chOid = toId(chOwner);
+        if (chOid != null && User.load(chOid) != null) {
+            owner = chOid;
         }
         String chParent = params.get("parent");
         if (chParent != null) {
@@ -171,7 +181,7 @@ public class NodeContent extends MongoEntity {
         if (chContent != null) {
             content = Validator.validate(chContent);
         }
-        this.update(); // TODO udpate cache
+        update(true);
     }
 
     public String getContent() {
@@ -197,10 +207,10 @@ public class NodeContent extends MongoEntity {
     }
 
     // save to mongodb
-    public NodeContent save() {
+    public NodeContent insert() {
         try {
             setId(new ObjectId());
-            MongoDB.save(this);
+            save();
             enhance();
             Cache.set("node_" + getId(), this);
             return this;
@@ -210,18 +220,6 @@ public class NodeContent extends MongoEntity {
             Logger.info(ex.toString());
         }
         return null;
-    }
-
-    public void update() {
-        try {
-            Logger.info("updating node");
-            MongoDB.update(this);
-            Cache.set("node_" + getId(), this);
-        } catch (Exception ex) {
-            Logger.info("update failed:");
-            ex.printStackTrace();
-            Logger.info(ex.toString());
-        }
     }
 
     private void delete() {
@@ -236,6 +234,8 @@ public class NodeContent extends MongoEntity {
         }
     }
 
+    // TODO load* should not be public - everything that returns a Node should
+    // check permissions first
     // load from mongodb
     public static NodeContent load(String id) {
         ObjectId oid = toId(id);
@@ -453,7 +453,7 @@ public class NodeContent extends MongoEntity {
         putNode.created = created;
         putNode.putId   = id;
         putNode.par     = parent.id;
-        putNode = putNode.save();
+        putNode = putNode.insert();
         pid = putNode.id;
         if (parent.dfs == null) {
             parent.dfs = pid;
@@ -461,8 +461,8 @@ public class NodeContent extends MongoEntity {
         } else {
             putNode.dfs = parent.dfs;
         }
-        putNode.update();
-        parent.update();
+        putNode.update(true);
+        parent.update(true);
         // Notifications
         List<ObjectId> roots = new LinkedList<ObjectId>();
         NodeContent upnode = parent;
@@ -488,7 +488,7 @@ public class NodeContent extends MongoEntity {
                 NodeContent dfsSource = loadByDfs(id);
                 if (dfsNode != null && dfsSource != null) {
                     dfsSource.dfs = dfs;
-                    dfsSource.update();
+                    dfsSource.update(true);
                 }
             }
             delete();
@@ -502,7 +502,7 @@ public class NodeContent extends MongoEntity {
         // TODO check & set permissions
         List<ObjectId> roots = new LinkedList<ObjectId>();
         ObjectId parOwner = null;
-        NodeContent newnode = new NodeContent(ownerid,params).save();
+        NodeContent newnode = new NodeContent(ownerid,params).insert();
         ObjectId mongoId = newnode.getId();
         if (mongoId == null)
         {
@@ -543,7 +543,7 @@ public class NodeContent extends MongoEntity {
                 }
             }
         }
-        newnode.update();
+        newnode.update(true);
         Activity.newNodeActivity(mongoId, newnode, roots, ownerid, parOwner);
         return mongoId.toString(); // neskor len id
     }
@@ -564,7 +564,7 @@ public class NodeContent extends MongoEntity {
             Map<ObjectId,NodeContent> children = loadByPar(id);
             if (children == null || children.isEmpty()) {
                 dfsSource.dfs = dfs;
-                dfsSource.update();
+                dfsSource.update(true);
             } else {
                 for (NodeContent child : children.values()) {
                     List<NodeContent> childrenSubtree = child.getTree(children);
@@ -576,22 +576,22 @@ public class NodeContent extends MongoEntity {
                         if (! children.containsKey(lastOne.dfs)) {
                             // this one is out of the tree
                             dfsSource.dfs = lastOne.dfs;
-                            dfsSource.update();
+                            dfsSource.update(true);
                         }
                         // create a subtree
                         lastOne.dfs = child.getId();
-                        lastOne.update();
+                        lastOne.update(true);
                     }
                     if (children.containsKey(child.dfs)) {
                         child.dfs = null;
                     }  else {
                         // same as above
                         dfsSource.dfs = child.dfs;
-                        dfsSource.update();
+                        dfsSource.update(true);
                         child.dfs = null; // sure?
                     }
                     child.par = null;
-                    child.update();
+                    child.update(true);
                 }
             }
         }
@@ -626,11 +626,11 @@ public class NodeContent extends MongoEntity {
                     if (lastOne.dfs.equals(id)) {
                         // this one is out of the tree
                         dfsSource.dfs = lastOne.dfs;
-                        dfsSource.update();
+                        dfsSource.update(true);
                     }
                 } else { // no children
                     dfsSource.dfs = dfs;
-                    dfsSource.update();
+                    dfsSource.update(true);
                 }
             }
         }
@@ -639,12 +639,12 @@ public class NodeContent extends MongoEntity {
             dfs = toNode.dfs;
         else {
             lastOne.dfs = toNode.dfs;
-            lastOne.update();
+            lastOne.update(true);
         }
         toNode.dfs = id;
-        toNode.update();
+        toNode.update(true);
         par = to;
-        update();
+        update(true);
     }
 
     // returns the whole subtree of a node, optionally stop on stopNodes.
@@ -714,8 +714,8 @@ public class NodeContent extends MongoEntity {
         else 
             setK(getK() + 1);
         user.setDailyK(user.getDailyK() - 1);
-        user.update();
-        update();
+        user.update(true);
+        update(true);
     }
 
     // -K
@@ -735,8 +735,8 @@ public class NodeContent extends MongoEntity {
         else
             setMk(getMk() + 1);
         user.setDailyK(user.getDailyK() - 1);
-        user.update();
-        update();
+        user.update(true);
+        update(true);
     }
 
     /**
@@ -829,6 +829,10 @@ public class NodeContent extends MongoEntity {
         return dbcol;
     }
 
+    @Override
+    public String key() {
+        return key;
+    }
 
     /**
      * @param template the template to set

@@ -15,12 +15,10 @@
         </form>
     </div>
     <div class="nodeContent">
-    <!-- TODO DateFormat.getDateTimeInstance(DateFormat.LONG,
-                            DateFormat.LONG).format(new Date(m.sent))); -->
     #{list items:mailMessages, as:'message'}
         <div class="comment" id="${message.id}">
-            <div>${message.fromUser}&nbsp;&gt;&nbsp;${message.toUser}
-            &nbsp;&nbsp;&nbsp;${message.sent}
+            <div>${message.fromUser}&nbsp;--&gt;&nbsp;${message.toUser}
+            &nbsp;&nbsp;&nbsp;${message.datetime}
             </div>
             <div>
                 ${message.content.raw()}

@@ -34,6 +34,7 @@ import play.cache.Cache;
 public class MessageThread extends MongoEntity {
 
     public static DBCollection dbcol = null;
+    private static final String key  = "message_thread_";
 
     // { _id: '...', users: [user1, user2...]}
     private List<ObjectId> users;
@@ -64,7 +65,7 @@ public class MessageThread extends MongoEntity {
         try {
             m = new MessageThread(from,to);
             m.setId(new ObjectId());
-            MongoDB.save(m);
+            m.save();
         } catch (Exception ex) {
             Logger.info("create failed:");
             ex.printStackTrace();
@@ -118,7 +119,7 @@ public class MessageThread extends MongoEntity {
                     for (ObjectId s : lr) {
                             m.unreads.remove(s);
                     }
-                    MongoDB.update(m);
+                    m.update();
                 }
                 return m;
             }
@@ -151,7 +152,7 @@ public class MessageThread extends MongoEntity {
             unreads = new LinkedList<ObjectId>();
         }
         unreads.add(to);
-        MongoDB.save(this);
+        save();
         Cache.set(from + "_lastThreadId", id);
     }
 
@@ -168,7 +169,7 @@ public class MessageThread extends MongoEntity {
                             lr.add(s);
                     for (ObjectId s : lr)
                             m.unreads.remove(s);
-                    MongoDB.update(m);
+                    m.update();
                 }
             }
         } catch (Exception ex) {
@@ -228,7 +229,7 @@ public class MessageThread extends MongoEntity {
     public void delete(ObjectId uid)
     {
         deleted.add(uid);
-        MongoDB.save(this);
+        save();
     }
 
     /**
@@ -255,5 +256,9 @@ public class MessageThread extends MongoEntity {
         return dbcol;
     }
 
+    @Override
+    public String key() {
+        return key;
+    }
 
 }

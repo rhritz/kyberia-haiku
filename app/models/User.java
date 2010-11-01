@@ -42,6 +42,7 @@ import play.cache.Cache;
 public class User extends MongoEntity {
 
     public static DBCollection dbcol = null;
+    private static final String key  = "user_";
 
     private String             username;
     private String             password;
@@ -131,7 +132,7 @@ public class User extends MongoEntity {
         if (oldPwd!= null && password.equals(pwdService.encrypt(oldPwd))) {
             if (newPwd1 != null && newPwd2 != null && newPwd1.equals(newPwd2)) {
                 password = pwdService.encrypt(newPwd1);
-                update();
+                update(true);
             }
         } else {
         // TODO else vynadaj userovi
@@ -155,7 +156,7 @@ public class User extends MongoEntity {
             changed = true;
         }
         if (changed) {
-            this.update();
+            update(true);
         }
     }
 
@@ -195,26 +196,6 @@ public class User extends MongoEntity {
         return false;
     }
 
-    public void save()
-    {
-        try {
-             Cache.set("user_" + this.getId(), this);
-             MongoDB.save(this);
-        } catch (Exception ex) {
-            Logger.info(ex.toString());
-        } 
-    }
-
-    public void update()
-    {
-        try {
-             Cache.set("user_" + this.getId(), this);
-             MongoDB.update(this);
-        } catch (Exception ex) {
-            Logger.info(ex.toString());
-        }
-    }
-
     /**
      * @return the username
      */
@@ -222,9 +203,7 @@ public class User extends MongoEntity {
         return username;
     }
 
-    public static User load(String id)
-    {
-        if (id == null || id.length() < 10) return null;
+    public static User load(String id) {
         return load(toId(id));
     }
 
@@ -261,7 +240,6 @@ public class User extends MongoEntity {
             Logger.info(ex.toString());
         }
     }
-
 
     public static List<User> loadUsers(String namePart,
                                         Integer start,
@@ -340,13 +318,13 @@ public class User extends MongoEntity {
             return;
         }
         friends.add(uid);
-        update();
+        update(true);
     }
 
     public void removeFriend(ObjectId uid) {
         if (friends != null && friends.contains(uid)) {
             friends.remove(uid);
-            update();
+            update(true);
         }
     }
 
@@ -358,13 +336,13 @@ public class User extends MongoEntity {
         }
         ignores.add(uid);
         // + mozno vytvorit nejaky iny zaznam inde?
-        update();
+        update(true);
     }
 
     public void removeIgnore(ObjectId uid) {
         if (ignores != null && ignores.contains(uid)) {
             ignores.remove(uid);
-            update();
+            update(true);
         }
     }
 
@@ -375,14 +353,13 @@ public class User extends MongoEntity {
             return;
         }
         ignoreMail.add(uid);
-        // + mozno vytvorit nejaky iny zaznam inde?
-        update();
+        update(true);
     }
 
     public void removeIgnoreMail(ObjectId uid) {
         if (ignoreMail != null && ignoreMail.contains(uid)) {
             ignoreMail.add(uid);
-            update();
+            update(true);
         }
     }
 
@@ -430,7 +407,7 @@ public class User extends MongoEntity {
     // transform ObjectId to User
     class ToUser implements Function<ObjectId, User> {
         public User apply(ObjectId arg) {
-            return User.load(arg);
+            return User.load(arg).enhance();
         }
     }
 
@@ -467,14 +444,11 @@ public class User extends MongoEntity {
         if (! User.usernameAvailable(username)) {
             return null;
         }
-
         try {
             User u = new User(username, password);
             id = u.getId();
-            u.save();
-        }
-        catch(Exception e)
-        {
+            u.save(true);
+        } catch(Exception e) {
            Logger.info("addUser failed " + e.toString() );
         }
         return id == null ? "" : id.toString();
@@ -490,5 +464,9 @@ public class User extends MongoEntity {
         return dbcol;
     }
 
+    @Override
+    public String key() {
+        return key;
+    }
 
 }

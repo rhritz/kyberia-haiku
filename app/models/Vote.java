@@ -38,6 +38,7 @@ import play.cache.Cache;
 public class Vote extends MongoEntity {
 
     public static DBCollection dbcol = null;
+    private static final String key  = "vote_";
 
     private List<Option> options; // TODO v pohode embedded?
     private List<String> votes;
@@ -88,7 +89,7 @@ public class Vote extends MongoEntity {
         Vote v = null;
         try {
             DBObject iobj = 
-                    dbcol.findOne(new BasicDBObject("_id",new ObjectId(id)));
+                    dbcol.findOne(new BasicDBObject("_id",toId(id)));
             if (iobj != null)
                 v = MongoDB.fromDBObject(Vote.class, iobj);
         } catch (Exception ex) {
@@ -98,24 +99,6 @@ public class Vote extends MongoEntity {
             return null;
         }
         return v;
-    }
-
-    public void save()
-    {
-        try {
-             MongoDB.save(this);
-        } catch (Exception ex) {
-            Logger.info(ex.toString());
-        }
-    }
-
-    public void update()
-    {
-        try {
-             MongoDB.update(this);
-        } catch (Exception ex) {
-            Logger.info(ex.toString());
-        }
     }
 
     // true.. ok, false.. already voted
@@ -179,5 +162,10 @@ public class Vote extends MongoEntity {
             numVotes++;
             return suc;
         }
+    }
+
+    @Override
+    public String key() {
+        return key;
     }
 }

@@ -38,8 +38,7 @@ public class Application extends Controller {
             renderArgs.put("user",   session.get(User.USERNAME));
             renderArgs.put("userid", uid);
             renderArgs.put("uid", uid);
-            renderArgs.put("newMail", 
-                    MessageThread.getUnreadMailNotif(new ObjectId(uid)));
+            renderArgs.put("newMail", MessageThread.getUnreadMailNotif(toId(uid)));
         } else {
             // to este neznamena ze sme uplne mimo, snad
             // mozeme vytvorit nejaku fake session pre neprihlasenych?
@@ -47,7 +46,6 @@ public class Application extends Controller {
         }
         User user = User.load(uid);
         request.args.put("app-user", user);
-        
         request.args.put("app-view", ViewTemplate.get(params.allSimple(),
                 request, session, user, renderArgs));
         // params.flash();
@@ -403,7 +401,7 @@ public class Application extends Controller {
     public static void addUserToGroup(String groupId) {
         String uid = params.get("newId");
         UserGroup g = UserGroup.load(groupId);
-        ObjectId newUid = new ObjectId(uid);
+        ObjectId newUid = toId(uid);
         if (newUid != null) {
             g.addUser(newUid);
         }

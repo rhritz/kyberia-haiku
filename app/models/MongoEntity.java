@@ -21,6 +21,8 @@ import java.io.Serializable;
 import com.google.code.morphia.annotations.Id;
 import com.mongodb.DBCollection;
 import org.bson.types.ObjectId;
+import play.cache.Cache;
+import plugins.MongoDB;
 
 public abstract class MongoEntity implements Serializable {
     @Id protected ObjectId id;
@@ -45,11 +47,45 @@ public abstract class MongoEntity implements Serializable {
 
     public abstract <T extends MongoEntity> T enhance();
     public abstract DBCollection getCollection();
+    public abstract String key();
 
-    // TODO error handling + validation
+    // TODO error handling
     public static ObjectId toId(String x) {
         ObjectId bubu = null;
         try { bubu = new ObjectId(x);} catch (Exception e ) {};
         return bubu;
     }
+
+    public void save() {
+        MongoDB.save(this);
+    }
+
+    public void save(boolean doCache, String cacheTime) {
+        MongoDB.save(this);
+        if (doCache) 
+            Cache.replace(key() + getIdString(), this, cacheTime);
+    }
+
+    public void save(boolean doCache) {
+        MongoDB.save(this);
+        if (doCache)
+            Cache.replace(key() + getIdString(), this);
+    }
+
+    public void update() {
+        MongoDB.update(this);
+    }
+
+    public void update(boolean doCache, String cacheTime) {
+        MongoDB.update(this);
+        if (doCache)
+            Cache.replace(key() + getIdString(), this, cacheTime);
+    }
+
+    public void update(boolean doCache) {
+        MongoDB.update(this);
+        if (doCache)
+            Cache.replace(key() + getIdString(), this);
+    }
+
 }

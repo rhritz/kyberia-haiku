@@ -23,7 +23,6 @@ import org.bson.types.ObjectId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.SortedSet;
-import plugins.*;
 import play.Logger;
 
 // new nodes etc create new activity instances to notify bookmarks etc
@@ -33,6 +32,7 @@ import play.Logger;
 public class Activity extends MongoEntity {
 
     public static DBCollection dbcol = null;
+    private static final String key = "activity_";
     
     private ObjectId         oid;  // o ktorom objekte je tato notifikacia
     private Integer        type; // enum? new, delete...? zatial neviem
@@ -104,17 +104,6 @@ public class Activity extends MongoEntity {
         }
     }
 
-    public void save()
-    {
-        try {
-            MongoDB.save(this);
-        } catch (Exception ex) {
-            Logger.info("activity save failed:");
-            ex.printStackTrace();
-            Logger.info(ex.toString());
-        }
-    }
-
     /**
      * @return the oid
      */
@@ -130,6 +119,11 @@ public class Activity extends MongoEntity {
     @Override
     public DBCollection getCollection() {
         return dbcol;
+    }
+
+    @Override
+    public String key() {
+        return key;
     }
 
 }

@@ -36,6 +36,7 @@ import play.cache.Cache;
 public class UserGroup extends MongoEntity {
 
     public static DBCollection dbcol = null;
+    private static final String key  = "usergroup_";
     
     String         name;
     ObjectId       owner;
@@ -60,12 +61,12 @@ public class UserGroup extends MongoEntity {
             List<ObjectId> members)
     {
             UserGroup u = new UserGroup(toId(uid), name, members);
-            MongoDB.save(u);
+            u.save();
             return u;
     }
 
     public static UserGroup load(String groupid) {
-        return load(new ObjectId(groupid));
+        return load(toId(groupid));
     }
 
     // + cache
@@ -119,7 +120,7 @@ public class UserGroup extends MongoEntity {
     // + cache
     public void changeOwner(ObjectId newOwner) {
         owner = newOwner;
-        MongoDB.save(this);
+        save();
     }
 
     public static List<UserGroup> loadGroups() {
@@ -137,12 +138,7 @@ public class UserGroup extends MongoEntity {
     }
 
     public void edit(Map<String, String> params) {
-        save();
-    }
-
-    // + cache
-    public void save() {
-        MongoDB.save(this);
+        save(true);
     }
 
     @Override
@@ -155,5 +151,9 @@ public class UserGroup extends MongoEntity {
         return dbcol;
     }
 
+    @Override
+    public String key() {
+        return key;
+    }
 
 }

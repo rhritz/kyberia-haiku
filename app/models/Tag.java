@@ -33,6 +33,7 @@ import plugins.Validator;
 public class Tag extends MongoEntity {
 
     public static DBCollection dbcol = null;
+    private static final String key  = "tag_";
 
     String  tag;
     Integer count;
@@ -96,18 +97,6 @@ public class Tag extends MongoEntity {
         return tag;
     }
 
-    // TODO + cache
-    public void save()
-    {
-        MongoDB.save(this);
-    }
-
-    // TODO + cache
-    public void update()
-    {
-        MongoDB.update(this);
-    }
-
     public static List<NodeContent> getTaggedNodes(String tag)
     {
         List<NodeContent> nodes = null;
@@ -152,6 +141,11 @@ public class Tag extends MongoEntity {
     @Override
     public DBCollection getCollection() {
         return dbcol;
+    }
+
+    @Override
+    public String key() {
+        return key;
     }
 
 }

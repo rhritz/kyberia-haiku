@@ -21,7 +21,6 @@ import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Transient;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import org.bson.types.ObjectId;
 import java.io.File;
@@ -39,6 +38,7 @@ import plugins.MongoDB;
 public class Feed extends MongoEntity{
 
     public static DBCollection dbcol = null;
+    private static final String key  = "feed_";
 
     protected        String         name;
     protected        ObjectId       owner;
@@ -74,14 +74,14 @@ public class Feed extends MongoEntity{
 
     public static Feed load(ObjectId id)
     {
-        Feed n = Cache.get("feed_" + id, Feed.class);
+        Feed n = Cache.get(key + id, Feed.class);
         if (n != null )
             return n;
         try {
             DBObject iobj = dbcol.findOne(new BasicDBObject("_id",id));
             if (iobj !=  null) {
                 n = MongoDB.fromDBObject(Feed.class, iobj);
-                Cache.add("feed_" + id, n);
+                Cache.add(key + id, n);
             }
         } catch (Exception ex) {
             Logger.info("load feed");
@@ -189,6 +189,11 @@ public class Feed extends MongoEntity{
     @Override
     public DBCollection getCollection() {
         return dbcol;
+    }
+
+    @Override
+    public String key() {
+        return key;
     }
 
 }

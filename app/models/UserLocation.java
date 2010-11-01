@@ -34,6 +34,8 @@ import plugins.MongoDB;
 public class UserLocation extends MongoEntity {
 
     public static DBCollection dbcol = null;
+    private static final String key  = "user_location_";
+
     private static final String uls = "user_locations";
     private static final String ulk = "user_location_";
     private static final String userCacheExpiry = "1h";
@@ -79,11 +81,6 @@ public class UserLocation extends MongoEntity {
         // +:
         // - pozri do zoznamu starych lokacii ci niekde nie je, ak je vymaz
         // - pridaj pre aktualnu lokaciu
-    }
-
-    private void save()
-    {
-        MongoDB.save(this);
     }
 
     // vsetci useri kdekolvek, teraz
@@ -164,6 +161,11 @@ public class UserLocation extends MongoEntity {
     @Override
     public DBCollection getCollection() {
         return dbcol;
+    }
+
+    @Override
+    public String key() {
+        return key;
     }
 
 }

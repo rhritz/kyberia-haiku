@@ -37,6 +37,7 @@ import plugins.MongoDB;
 public class ViewTemplate extends MongoEntity{
 
     public static DBCollection dbcol = null;
+    private static final String key  = "view_template_";
 
     public boolean  isDefault; // if true - this is the root/default view
     public ObjectId superView; // view inheritance
@@ -160,13 +161,9 @@ public class ViewTemplate extends MongoEntity{
             vt.name = name;
             vt.superViewName = inherit;
             vt.owner = owner;
-            vt.save();
+            vt.save(true);
             vt.enhance();
             return vt;
-        }
-
-        public void save() {
-            MongoDB.save(this);
         }
 
     @Override
@@ -181,7 +178,7 @@ public class ViewTemplate extends MongoEntity{
 
 
     public void edit(Map<String, String> allSimple) {
-        
+        save(true);
     }
 
     public static List<ViewTemplate> loadViews() {
@@ -192,6 +189,11 @@ public class ViewTemplate extends MongoEntity{
     public static ViewTemplate load(String viewId) {
         ViewTemplate v = null;
         return v;
+    }
+
+    @Override
+    public String key() {
+        return key;
     }
 
 }

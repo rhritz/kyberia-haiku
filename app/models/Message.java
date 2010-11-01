@@ -22,6 +22,8 @@ import com.google.code.morphia.annotations.Transient;
 import com.mongodb.DBCollection;
 import org.bson.types.ObjectId;
 import java.util.List;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import plugins.*;
 import play.Logger;
 
@@ -29,6 +31,7 @@ import play.Logger;
 public class Message extends MongoEntity {
 
     public static DBCollection dbcol = null;
+    private static final String key  = "message_";
     
     private String content;
     private Long sent;
@@ -41,6 +44,12 @@ public class Message extends MongoEntity {
     public String fromUser;
     @Transient
     public String toUser;
+    @Transient
+    public String datetime;
+
+    // -> plugin?
+    private static DateTimeFormatter dateFormatter =
+            DateTimeFormat.forPattern("dd.MM.YYYY - HH:mm:ss");
 
     public Message() {}
 
@@ -74,7 +83,7 @@ public class Message extends MongoEntity {
     public void delete(String uid)
     {
         deleted.add(toId(uid));
-        MongoDB.save(this);
+        save();
     }
 
     public static void send(
@@ -83,16 +92,13 @@ public class Message extends MongoEntity {
             String content
             )
     {
-        ObjectId fromId = new ObjectId(fromIdStr);
-        ObjectId toId = new ObjectId(toIdStr);
+        ObjectId fromId = toId(fromIdStr);
+        ObjectId toId = toId(toIdStr);
         MessageThread mt = MessageThread.getThread(fromId, toId, false);
         if (mt == null)
-        {
             mt = MessageThread.create(fromId, toId);
-        }
-        if (mt == null)
-        {
-            Logger.info("Unable to find/create thread, bailing");
+        if (mt == null) {
+            Logger.error("Unable to find/create message thread");
             return;
         }
         Message m = new Message(Validator.validateTextonly(content),
@@ -105,12 +111,18 @@ public class Message extends MongoEntity {
     public Message enhance() {
         fromUser = User.getNameForId(from);
         toUser   = User.getNameForId(to);
+        datetime = dateFormatter.print(sent);
         return this;
     }
 
     @Override
     public DBCollection getCollection() {
         return dbcol;
+    }
+
+    @Override
+    public String key() {
+        return key;
     }
 
 }
