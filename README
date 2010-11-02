@@ -14,7 +14,7 @@ AGPL
 Prerekvizity:
 * Linux
 * Sun/OpenJDK Java 1.5 a vyssie
-* Play framework, verzia 1.0.2 a vyssia:
+* Play framework, verzia 1.1 a vyssia:
     http://download.playframework.org/releases/
     Stiahnut a rozbalit
 * MongoDB, verzia 1.3 a vyssia:

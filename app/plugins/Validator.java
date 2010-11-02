@@ -82,8 +82,7 @@ public class Validator {
 
     // ziadne tagy a haluze
     public static String validateTextonly(String get) {
-        String stripped = strip_tags(get, null);
-        return stripped;
+        return get == null ? null : strip_tags(get, null);
     }
 
     public static String strip_tags(String text, String allowedTags) {

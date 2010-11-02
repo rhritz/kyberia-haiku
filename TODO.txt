@@ -1,22 +1,9 @@
 Veci, ktore nie su hotove, a chceme aby boli:
 
---- 12.09.2010 ---
-* Redis 2 na spravu volatilnych dat (zoznamy, hashe)
-alebo zistit nakolko vhodne je na toto ehcache
-
---- 16.05.2010 ---
-* Bookmark Tags (aka delicious), flags - ci ho zobrazovat vzdy alebo len v kompletnom zozname
-
---- 24.04.2010 ---
-* access/perms on userinfo ale len ciastocne
-
---- 09.04.2010 ---
-* status updates
+* Bookmark Tags (aka delicious)
+* access/perms on usernode
 * personal home/landing page
 * Registracie (akoze tie kackovacie + posielanie + potvrdzovanie mailov)
-
---- 23.03.2010 ---
-* Fook, Ignore & co
 * Content export - REST, JSON & AJAX
 * Ability to see some content without an account
 - 1. Hack Secure module; or
@@ -27,4 +14,4 @@ alebo zistit nakolko vhodne je na toto ehcache
 * Proper CSS & HTML & Javascript, Variable CSS? http://www.playframework.org/modules/sass
 * FastTags/Javatags
 * Fulltext Search in nodes & mail
-* View & Template inheritance
+* Proper View & Template inheritance

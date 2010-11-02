@@ -5,7 +5,7 @@
     <div class="nodeContent">
         #{list items:locations, as:'location' }
             <div class="comment">
-                <div style="background-color:#e3e3e3; display:block">${location.getUsername()} was seen @ ${location.getLocation()} ${location.getTimeAgo()}s ago</div>
+                <div style="background-color:#e3e3e3; display:block">${location.getUsername()} was seen @ ${location.getLoc()} ${location.getTimeAgo()}s ago</div>
                 <!-- <img style=\"position:relative;\" src=\"/public/images/k2.gif\"> -->
             </div>
         #{/list}

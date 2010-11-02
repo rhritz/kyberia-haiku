@@ -794,8 +794,12 @@ public class NodeContent extends MongoEntity {
                 bu.put(ban, ACL.BAN);
         if (par != null) {
             NodeContent parent = checkNotNull(load(par));
-            if (parent.fook != null)
+            if (parent.fook != null) {
+                if (fook == null) {
+                    fook = new HashMap<String,Boolean>();
+                }
                 fook.putAll(parent.fook);
+            }
             if (parent.acl == null) {
                 parent.loadRights();
             } 

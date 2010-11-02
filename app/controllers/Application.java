@@ -118,7 +118,10 @@ public class Application extends Controller {
         String nid = null;
         Logger.info("newid::" + newId);
         if (id == null) {
-            nid = NodeContent.load(newId).getIdString();
+            NodeContent newNode = NodeContent.load(newId);
+            nid = newNode.getIdString();
+            renderArgs.put("node", newNode);
+            request.args.put("app-node", newNode);
         } else {
             nid = id;
         }
