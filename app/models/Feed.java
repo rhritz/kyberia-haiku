@@ -69,7 +69,7 @@ public class Feed extends MongoEntity{
 
     public void loadContent()
     {
-        content = NodeContent.load(nodes);
+        // content = NodeContent.load(nodes);
     }
 
     public static Feed load(ObjectId id)

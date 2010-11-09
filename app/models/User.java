@@ -160,7 +160,7 @@ public class User extends MongoEntity {
         }
     }
 
-    public void loadUserData()
+    private void loadUserData()
     {
         // mail status,
         // list bookmarks,
@@ -319,12 +319,14 @@ public class User extends MongoEntity {
         }
         friends.add(uid);
         update(true);
+        loadUserData();
     }
 
     public void removeFriend(ObjectId uid) {
         if (friends != null && friends.contains(uid)) {
             friends.remove(uid);
             update(true);
+            loadUserData();
         }
     }
 
@@ -335,14 +337,15 @@ public class User extends MongoEntity {
             return;
         }
         ignores.add(uid);
-        // + mozno vytvorit nejaky iny zaznam inde?
         update(true);
+        loadUserData();
     }
 
     public void removeIgnore(ObjectId uid) {
         if (ignores != null && ignores.contains(uid)) {
             ignores.remove(uid);
             update(true);
+            loadUserData();
         }
     }
 
@@ -383,6 +386,10 @@ public class User extends MongoEntity {
             return new ArrayList<User>();
         else
             return Lists.transform(ignores, new ToUser());
+    }
+
+    public boolean ignores(ObjectId uid) {
+        return prepIgnores.containsKey(uid);
     }
 
     /**

@@ -121,7 +121,7 @@ public class NodeContent extends MongoEntity {
         Logger.info("Adding node with content:: " + content);
     }
 
-    public void edit(Map<String,String> params) {
+    public void edit(Map<String,String> params, User user) {
         String accType = params.get("access_type");
         if (accType != null) {
             accessType = Integer.parseInt(accType);
@@ -166,8 +166,8 @@ public class NodeContent extends MongoEntity {
         String chParent = params.get("parent");
         if (chParent != null) {
             NodeContent np = load(chParent);
-            if (np != null)
-                moveNode(np.getId());
+            if (np != null && ! np.getId().equals(par) )
+                moveNode(np.getId(), user);
         }
         String chName = params.get(NAME);
         if (chName != null) {
@@ -234,17 +234,27 @@ public class NodeContent extends MongoEntity {
         }
     }
 
-    // TODO load* should not be public - everything that returns a Node should
-    // check permissions first
-    // load from mongodb
-    public static NodeContent load(String id) {
+    public static NodeContent load(String id, User user) {
+        return load(toId(id),user);
+    }
+    
+    private static NodeContent load(String id) {
         ObjectId oid = toId(id);
         if (oid == null)
            return null;
         return load(oid);
     }
 
+    public static NodeContent load(ObjectId id, User user) {
+        NodeContent node = load(id);
+        if ( node != null && node.canRead(user.getId()))
+            return node;
+        else
+            return null;
+    }
+
     // TODO parametrize parent loading
+    // TODO permissions @Thread
     public static NodeContent load(ObjectId id) {
         // Logger.info("About to load node " + id);
         NodeContent n = Cache.get("node_" + id, NodeContent.class);
@@ -279,12 +289,32 @@ public class NodeContent extends MongoEntity {
         return n;
     }
 
-    // some form of smart caching?
-    public static List<NodeContent> load(List<ObjectId> nodeIds) {
+    // apply permissions
+    public static List<NodeContent> load(List<ObjectId> nodeIds, User user) {
+        // TODO smart caching?
+        List<NodeContent> res2 = Lists.newLinkedList();
+        /*
+        for (ObjectId nodeId : checkNotNull(nodeIds)) {
+            NodeContent cachedNode = loadCachedOnly(nodeId);
+        }
+        */
+        List<NodeContent> res  = MongoDB.loadIds(nodeIds, MongoDB.CNode, MongoDB.getSelf().toNodeContent());
+        ObjectId uid = user.getId();
+        for (NodeContent node : res)
+            if (node.canRead(uid))
+                res2.add(node);
+        return res2;
+    }
+
+    private static List<NodeContent> load(List<ObjectId> nodeIds) {
         return MongoDB.loadIds(nodeIds, MongoDB.CNode, MongoDB.getSelf().toNodeContent());
     }
 
-    static Map<ObjectId,NodeContent> loadByPar(ObjectId parId) {
+    private static List<NodeContent> loadByPut(ObjectId putId) {
+        return MongoDB.transform(dbcol.find(new BasicDBObject("putId", putId)), MongoDB.getSelf().toNodeContent());
+    }
+
+    private static Map<ObjectId,NodeContent> loadByPar(ObjectId parId) {
         Map<ObjectId,NodeContent> nodes = Maps.newHashMap();
         try {
             DBCursor iobj = dbcol.find(new BasicDBObject("par", parId));
@@ -300,9 +330,6 @@ public class NodeContent extends MongoEntity {
     }
 
     public boolean canRead(ObjectId uid) {
-        Logger.info("canRead:: uid " + uid.toString() + " acc type " + accessType);
-        if (accessType == null) // ale to by sa nemalo stat -> load
-            return Boolean.TRUE;
         ACL ur = acl.get(uid);
         if (ACL.BAN == ur)
             return Boolean.FALSE;
@@ -320,9 +347,6 @@ public class NodeContent extends MongoEntity {
 
     // moze pridavat reakcie, tagy etc?
     public boolean canWrite(ObjectId uid) {
-        Logger.info("canWrite:: uid " + uid.toString() + " acc type " + accessType);
-        if (accessType == null) // TODO remove this
-            return Boolean.FALSE;
         ACL ur = acl.get(uid);
         if (ACL.BAN ==  ur || ACL.SILENCE == ur)
             return Boolean.FALSE;
@@ -438,7 +462,6 @@ public class NodeContent extends MongoEntity {
 
     // TODO - make sure no node is a child of a put node,
     // that would cause serious trouble
-    // + update threading functions to maek them aware of putnodes
     public ObjectId putNode(ObjectId parentId)
     {
         if (parentId == null || load(parentId) == null)
@@ -500,6 +523,18 @@ public class NodeContent extends MongoEntity {
             ObjectId ownerid)
     {
         // TODO check & set permissions
+        NodeContent root = null;
+        if (parent != null) {
+            root = NodeContent.load(parent);
+            if (root == null || root.isPut()) { // &&  check root type too
+                return null;
+            } else {
+                if (!root.canWrite(ownerid)) {
+                    // no permissions to add Node here
+                    return null;
+                }
+            }
+        }
         List<ObjectId> roots = new LinkedList<ObjectId>();
         ObjectId parOwner = null;
         NodeContent newnode = new NodeContent(ownerid,params).insert();
@@ -509,55 +544,58 @@ public class NodeContent extends MongoEntity {
             // validation errors...
             return null;
         }
-        Logger.info("parent :: " + parent);
-        if (parent != null) {
-            NodeContent root = NodeContent.load(parent);
+        if (root != null) {
             ObjectId dfs;
-            if (root != null && root.putId == null ) {
-                newnode.par = parent;
-                Logger.info("parent loaded :: " + root.dfs);
-                dfs = root.dfs;
-                root.dfs = mongoId;
-                root.update();
-                Logger.info("parent saved:: " + root.dfs);
-                if (dfs != null) {
-                    newnode.dfs = dfs;
-                } else {
-                    newnode.dfs = root.getId();
-                }
-                Logger.info("newnode dfs:: " + newnode.dfs );
-                // TODO change this - load vector etc
-                // nizsie su updaty notifikacii
-                NodeContent upnode = root;
-                for (int i = 0; i < 10; i++)
-                    // 10 - max hier depth for notif update
-                {
-                      roots.add(upnode.getId());
-                      ObjectId re = upnode.getParent();
-                      if (re == null) break;
-                      upnode = NodeContent.load(re);
-                }
-                User parentOwner = User.load(root.owner);
-                if (parentOwner != null) {
-                    parOwner = parentOwner.getId();
-                }
+            newnode.par        = parent;
+            // TODO load accType from params if set, override the inherited one
+            newnode.accessType = root.accessType;
+            Logger.info("parent loaded :: " + root.dfs);
+            dfs = root.dfs;
+            root.dfs = mongoId;
+            root.update();
+            if (dfs != null) {
+                newnode.dfs = dfs;
+            } else {
+                newnode.dfs = root.getId();
             }
+            Logger.info("newnode dfs:: " + newnode.dfs );
+            // TODO change this - load vector etc
+            // nizsie su updaty notifikacii
+            NodeContent upnode = root;
+            for (int i = 0; i < 10; i++)
+                // 10 - max hier depth for notif update
+            {
+                  roots.add(upnode.getId());
+                  ObjectId re = upnode.getParent();
+                  if (re == null) break;
+                  upnode = NodeContent.load(re);
+            }
+            User parentOwner = User.load(root.owner);
+            if (parentOwner != null) {
+                parOwner = parentOwner.getId();
+            }
+        } else {
+            newnode.accessType = NodeContent.PUBLIC;
+            // newnode.typ = NodeContent.CONTENT;
         }
+        
         newnode.update(true);
         Activity.newNodeActivity(mongoId, newnode, roots, ownerid, parOwner);
-        return mongoId.toString(); // neskor len id
+        return mongoId.toString();
     }
 
-    // unles it's a putNode...
-    // TODO remove all putNodes that reference this Node
     public void deleteNode() {
         NodeContent dfsNode = null;
         NodeContent dfsSource = null;
+        if (isPut())
+            return;
         if (dfs != null) {
             dfsNode = load(dfs);
             // if we have dfs-out, we have a dfs-in too -
             dfsSource = loadByDfs(id);
         }
+        for (NodeContent putNode : checkNotNull(loadByPut(id)))
+                putNode.unputNode();
         if (dfsNode != null) {
             // dfsSource.dfs = dfs; // !!! unless this is our child
             // we have to unlink all direct children, making them orphans
@@ -601,13 +639,9 @@ public class NodeContent extends MongoEntity {
     }
 
     // + add activity to new place, remove from old one
-    // + updates in one place
-    // + check permissions
-    public void moveNode(ObjectId to) {
+    public void moveNode(ObjectId to, User user) {
         NodeContent toNode = load(to);
-        if (toNode == null) // + permissions
-            return;
-        if (toNode.putId != null)
+        if (toNode == null || !toNode.canMove(user.getId()) || !toNode.isPut())
             return;
         // fix old dfs, if dfs goes out of the subtree;
         // set new dfs, -||-
@@ -700,15 +734,13 @@ public class NodeContent extends MongoEntity {
     // +K
     public void giveK(User user)
     {
-        //TODO error messages
         if (user.getDailyK() < 1)
             return;
         if (kgivers == null)
             kgivers = new LinkedList<ObjectId>();
         else if (kgivers.contains(user.getId()))
             return;
-        else
-            kgivers.add(user.getId());
+        kgivers.add(user.getId());
         if (getK() == null)
             setK(1l);
         else 
@@ -721,15 +753,13 @@ public class NodeContent extends MongoEntity {
     // -K
     public void giveMK(User user)
     {
-        //TODO error messages
         if (user.getDailyK() < 1)
             return;
         if (kgivers == null)
             kgivers = new LinkedList<ObjectId>();
         else if (kgivers.contains(user.getId()))
             return;
-        else
-            kgivers.add(user.getId());
+        kgivers.add(user.getId());
         if (getMk() == null)
             setMk(1l);
         else
@@ -774,12 +804,18 @@ public class NodeContent extends MongoEntity {
         return fook;
     }
 
+    public boolean isFook(User user) {
+        return fook != null && fook.containsKey(user.getIdString()) ? Boolean.TRUE : Boolean.FALSE;
+    }
+
     // Node o 1 vyssie nad nami uz urcite ma vsetko poriesene
     public void loadRights()
     {
         // ImmutableMap.Builder allows duplicate keys but cannot handle them
         // stupid cocks
         Map<ObjectId,ACL> bu = Maps.newHashMap();
+        if (accessType == null)
+            accessType = 0;
         if (access != null)
             for (ObjectId acc : access)
                 bu.put(acc, ACL.ACCESS);
@@ -815,6 +851,15 @@ public class NodeContent extends MongoEntity {
         }
         bu.put(owner, ACL.OWNER);
         acl = ImmutableMap.copyOf(bu);
+    }
+
+    public boolean isPut() {
+        return putId == null ? false : true;
+    }
+
+    // unsafe, should check permissions
+    public NodeContent getPutNode() {
+        return load(checkNotNull(putId));
     }
 
     @Override

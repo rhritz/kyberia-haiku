@@ -29,6 +29,7 @@ import java.util.List;
 import plugins.*;
 import play.Logger;
 import play.cache.Cache;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 // TODO kategorie + tagy + alt linky
 // ? pre kazdy node ukladat last_update_time do cache a porovnavat
@@ -61,13 +62,14 @@ public class Bookmark extends MongoEntity {
 
     public Bookmark() {}
 
-    public Bookmark(ObjectId dest, ObjectId uid, String type)
+    public Bookmark(ObjectId dest, User user, String type)
     {
-        this.dest       = dest;
-        this.uid        = uid;
-        name       = NodeContent.load(dest).getName();
+
+        this.dest  = checkNotNull(dest);
+        uid        = checkNotNull(user).getId();
+        name       = checkNotNull(NodeContent.load(dest, user)).getName();
         lastVisit  = System.currentTimeMillis();
-        typ = type;
+        typ        = checkNotNull(type);
     }
 
     public static List<Bookmark> getUserBookmarks(String uid)
@@ -183,12 +185,13 @@ public class Bookmark extends MongoEntity {
         return b;
     }
 
-    public static void add(ObjectId dest, ObjectId uid, String type)
+    public static void add(ObjectId dest, User user, String type)
     {
+        ObjectId uid = user.getId();
         Bookmark b = Cache.get(key(uid.toString(),dest.toString()), Bookmark.class);
         if (b != null)
             return;
-        b = new Bookmark(dest, uid, type);
+        b = new Bookmark(dest, user, type);
         b.save();
         Cache.delete(key + uid);
     }

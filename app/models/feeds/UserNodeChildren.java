@@ -57,7 +57,7 @@ public class UserNodeChildren extends Feed {
         List<ObjectId> nodeIds = Lists.newLinkedList();
         while(iobj.hasNext())
             nodeIds.add(MongoDB.fromDBObject(Activity.class, iobj.next()).getOid());
-        renderArgs.put(dataName, NodeContent.load(nodeIds)); // TODO Lists.reverse(
+        renderArgs.put(dataName, Lists.reverse(NodeContent.load(nodeIds, user)));
     }
 
     @Override

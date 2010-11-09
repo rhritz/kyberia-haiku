@@ -35,7 +35,6 @@ import models.Page;
 import models.User;
 import plugins.MongoDB;
 
-// doesn't do anything at all, just an empty example
 public class Thread extends Feed{
 
     @Override
@@ -54,35 +53,48 @@ public class Thread extends Feed{
 
         List<NodeContent> thread = new LinkedList<NodeContent>();
         HashMap<ObjectId,Integer> roots = new HashMap<ObjectId,Integer>();
-        int local_depth = 0;
-        NodeContent nextnode = (NodeContent) request.args.get("app-node");
-        NodeContent lastnode;
+        int localDepth = 0;
+        NodeContent nextNode = (NodeContent) request.args.get("app-node");
+        NodeContent lastNode;
         ObjectId parent;
+        // TODO permissions
         for (int i = 0; i < start + count; i++) {
-            lastnode = nextnode;
-            if (lastnode.dfs == null)
+            lastNode = nextNode;
+            if (lastNode.dfs == null)
               break;
-            nextnode = NodeContent.load(lastnode.dfs);
-            if (nextnode == null || nextnode.par == null)
+            nextNode = NodeContent.load(lastNode.dfs);
+            if (nextNode == null || nextNode.par == null)
               break;
-            parent = nextnode.par;
-            if (parent.equals(lastnode.getId())) {
-                roots.put(parent,local_depth);
-                local_depth++;
+            parent = nextNode.par;
+            if (parent.equals(lastNode.getId())) {
+                roots.put(parent,localDepth);
+                localDepth++;
             } else {
                 // ak v tomto bode nema parenta v roots,
                 // znamena to ze siahame vyssie ako root - koncime
                 if (roots.get(parent) == null)
                     break;
                 // nasli sme parenta, sme o jedno hlbsie ako on
-                local_depth = roots.get(parent) + 1;
+                localDepth = roots.get(parent) + 1;
             }
             if ( i>= start) {
-                // tento node chceme zobrazit
-                // tu je vhodne miesto na kontrolu per-node permissions,
-                // ignore a fook zalezitosti
-                nextnode.depth = local_depth;
-                thread.add(nextnode);
+                // Add this node to the list of displayed Nodes
+                // - here we can check for ignore & fook stuff
+                // and even permissions, if the current model is too crude,
+                // just add an dummy node here instead of stopping completely
+                // at the NodeContent.load(lastNode.dfs) line
+                if (user.ignores(nextNode.owner)) {
+                    // add dummy or nothing (but that could break the threading view)
+                } else if (nextNode.isFook(user)) {
+                    // add dummy or nothing (but that could break the threading view)
+                } else if (nextNode.isPut()) {
+                    NodeContent targetNode = nextNode.getPutNode();
+                    targetNode.depth = localDepth;
+                    thread.add(targetNode);
+                } else {
+                    nextNode.depth = localDepth;
+                    thread.add(nextNode);
+                }
             }
         }
         renderArgs.put(dataName, thread);

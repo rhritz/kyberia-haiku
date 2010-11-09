@@ -64,7 +64,7 @@ public class NodeUpdates extends Feed{
                 List<ObjectId> nodeIds = Lists.newLinkedList();
                 for (Activity ac : reverse(lll))
                     nodeIds.add(ac.getOid());
-                newNodes = NodeContent.load(nodeIds);
+                newNodes = NodeContent.load(nodeIds, user);
             }
         } catch (Exception ex) {
             Logger.info("NodeUpdates");

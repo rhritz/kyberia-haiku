@@ -17,6 +17,7 @@
 */
 package controllers;
 
+import java.util.Map;
 import org.bson.types.ObjectId;
 import java.io.File;
 import play.mvc.*;
@@ -57,7 +58,7 @@ public class Application extends Controller {
     @Before
     static void setNode() {
         String id = params.get("id");
-        NodeContent node = NodeContent.load(id);
+        NodeContent node = NodeContent.load(id,getUser());
         if (node != null) {
             renderArgs.put("node", node);
             request.args.put("app-node", node);
@@ -118,7 +119,7 @@ public class Application extends Controller {
         String nid = null;
         Logger.info("newid::" + newId);
         if (id == null) {
-            NodeContent newNode = NodeContent.load(newId);
+            NodeContent newNode = NodeContent.load(newId,getUser());
             nid = newNode.getIdString();
             renderArgs.put("node", newNode);
             request.args.put("app-node", newNode);
@@ -131,7 +132,7 @@ public class Application extends Controller {
      public static void putNode(String id) {
          checkAuthenticity();
          NodeContent node = getNode();
-         NodeContent toNode = NodeContent.load(params.get("to"));
+         NodeContent toNode = NodeContent.load(params.get("to"),getUser());
          if (node != null && toNode != null)
             node.putNode(toNode.getId());
          displayNode(id);
@@ -156,9 +157,9 @@ public class Application extends Controller {
      public static void moveNode(String id) {
          checkAuthenticity();
          NodeContent node = getNode();
-         NodeContent toNode = NodeContent.load(params.get("to"));
+         NodeContent toNode = NodeContent.load(params.get("to"),getUser());
          if (node != null && toNode != null)
-            node.moveNode(toNode.getId());
+            node.moveNode(toNode.getId(),getUser());
          displayNode(id);
      }
 
@@ -195,7 +196,7 @@ public class Application extends Controller {
         Logger.info("Show edit node:: " + id);
         NodeContent node = getNode();
         if (node.canEdit(getUser().getId())) {
-            node.edit(Controller.params.allSimple());
+            node.edit(Controller.params.allSimple(),getUser());
         }
         displayNode(id);
     }
@@ -205,14 +206,14 @@ public class Application extends Controller {
         checkAuthenticity();
         Logger.info("Bookmark action:: " + id);
         String type = "ids";
-        Bookmark.add(toId(id), getUser().getId(), type);
+        Bookmark.add(toId(id), getUser(), type);
         displayNode(id);
     }
 
     public static void book(String id, String type)
     {
         checkAuthenticity();
-        Bookmark.add(toId(id), getUser().getId(), type);
+        Bookmark.add(toId(id), getUser(), type);
         displayNode(id); // could be a user though...
     }
 

@@ -71,7 +71,7 @@ public class BookmarkUpdates extends Feed{
                 List<ObjectId> nodeIds = Lists.newLinkedList();
                 for (Activity ac : lll)
                     nodeIds.add(ac.getOid());
-                newNodes = NodeContent.load(nodeIds);
+                newNodes = NodeContent.load(nodeIds, user);
             }
         } catch (Exception ex) {
             Logger.info("getUpdatesForBookmark");
