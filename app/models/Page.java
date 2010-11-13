@@ -47,7 +47,8 @@ public class Page extends MongoEntity {
     private String              template;
     private ObjectId            owner;
     private Map<String,String>  blocks;
-    // private boolean checkOwner, checkEdit, checkRead..?
+    private Boolean             checkOwner; // check corresponding rights
+    private Boolean             checkEdit;  
 
     @Transient
     private List<Feed> preparedBlocks;
@@ -61,12 +62,16 @@ public class Page extends MongoEntity {
     public Page(String name, String template) {
         this.name     = name;
         this.template = template;
+        checkOwner    = false;
+        checkEdit     = false;
     }
 
     public Page(String name, String template, ObjectId owner) {
         this.name     = name;
         this.template = template;
         this.owner    = owner;
+        checkOwner    = false;
+        checkEdit     = false;
     }
 
     /**
@@ -109,8 +114,10 @@ public class Page extends MongoEntity {
             try {
                 DBObject iobj = dbcol.findOne(new BasicDBObject("name",name));
                 Logger.info("Page.loadByName Found:" + iobj);
-                if (iobj != null) 
+                if (iobj != null) {
                     page = MongoDB.fromDBObject(Page.class, iobj).enhance();
+                    templateStore.put(name, page);
+                }
             } catch (Exception ex) {
                 Logger.info("page load fail");
                 ex.printStackTrace();
@@ -172,8 +179,6 @@ public class Page extends MongoEntity {
         return name;
     }
 
-    ////////////////////////////////////////////////////////////////////////////
-
     public static void start() {
         templateStore = new HashMap<String,Page>();
         List<Page> allPages = loadPages();
@@ -226,6 +231,34 @@ public class Page extends MongoEntity {
     @Override
     public String key() {
         return key;
+    }
+
+    /**
+     * @return the checkOwner
+     */
+    public Boolean getCheckOwner() {
+        return checkOwner;
+    }
+
+    /**
+     * @param checkOwner the checkOwner to set
+     */
+    public void setCheckOwner(Boolean checkOwner) {
+        this.checkOwner = checkOwner;
+    }
+
+    /**
+     * @return the checkEdit
+     */
+    public Boolean getCheckEdit() {
+        return checkEdit;
+    }
+
+    /**
+     * @param checkEdit the checkEdit to set
+     */
+    public void setCheckEdit(Boolean checkEdit) {
+        this.checkEdit = checkEdit;
     }
 
 }

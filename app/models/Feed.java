@@ -23,8 +23,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import org.bson.types.ObjectId;
-import java.io.File;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import play.Logger;
@@ -94,14 +92,12 @@ public class Feed extends MongoEntity{
     String getName() {
         return name;
     }
-    ////////////////////////////////////////////////////////////////////////////
+    
     public void getData(   Map<String, String> params,
                     Request request,
                     Session session,
                     User    user,
                     RenderArgs renderArgs) {
-        // mali by sme vyhodit error?
-        Logger.info("Hello from Feed base class. You really shouldn't see this.");
     }
 
     public void init(Page page) {}
@@ -134,7 +130,6 @@ public class Feed extends MongoEntity{
         return feed;
     }
 
-    // TODO toto sa urcite da spravit elegantnejsie
     private static <T extends Feed> T sc(Class<T> c, Feed fu, Page page) {
         T le = null;
         try {
@@ -151,34 +146,6 @@ public class Feed extends MongoEntity{
         }
         return le;
     }
-
-   /*
-    Dirty hacks ftw!
-    list Java files (not classes, since they are not going to be there)
-    inside a given package directory, and use them as a list of available feeds
-    adapted from Jon Peck http://jonpeck.com
-    adapted from http://www.javaworld.com/javaworld/javatips/jw-javatip113.html
-   */
-  public static List<Class> getClasses(String pckgname) {
-    List<Class> classes=new LinkedList<Class>();
-    try {
-      File directory=new File(Thread.currentThread().getContextClassLoader()
-              .getResource('/'+pckgname.replace('.', '/')).getFile());
-        if(directory.exists()) {
-          String[] files=directory.list();
-          for( int i=0 ; i < files.length; i++)
-            if(files[i].endsWith(".java"))
-              classes.add(Class.forName(pckgname+'.'+
-                files[i].substring(0, files[i].length()-5)));
-        } else 
-          Logger.info(pckgname + " does not appear to be a valid package");
-    } catch(Exception x) {
-        Logger.info(pckgname + " does not appear to be a valid package");
-        x.printStackTrace();
-        Logger.info(x.toString());
-    }
-    return classes;
-  }
 
     @Override
     public Feed enhance() {

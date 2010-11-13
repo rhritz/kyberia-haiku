@@ -22,6 +22,7 @@ import com.mongodb.DBObject;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import models.Page;
+import models.actions.Action;
 import models.ViewTemplate;
 import play.Play;
 import play.PlayPlugin;
@@ -37,6 +38,8 @@ import static com.mongodb.util.JSON.parse;
 */
 
 public class TemplatePlugin extends PlayPlugin {
+
+    // TODO do the same on reload
     @Override
     public void onApplicationStart() {
 
@@ -46,6 +49,7 @@ public class TemplatePlugin extends PlayPlugin {
         try {
             Page.start();
             ViewTemplate.start();
+            Action.start();
         } catch (Exception e) {
             throw new UnexpectedException (e);
         }

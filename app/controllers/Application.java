@@ -17,6 +17,7 @@
 */
 package controllers;
 
+import models.actions.Action;
 import java.util.Map;
 import org.bson.types.ObjectId;
 import java.io.File;
@@ -70,8 +71,8 @@ public class Application extends Controller {
      */
     @Before
     static void setPage() {
-        String p = params.get("page");
-        if (p == null || Page.loadByName(p) == null) {
+        String p = params.get("page"); // or from request...?
+        if (p == null || p.length() < 1 || Page.loadByName(p) == null) {
             NodeContent node = getNode();
             if (node != null) {
                 p = node.getTemplate();
@@ -99,6 +100,36 @@ public class Application extends Controller {
         viewPage("main");
     }
 
+    // Actions for view (get) -> Page
+//     # whatever1:action : edit(showEditNode), new(viewNodeUpdates), '' -> viewNode
+// # pars: page, p (pageNum), ..?
+
+    public static void getNode(String id) {
+        String ac = params.get("action"); // or rs
+        if (ac != null) { // or something else is wrong
+            Action.doAction(ac, request, getUser(), params.allSimple());
+        } // TODO or make it into a Page..how to distinguish between them?
+        displayNode(id);
+    }
+
+    // TODO -> doPostAction, doGetAction...?
+    public static void postNode(String id) {
+        String ac = params.get("action"); // or rs
+        checkAuthenticity();
+        // NodeContent n = getNode(); // checkNotNull?
+        if (ac == null) { // or something else is wrong
+           // displayNode(id);
+        } else {
+            Action.doAction(ac, request, getUser(), params.allSimple());
+            // TODO non-node actions -> ac.toLowerCase() + 'mail', ac.toLowerCase() + 'user' ..
+            // OR models.actions.user.*?
+            // different Action.apply signatures too?
+        }
+        // delete(), unput() -> index(), ostatne displayNode()?
+        
+        displayNode(id);
+    }
+    
     public static void viewNode(String id, Integer pageNum) {
         displayNode(id);
     }
@@ -107,65 +138,7 @@ public class Application extends Controller {
         displayNode(id);
     }
 
-    public static void addNode(String id, String content) {
-        Logger.info("about to add node:" + id + "," + content );
-        checkAuthenticity();
-        NodeContent parentNode = getNode();
-        String newId = NodeContent.addNode(
-                    parentNode == null ? null : parentNode.getId(),
-                    params.allSimple(),
-                    getUser().getId()
-                );
-        String nid = null;
-        Logger.info("newid::" + newId);
-        if (id == null) {
-            NodeContent newNode = NodeContent.load(newId,getUser());
-            nid = newNode.getIdString();
-            renderArgs.put("node", newNode);
-            request.args.put("app-node", newNode);
-        } else {
-            nid = id;
-        }
-        displayNode(nid);
-    }
-
-     public static void putNode(String id) {
-         checkAuthenticity();
-         NodeContent node = getNode();
-         NodeContent toNode = NodeContent.load(params.get("to"),getUser());
-         if (node != null && toNode != null)
-            node.putNode(toNode.getId());
-         displayNode(id);
-     }
-
-     public static void unputNode(String id) {
-         checkAuthenticity();
-         NodeContent node = getNode();
-         if (node != null)
-            node.unputNode();
-         index();
-     }
-
-     public static void deleteNode(String id) {
-         checkAuthenticity();
-         NodeContent node = getNode();
-         if (node != null)
-            node.deleteNode();
-         index();
-     }
-
-     public static void moveNode(String id) {
-         checkAuthenticity();
-         NodeContent node = getNode();
-         NodeContent toNode = NodeContent.load(params.get("to"),getUser());
-         if (node != null && toNode != null)
-            node.moveNode(toNode.getId(),getUser());
-         displayNode(id);
-     }
-
-    //
     // Actions
-    //
     public static void friend(String uid)
     {
         checkAuthenticity();
@@ -190,26 +163,6 @@ public class Application extends Controller {
         showUser(uid);
     }
 
-    public static void editNode(String id)
-    {
-        checkAuthenticity();
-        Logger.info("Show edit node:: " + id);
-        NodeContent node = getNode();
-        if (node.canEdit(getUser().getId())) {
-            node.edit(Controller.params.allSimple(),getUser());
-        }
-        displayNode(id);
-    }
-
-    public static void book(String id)
-    {
-        checkAuthenticity();
-        Logger.info("Bookmark action:: " + id);
-        String type = "ids";
-        Bookmark.add(toId(id), getUser(), type);
-        displayNode(id);
-    }
-
     public static void book(String id, String type)
     {
         checkAuthenticity();
@@ -217,95 +170,38 @@ public class Application extends Controller {
         displayNode(id); // could be a user though...
     }
 
-    public static void unbook(String id)
-    {
-        checkAuthenticity();
-        Logger.info("UnBook:: " + id);
-        Bookmark.delete(id, getUser().getIdString());
-        displayNode(id);
-    }
-
-    public static void fook(String id)
-    {
-        checkAuthenticity();
-        Logger.info("Fook ::" + id);
-        NodeContent n = getNode();
-        n.fook(getUser().getId());
-        displayNode(id);
-    }
-
-    public static void k(String id)
-    {
-        checkAuthenticity();
-        Logger.info("K ::" + id);
-        NodeContent nc = getNode();
-        if (nc != null)
-            nc.giveK(getUser());
-        displayNode(id);
-    }
-
-    public static void mk(String id)
-    {
-        checkAuthenticity();
-        Logger.info("K ::" + id);
-        NodeContent nc = getNode();
-        if (nc != null)
-            nc.giveMK(getUser());
-        displayNode(id);
-    }
-
-    public static void tag(String id, String tag)
-    {
-        checkAuthenticity();
-        Logger.info("Tag id ::" + id + " with tag ::" + tag);
-        NodeContent nc = getNode();
-        if (nc != null)
-            Tag.tagNode(nc,tag,getUser().getIdString());
-        displayNode(id);
-    }
-
     private static void displayNode(String id)
     {
         renderArgs.put("id", id);
         NodeContent node = getNode();
-        if (node != null) {
-            if (node.canRead(getUser().getId())) {
-                UserLocation.saveVisit(getUser(), node.getId());
-                viewPage("Node");
-            } else {
-                viewPage("NodeNoAccess");
-            }
-        } else {
-            viewPage("NodeError");
-        }
-    }
-
-    public static void displayNodeWithTemplate()
-    {
-        NodeContent node = getNode();
         Page page = getPage();
-        if (node != null && page != null) {
+        if (node != null) {
             if (node.canRead(getUser().getId())) {
                 UserLocation.saveVisit(getUser(), node.getId());
-                viewPage(page);
+                if (page != null) {
+                    if (page.getCheckEdit()) {
+                        if (node.canEdit(getUser().getId())) {
+                            viewPage(page);
+                        } else {
+                            viewPage("Node"); // + error message
+                        }
+                    } else if (page.getCheckOwner()) {
+                        if (node.owner.equals(getUser().getId())) {
+                            viewPage(page);
+                        } else {
+                            viewPage("Node"); // + error message
+                        }
+                    } else {
+                        viewPage(page);
+                    }
+                } else {
+                    viewPage("Node");
+                }
             } else {
                 viewPage("NodeNoAccess");
             }
         } else {
             viewPage("NodeError");
-        }
-    }
-
-    public static void showEditNode(String id) {
-        renderArgs.put("id", id);
-        NodeContent node = getNode();
-        if (node != null) {
-            if (node.canEdit(getUser().getId())) {
-                renderArgs.put("node", node);
-                viewPage("EditNode");
-            } else {
-                viewPage("NodeNoAccess");
-            }
         }
     }
 
@@ -439,7 +335,7 @@ public class Application extends Controller {
         Page p = Page.create(params.get("name"), params.get("template"),
                 getUser().getId());
         renderArgs.put("page",  p);
-        renderArgs.put("classes", Feed.getClasses("models.feeds"));
+        renderArgs.put("classes", MongoEntity.getClasses("models.feeds"));
         render(ViewTemplate.EDIT_PAGE_HTML);
     }
 

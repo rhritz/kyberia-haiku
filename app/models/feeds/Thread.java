@@ -81,7 +81,7 @@ public class Thread extends Feed{
                 // Add this node to the list of displayed Nodes
                 // - here we can check for ignore & fook stuff
                 // and even permissions, if the current model is too crude,
-                // just add an dummy node here instead of stopping completely
+                // just add a dummy node here instead of stopping completely
                 // at the NodeContent.load(lastNode.dfs) line
                 if (user.ignores(nextNode.owner)) {
                     // add dummy or nothing (but that could break the threading view)

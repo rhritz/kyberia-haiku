@@ -20,7 +20,11 @@ package models;
 import java.io.Serializable;
 import com.google.code.morphia.annotations.Id;
 import com.mongodb.DBCollection;
+import java.io.File;
+import java.util.LinkedList;
+import java.util.List;
 import org.bson.types.ObjectId;
+import play.Logger;
 import play.cache.Cache;
 import plugins.MongoDB;
 
@@ -87,5 +91,34 @@ public abstract class MongoEntity implements Serializable {
         if (doCache)
             Cache.replace(key() + getIdString(), this);
     }
+
+
+    /*
+    Dirty hacks ftw!
+    list Java files (not classes, since they are not going to be there)
+    inside a given package directory, and use them as a list of available feeds
+    adapted from Jon Peck http://jonpeck.com
+    adapted from http://www.javaworld.com/javaworld/javatips/jw-javatip113.html
+    */
+    public static List<Class> getClasses(String pckgname) {
+        List<Class> classes=new LinkedList<Class>();
+        try {
+          File directory=new File(Thread.currentThread().getContextClassLoader()
+                  .getResource('/'+pckgname.replace('.', '/')).getFile());
+            if(directory.exists()) {
+              String[] files=directory.list();
+              for( int i=0 ; i < files.length; i++)
+                if(files[i].endsWith(".java"))
+                  classes.add(Class.forName(pckgname+'.'+
+                    files[i].substring(0, files[i].length()-5)));
+            } else
+              Logger.info(pckgname + " does not appear to be a valid package");
+        } catch(Exception x) {
+            Logger.info(pckgname + " does not appear to be a valid package");
+            x.printStackTrace();
+            Logger.info(x.toString());
+        }
+        return classes;
+      }
 
 }

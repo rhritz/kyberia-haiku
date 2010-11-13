@@ -86,7 +86,6 @@ public class User extends MongoEntity {
         this.password = pwdService.encrypt(password);
     }
 
-
     public static User login(String username, String password)
     {
         User u = null;
